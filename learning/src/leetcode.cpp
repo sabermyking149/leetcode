@@ -1674,3 +1674,31 @@ long long putMarbles(vector<int>& weights, int k)
     }
     return ans;
 }
+
+
+ListNode* mergeInBetween(ListNode* list1, int a, int b, ListNode* list2)
+{
+    int cnt;
+    ListNode *prev = nullptr;
+    ListNode *cur = list2;
+    while (cur->next) {
+        cur = cur->next;
+    }
+    ListNode *list2Tail = cur;
+
+    cur = list1;
+    cnt = 0;
+    while (cur) {
+        if (cnt == a) {
+            prev->next = list2;
+        }
+        if (cnt == b) {
+            list2Tail->next = cur->next;
+            break;
+        }
+        cnt++;
+        prev = cur;
+        cur = cur->next;
+    }
+    return list1;
+}
