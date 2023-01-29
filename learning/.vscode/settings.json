@@ -1,0 +1,23 @@
+{
+    "files.associations": {
+        "cmath": "cpp",
+        "vector": "cpp",
+        "iostream": "cpp",
+        "xstring": "cpp",
+        "unordered_map": "cpp",
+        "deque": "cpp",
+        "list": "cpp",
+        "map": "cpp",
+        "xhash": "cpp",
+        "xtree": "cpp",
+        "xiosbase": "cpp",
+        "unordered_set": "cpp",
+        "utility": "cpp",
+        "queue": "cpp",
+        "initializer_list": "cpp",
+        "xutility": "cpp",
+        "tuple": "cpp",
+        "stack": "cpp",
+        "type_traits": "cpp"
+    }
+}
