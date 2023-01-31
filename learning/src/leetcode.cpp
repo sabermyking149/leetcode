@@ -1676,7 +1676,7 @@ long long putMarbles(vector<int>& weights, int k)
 }
 
 
-ListNode* mergeInBetween(ListNode* list1, int a, int b, ListNode* list2)
+ListNode* func_mergeInBetween(ListNode* list1, int a, int b, ListNode* list2)
 {
     int cnt;
     ListNode *prev = nullptr;
