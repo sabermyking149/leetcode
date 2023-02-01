@@ -1855,3 +1855,29 @@ int minReorder(int n, vector<vector<int>>& connections)
     DSFAdjustRoute(0, -1, edges, realRoutePair, visited, ans);
     return ans;
 }
+
+
+string findContestMatch(int n)
+{
+    int i, j;
+    string ans;
+    vector<string> v, t;
+
+    for (i = 1; i <= n; i++) {
+        v.emplace_back(to_string(i));
+    }
+    while (n != 1) {
+        i = 0;
+        j = v.size() - 1;
+        t.clear();
+        while (i < j) {
+            t.emplace_back("(" + v[i] + "," + v[j] + ")");
+            i++;
+            j--;
+        }
+        v = t;
+        n /= 2;
+    }
+    ans = v[0];
+    return ans;
+}
