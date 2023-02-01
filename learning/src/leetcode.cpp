@@ -1702,3 +1702,156 @@ ListNode* mergeInBetween(ListNode* list1, int a, int b, ListNode* list2)
     }
     return list1;
 }
+
+
+static bool longestStrChainCMP(const string& a, const string& b)
+{
+    if (a.size() != b.size()) {
+        return a.size() < b.size();
+    }
+    return a < b;
+}
+bool IsParent(string& a, string& b) // a - cur  b - parent
+{
+    int m = a.size();
+    int n = b.size();
+    int i, j;
+
+    if (n + 1 != m) {
+        return false;
+    }
+    i = j = 0;
+    while (j < n && i < m) {
+        if (a[i] == b[j]) {
+            i++;
+            j++;
+        } else {
+            i++;
+        }
+    }
+    if (j == n) {
+        return true;
+    }
+    return false;
+} 
+int longestStrChain(vector<string>& words)
+{
+    int i, j;
+    int n = words.size();
+    vector<int> dp(n, 1);
+    sort(words.begin(), words.end(), longestStrChainCMP);
+    for (i = 1; i < n; i++) {
+        for (j = i - 1; j >= 0; j--) {
+            if (IsParent(words[i], words[j])) {
+                dp[i] = max(dp[i], dp[j] + 1);
+            }
+        }
+    }
+    int ans = 0;
+    for (auto d : dp) {
+        ans = max(ans, d); 
+    }
+    return ans;
+}
+
+
+unordered_map<TreeNode *, unordered_set<TreeNode *>> edges;
+vector<TreeNode *> leaves;
+void DFSCreateGrid(TreeNode * node, TreeNode *parent)
+{
+    if (node == nullptr) {
+        return;
+    }
+    if (node->left == nullptr && node->right == nullptr) {
+        leaves.emplace_back(node);
+    }
+    if (parent != nullptr) {
+        edges[node].emplace(parent);
+        edges[parent].emplace(node);
+    }
+    DFSCreateGrid(node->left, node);
+    DFSCreateGrid(node->right, node);
+}
+int CheckCanReach(TreeNode *a, int distance)
+{
+    int i, n;
+    int step, ans;
+    queue<TreeNode *> q;
+    unordered_set<TreeNode *> visited;
+
+    q.push(a);
+    step = 0;
+    ans = 0;
+    while (q.size()) {
+        n = q.size();
+        for (i = 0; i < n; i++) {
+            TreeNode *t = q.front();
+            q.pop();
+            if (t != a && t->left == nullptr && t->right == nullptr) {
+                ans++;
+            }
+            visited.emplace(t);
+            for (auto it : edges[t]) {
+                if (visited.count(it) == 1) {
+                    continue;
+                }
+                q.push(it);
+            }
+        }
+        step++;
+        if (step > distance) {
+            break;
+        }
+    }
+    return ans;
+}
+int countPairs(TreeNode* root, int distance)
+{
+    int ans;
+    DFSCreateGrid(root, nullptr);
+
+    int num = leaves.size();
+    if (num < 2) {
+        return 0;
+    }
+    int i, j;
+    ans = 0;
+    for (i = 0; i < num; i++) {
+        ans += CheckCanReach(leaves[i], distance);
+    }
+    return ans / 2;
+}
+
+
+void DSFAdjustRoute(int cur, int parent, unordered_map<int, vector<int>>& edges, set<pair<int, int>>& realRoutePair, 
+    unordered_set<int>& visited, int& ans)
+{
+    visited.emplace(cur);
+    if (parent != -1) {
+        if (realRoutePair.count(make_pair(cur, parent)) == 0) {
+            ans++;
+        }
+    }
+    for (auto it : edges[cur]) {
+        if (visited.find(it) != visited.end()) {
+            continue;
+        }
+        DSFAdjustRoute(it, cur, edges, realRoutePair, visited, ans);
+    }
+}
+int minReorder(int n, vector<vector<int>>& connections)
+{
+    int ans;
+    unordered_map<int, vector<int>> edges;
+    set<pair<int, int>> realRoutePair;
+    unordered_set<int> visited;
+    for (auto conn : connections) {
+        edges[conn[0]].emplace_back(conn[1]);
+        edges[conn[1]].emplace_back(conn[0]);
+        realRoutePair.emplace(make_pair(conn[0], conn[1]));
+    }
+
+    ans = 0;
+    DSFAdjustRoute(0, -1, edges, realRoutePair, visited, ans);
+    return ans;
+}
