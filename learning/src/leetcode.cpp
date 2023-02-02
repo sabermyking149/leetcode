@@ -1881,7 +1881,7 @@ string findContestMatch(int n)
 }
 
 
-void CreateWordTrim(Trie<char> *root, string& word)
+void CreateWordTrie(Trie<char> *root, string& word)
 {
     int i, j;
     int n, m;
@@ -1909,7 +1909,7 @@ void CreateWordTrim(Trie<char> *root, string& word)
     }
     root->IsEnd = true;
 }
-void DFSScanWordTrim(Trie<char> *root, string& t, int point, unordered_map<string, int>& wordPrefixPoint)
+void DFSScanWordTrie(Trie<char> *root, string& t, int point, unordered_map<string, int>& wordPrefixPoint)
 {
     int i;
     t.push_back(root->val);
@@ -1918,7 +1918,7 @@ void DFSScanWordTrim(Trie<char> *root, string& t, int point, unordered_map<strin
         wordPrefixPoint[t.substr(1)] = point; // 去掉字符串首位的'/'
     }
     for (i = 0; i < root->children.size(); i++) {
-        DFSScanWordTrim(root->children[i], t, point, wordPrefixPoint);
+        DFSScanWordTrie(root->children[i], t, point, wordPrefixPoint);
         t.pop_back();
     }
 }
@@ -1930,12 +1930,12 @@ string longestWord(vector<string>& words)
     Trie<char> *root = new Trie('/');
 
     for (i = 0; i < m; i++) {
-        CreateWordTrim(root, words[i]);
+        CreateWordTrie(root, words[i]);
     }
 
     unordered_map<string, int> wordPrefixPoint;
     string t;
-    DFSScanWordTrim(root, t, 0, wordPrefixPoint);
+    DFSScanWordTrie(root, t, 0, wordPrefixPoint);
 
     string ans = "";
     for (auto it : wordPrefixPoint) {
