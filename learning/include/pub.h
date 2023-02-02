@@ -28,6 +28,7 @@ public:
     T val;
     bool IsEnd;
     vector<Trie *> children;
+    Trie() : IsEnd(false) {}
     Trie(T ch) : val(ch), IsEnd(false) {}
 };
 

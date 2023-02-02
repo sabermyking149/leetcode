@@ -1601,42 +1601,41 @@ int waysToMakeFair(vector<int>& nums)
     return ans;
 }
 
-class MaxScoreCmp {
-public:
-    bool operator() (const tuple<int, int, int>& tp1, const tuple<int, int, int>& tp2)
-    {
-        if (get<0>(tp1) == get<0>(tp2)) {
-            return get<2>(tp1) < get<2>(tp2);
-        }
-        return get<0>(tp1) < get<0>(tp2);
+static bool MaxScoreCmp(const pair<int, int>& a, const pair<int, int>& b)
+{
+    if (a.first == b.first) {
+        return a.second > b.second;
     }
-};
+    return a.first > b.first;
+}
 long long maxScore(vector<int>& nums1, vector<int>& nums2, int k)
 {
     int i;
     int n = nums1.size();
-    // tuple<int, int, int> tp; nums2[idx], idx, nums1[idx]
+    int t;
+    long long ans, sum;
     vector<tuple<int, int, int>> vtp;
-    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, MaxScoreCmp> pq;
+    priority_queue<int, vector<int>, greater<>> pq;
+
+    vector<pair<int, int>> vp;
     for (i = 0; i < n; i++) {
-        pq.push(make_tuple(nums2[i], i, nums1[i]));
+        vp.emplace_back(make_pair(nums2[i], i));
     }
-    while (!pq.empty()) {
-        vtp.emplace_back(pq.top());
-        pq.pop();
+    sort(vp.begin(), vp.end(), MaxScoreCmp);
+    sum = 0;
+    for (i = 0; i < k; i++) {
+        t = nums1[vp[i].second];
+        sum += t;
+        pq.push(t);
     }
-    vector<long long> nums1PrefixSum(n);
-    /*nums1PrefixSum[0] = get<2>(vtp[0]);
-    for (i = 1; i < n; i++) {
-        nums1PrefixSum[i] = nums1PrefixSum[i - 1] + get<2>(vtp[i]);
-    }
-    */
-    long long ans = 0;
-    for (i = 0; i <= n - k; i++) {
-        if (i == 0) {
-            ans = max(ans, get<0>(vtp[i + k - 1]) * nums1PrefixSum[k - 1]);
-        } else {
-            ans = max(ans, get<0>(vtp[i + k - 1]) * (nums1PrefixSum[i + k - 1] - nums1PrefixSum[i - 1]));
+    ans = sum * vp[k - 1].first;
+    for (i = k; i < n; i++) {
+        t = nums1[vp[i].second];
+        if (pq.top() < t) {
+            sum += t - pq.top();
+            pq.pop();
+            pq.push(t);
+            ans = max(ans, sum * vp[i].first);
         }
     }
     return ans;
