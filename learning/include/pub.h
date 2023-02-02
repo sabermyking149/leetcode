@@ -22,12 +22,13 @@ struct ListNode {
     ListNode(int x, ListNode *next) : val(x), next(next) {}
 };
 
-class Trim {
+template <typename T>
+class Trie {
 public:
-    char val;
+    T val;
     bool IsEnd;
-    vector<Trim *> children;
-    Trim(char ch) : val(ch), IsEnd(false) {}
+    vector<Trie *> children;
+    Trie(T ch) : val(ch), IsEnd(false) {}
 };
 
 #endif
