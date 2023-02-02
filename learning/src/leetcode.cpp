@@ -1614,10 +1614,9 @@ long long maxScore(vector<int>& nums1, vector<int>& nums2, int k)
     int n = nums1.size();
     int t;
     long long ans, sum;
-    vector<tuple<int, int, int>> vtp;
     priority_queue<int, vector<int>, greater<>> pq;
-
     vector<pair<int, int>> vp;
+
     for (i = 0; i < n; i++) {
         vp.emplace_back(make_pair(nums2[i], i));
     }

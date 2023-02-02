@@ -29,7 +29,7 @@ public:
     bool IsEnd;
     vector<Trie *> children;
     Trie() : IsEnd(false) {}
-    Trie(T ch) : val(ch), IsEnd(false) {}
+    Trie(T t) : val(t), IsEnd(false) {}
 };
 
 #endif
