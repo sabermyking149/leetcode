@@ -22,4 +22,12 @@ struct ListNode {
     ListNode(int x, ListNode *next) : val(x), next(next) {}
 };
 
+class Trim {
+public:
+    char val;
+    bool IsEnd;
+    vector<Trim *> children;
+    Trim(char ch) : val(ch), IsEnd(false) {}
+};
+
 #endif
