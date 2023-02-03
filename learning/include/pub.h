@@ -2,8 +2,12 @@
 #define _PUB_H_
 
 #include <iostream>
+#include <vector>
+
+using namespace std;
+
 constexpr unsigned short w = 1024;
-int mod = 1000000007;
+constexpr int mod = 1000000007;
 
 struct TreeNode {
     int val;

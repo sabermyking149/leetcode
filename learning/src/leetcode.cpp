@@ -1950,3 +1950,25 @@ string longestWord(vector<string>& words)
     }
     return ans;
 }
+
+
+int maxSumAfterOperation(vector<int>& nums)
+{
+    int ans;
+    int n = nums.size();
+    int i;
+    int a, b;
+    vector<vector<int>> dp(n, vector<int>(2, 0));
+    // 最大子数组的变种 dp[i][0] -- 以nums[i]结尾的最大子数组和,不使用平方; dp[i][1] -- 以nums[i]结尾的最大子数组和,使用平方
+    dp[0][0] = nums[0];
+    dp[0][1] = nums[0] * nums[0];
+    ans = max(dp[0][0], dp[0][1]);
+    for (i = 1; i < n; i++) {
+        dp[i][0] = dp[i - 1][0] > 0 ? dp[i - 1][0] + nums[i] : nums[i];
+        a = dp[i - 1][0] > 0 ? dp[i - 1][0] + nums[i] * nums[i] : nums[i] * nums[i];
+        b = dp[i - 1][1] > 0 ? dp[i - 1][1] + nums[i] : nums[i];
+        dp[i][1] = max(a, b);
+        ans = max(ans, max(dp[i][0], dp[i][1]));
+    }
+    return ans;
+}
