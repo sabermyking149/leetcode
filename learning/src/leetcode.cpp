@@ -1972,3 +1972,194 @@ int maxSumAfterOperation(vector<int>& nums)
     }
     return ans;
 }
+
+
+bool canBeValid(string s, string locked)
+{
+    int i;
+    int n = s.size();
+    stack<int> lockedIdxStack;
+    stack<int> freeIdxStack;
+
+    if (n % 2 == 1 || (s[0] == ')' && locked[0] == '1') || (s[n - 1] == '(' && locked[n - 1] == '1')) {
+        return false;
+    }
+
+    for (i = 0; i < n; i++) {
+        if (locked[i] == '0') {
+            freeIdxStack.push(i);
+            continue;
+        }
+        if (s[i] == '(') {
+            lockedIdxStack.push(i);
+        } else {
+            if (lockedIdxStack.empty()) {
+                if (freeIdxStack.empty()) {
+                    return false;
+                } else {
+                    freeIdxStack.pop();
+                }
+            } else {
+                lockedIdxStack.pop();
+            }
+        }
+    }
+    while (lockedIdxStack.size()) {
+        if (freeIdxStack.empty() || lockedIdxStack.top() > freeIdxStack.top()) {
+            return false;
+        }
+        lockedIdxStack.pop();
+        freeIdxStack.pop();
+    }
+    return lockedIdxStack.empty();
+}
+
+
+void TrySessions(vector<int>& tasks, int curSum, int sessionTime, vector<bool>& visited, int session, int& ans)
+{
+    int i;
+    int n = tasks.size();
+
+    if (session > ans) {
+        return;
+    }
+    for (i = 0; i < n; i++) {
+        if (!visited[i]) {
+            break;
+        }
+    }
+    if (i == n) {
+        if (curSum == 0) {
+            ans = min(ans, session);
+        } else {
+            ans = min(ans, session + 1);
+        }
+    }
+    for (i = 0; i < n; i++) {
+        if (visited[i] == false) {
+            if (curSum + tasks[i] > sessionTime) {
+                TrySessions(tasks, 0, sessionTime, visited, session + 1, ans);
+            } else if (curSum + tasks[i] == sessionTime) {
+                visited[i] = true;
+                TrySessions(tasks, 0, sessionTime, visited, session + 1, ans);
+                visited[i] = false;
+            } else {
+                visited[i] = true;
+                TrySessions(tasks, curSum + tasks[i], sessionTime, visited, session, ans);
+                visited[i] = false;
+            }
+        }
+    }
+}
+int minSessions(vector<int>& tasks, int sessionTime)
+{
+    int n = tasks.size();
+    int ans;
+    vector<bool> visited(n, false);
+    sort (tasks.begin(), tasks.end());
+    ans = n;
+    TrySessions(tasks, 0, sessionTime, visited, 0, ans);
+    return ans;
+}
+
+
+
+// dp[i][j] 从前i个物品选j个物品的最小和
+// dp[i][j] = min(dp[i - 1][j], dp[i - 2][j - 1] + nums[i])
+int minCapability(vector<int>& nums, int k)
+{
+    int i, j;
+    int n = nums.size();
+    int ans, t;
+    
+    if (n == 1) {
+        return nums[0];
+    } else if (n == 2) {
+        return min(nums[0], nums[1]);
+    }
+    vector<vector<long long>> dp(n, vector<long long>(k + 1, 0x3f3f3f3f));
+    dp[0][0] = 0;
+    dp[0][1] = nums[0];
+    dp[1][1] = min(nums[0], nums[1]);
+    ans = dp[1][1];
+    for (i = 2; i < n; i++) {
+        t = ans;
+        for (j = 1; j <= k; j++) {
+            // dp[i][j] = min(dp[i - 1][j], dp[i - 2][j - 1] + nums[i]);
+            if (dp[i - 2][j - 1] + nums[i] < dp[i - 1][j]) {
+                ans = max(t, nums[i]);
+                dp[i][j] = dp[i - 2][j - 1] + nums[i];
+            } else {
+                ans = t;
+                dp[i][j] = dp[i - 1][j];
+            }
+        }
+    }
+    // return dp[n - 1][k];
+    return ans;
+}
+
+
+long long minCost(vector<int>& basket1, vector<int>& basket2)
+{
+    int i;
+    int k;
+    int n = basket1.size();
+    long long ans;
+    map<int, int> m1, m2;
+    for (i = 0; i < n; i++) {
+        m1[basket1[i]]++;
+        m2[basket2[i]]++;
+    }
+    vector<vector<int>> v1, v2;
+    for (auto it : m1) {
+        if (m2.find(it.first) == m2.end()) {
+            if (it.second % 2 != 0) {
+                return -1;
+            }
+            v1.push_back({it.first, it.second / 2});
+        } else {
+            if (abs(it.second - m2[it.first]) % 2 != 0) {
+                return -1;
+            }
+            if (it.second > m2[it.first]) {
+                v1.push_back({it.first, (it.second - m2[it.first]) / 2});
+            } else if (it.second < m2[it.first]) {
+                v2.push_back({it.first, (m2[it.first] - it.second) / 2});
+            }
+        }
+    }
+    for (auto it : m2) {
+        if (m1.find(it.first) == m1.end()) {
+            if (it.second % 2 != 0) {
+                return -1;
+            }
+            v2.push_back({it.first, it.second / 2});
+        }
+    }
+    /* for (auto v : v1) cout << v[0] << ":" << v[1] << endl;
+    cout << endl;
+    for (auto v : v2) cout << v[0] << ":" << v[1] << endl;
+    cout << endl;
+    */
+    ans = 0;
+    k = min(m1.begin()->first, m2.begin()->first) * 2;
+    vector<int> vv;
+    for (auto v : v1) {
+        for (i = 0; i < v[1]; i++) {
+            vv.emplace_back(v[0]);
+        }
+    }
+    for (auto v : v2) {
+        for (i = 0; i < v[1]; i++) {
+            vv.emplace_back(v[0]);
+        }
+    }
+
+    sort(vv.begin(), vv.end());
+    n = vv.size();
+    for (i = 0; i < n / 2; i++) {
+        ans += min(k, vv[i]);
+    }
+    return ans;
+}
