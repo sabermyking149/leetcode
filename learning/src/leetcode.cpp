@@ -2015,53 +2015,102 @@ bool canBeValid(string s, string locked)
 }
 
 
-void TrySessions(vector<int>& tasks, int curSum, int sessionTime, vector<bool>& visited, int session, int& ans)
+bool TrySessions(vector<int>& tasks, int sessionTime, int bucketSize)
 {
     int i;
     int n = tasks.size();
+    bool isOk = false;
+    vector<int> bucket(bucketSize, 0);
+    CheckBucket(tasks, sessionTime, bucket, 0, isOk);
+    return isOk;
+}
+void CheckBucket(vector<int>& tasks, int sessionTime, vector<int> &bucket, int idx, bool& isOk)
+{
+    int i;
+    int n = bucket.size();
 
-    if (session > ans) {
+    if (isOk) {
         return;
     }
-    for (i = 0; i < n; i++) {
-        if (!visited[i]) {
-            break;
-        }
+    if (idx == tasks.size()) {
+        isOk = true;
+        return;
     }
-    if (i == n) {
-        if (curSum == 0) {
-            ans = min(ans, session);
-        } else {
-            ans = min(ans, session + 1);
-        }
-    }
-    for (i = 0; i < n; i++) {
-        if (visited[i] == false) {
-            if (curSum + tasks[i] > sessionTime) {
-                TrySessions(tasks, 0, sessionTime, visited, session + 1, ans);
-            } else if (curSum + tasks[i] == sessionTime) {
-                visited[i] = true;
-                TrySessions(tasks, 0, sessionTime, visited, session + 1, ans);
-                visited[i] = false;
-            } else {
-                visited[i] = true;
-                TrySessions(tasks, curSum + tasks[i], sessionTime, visited, session, ans);
-                visited[i] = false;
-            }
+    for (i = 0; i < min(n, idx + 1); i++) {
+        if (bucket[i] + tasks[idx] <= sessionTime) {
+            bucket[i] += tasks[idx];
+            CheckBucket(tasks, sessionTime, bucket, idx + 1, isOk);
+            bucket[i] -= tasks[idx];
         }
     }
 }
 int minSessions(vector<int>& tasks, int sessionTime)
 {
+    int bucketSize;
     int n = tasks.size();
     int ans;
-    vector<bool> visited(n, false);
-    sort (tasks.begin(), tasks.end());
+    sort (tasks.rbegin(), tasks.rend());
     ans = n;
-    TrySessions(tasks, 0, sessionTime, visited, 0, ans);
+    for (bucketSize = 1; bucketSize <= n; bucketSize++) {
+        if (TrySessions(tasks, sessionTime, bucketSize)) {
+            ans = bucketSize;
+            break;
+        }
+    }
     return ans;
 }
 
+
+void DFSTrySum(vector<int>& nums, int curSum, int curMatchSubArr, int val, int k, vector<bool>& visited, bool& matchAll, int idx)
+{
+    int i;
+    if (matchAll == true) {
+        return;
+    }
+    for (i = idx; i < nums.size(); i++) {
+        if (visited[i] == false) {
+            if (curSum - curMatchSubArr * val + nums[i] == val) {
+                if (curMatchSubArr + 1 == k) {
+                    matchAll = true;
+                    return;
+                } else {
+                    visited[i] = true;
+                    DFSTrySum(nums, curSum + nums[i], curMatchSubArr + 1, val, k, visited, matchAll, 0);
+                    visited[i] = false;
+                }
+            } else if (curSum - curMatchSubArr * val + nums[i] < val) {
+                visited[i] = true;
+                DFSTrySum(nums, curSum + nums[i], curMatchSubArr, val, k, visited, matchAll, i + 1);
+                visited[i] = false;
+            }
+        }
+    }
+}
+bool makesquare(vector<int>& matchsticks)
+{
+    int sum = 0;
+    int n = matchsticks.size();
+
+    if (n < 4) {
+        return false;
+    }
+    for (auto m : matchsticks) {
+        sum += m;
+    }
+    if (sum % 4 != 0) {
+        return false;
+    }
+    int edgeLen = sum / 4;
+    sort(matchsticks.rbegin(), matchsticks.rend());
+    if (matchsticks[0] > edgeLen) {
+        return false;
+    }
+    vector<int> v;
+    bool f = false;
+    vector<bool> visited(n, false);
+    DFSTrySum(matchsticks, 0, 0, edgeLen, 4, visited, f, 0);
+    return f;
+}
 
 
 // dp[i][j] 从前i个物品选j个物品的最小和

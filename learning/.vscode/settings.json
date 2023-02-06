@@ -18,6 +18,7 @@
         "xutility": "cpp",
         "tuple": "cpp",
         "stack": "cpp",
-        "type_traits": "cpp"
+        "type_traits": "cpp",
+        "algorithm": "cpp"
     }
 }
