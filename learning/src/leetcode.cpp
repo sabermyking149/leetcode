@@ -2113,14 +2113,14 @@ bool makesquare(vector<int>& matchsticks)
 }
 
 
+// 从数组取k个互不相邻元素和最小值
 // dp[i][j] 从前i个物品选j个物品的最小和
 // dp[i][j] = min(dp[i - 1][j], dp[i - 2][j - 1] + nums[i])
-int minCapability(vector<int>& nums, int k)
+int minGetSum(vector<int>& nums, int k)
 {
     int i, j;
     int n = nums.size();
-    int ans, t;
-    
+
     if (n == 1) {
         return nums[0];
     } else if (n == 2) {
@@ -2130,22 +2130,17 @@ int minCapability(vector<int>& nums, int k)
     dp[0][0] = 0;
     dp[0][1] = nums[0];
     dp[1][1] = min(nums[0], nums[1]);
-    ans = dp[1][1];
     for (i = 2; i < n; i++) {
-        t = ans;
         for (j = 1; j <= k; j++) {
             // dp[i][j] = min(dp[i - 1][j], dp[i - 2][j - 1] + nums[i]);
             if (dp[i - 2][j - 1] + nums[i] < dp[i - 1][j]) {
-                ans = max(t, nums[i]);
                 dp[i][j] = dp[i - 2][j - 1] + nums[i];
             } else {
-                ans = t;
                 dp[i][j] = dp[i - 1][j];
             }
         }
     }
-    // return dp[n - 1][k];
-    return ans;
+    return dp[n - 1][k];
 }
 
 
@@ -2211,4 +2206,56 @@ long long minCost(vector<int>& basket1, vector<int>& basket2)
         ans += min(k, vv[i]);
     }
     return ans;
+}
+
+
+int maxCount(vector<int>& banned, int n, long long maxSum)
+{
+    int i;
+    int banSize;
+    int start, end;
+    int cnt;
+    int left, right, mid;
+    long long t;
+    vector<int> ban;
+
+    sort(banned.begin(), banned.end());
+    ban.emplace_back(0);
+    ban.insert(ban.end(), banned.begin(), banned.end());
+    ban.emplace_back(n + 1);
+    banSize = ban.size();
+
+    cnt = 0;
+    for (i = 1; i < banSize; i++) {
+        start = ban[i - 1] + 1;
+        end = ban[i] - 1;
+        if (start > end) {
+            continue;
+        }
+        t = static_cast<long long>(start + end) * (end - start + 1) / 2;
+        maxSum -= t;
+        if (maxSum == 0) {
+            cnt += end - start + 1;
+            break;
+        } else if (maxSum > 0) {
+            cnt += end - start + 1;
+            continue;
+        }
+        left = start;
+        right = end;
+        maxSum += t; // 还原
+        while (left <= right) { // 所求为right
+            mid = (right - left) / 2 + left;
+            t = static_cast<long long>(start + mid) * (mid - start + 1) / 2;
+            if (t <= maxSum) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        // cout << left << " " << right << endl;
+        cnt += right - start + 1;
+        break;
+    }
+    return cnt;
 }
