@@ -19,6 +19,7 @@
         "tuple": "cpp",
         "stack": "cpp",
         "type_traits": "cpp",
-        "algorithm": "cpp"
+        "algorithm": "cpp",
+        "xlocale": "cpp"
     }
 }

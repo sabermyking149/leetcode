@@ -150,7 +150,7 @@ vector<string> MySplit(string& s, char separate)
     int cur = 0;
 
     for (i = 0; i < n; i++) {
-        if (s[i] == ' ') {
+        if (s[i] == separate) {
             ans.emplace_back(s.substr(cur, i - cur));
             cur = i + 1;
         }
@@ -2258,4 +2258,126 @@ int maxCount(vector<int>& banned, int n, long long maxSum)
         break;
     }
     return cnt;
+}
+
+
+bool CheckContinuousArr(int lastArrVal, vector<int>& arr)
+{
+    int i;
+
+    sort(arr.begin(), arr.end());
+    if (lastArrVal + 1 != arr[0]) {
+        return false;
+    }
+    i = 1;
+    for (; i < arr.size(); i++) {
+        if (arr[i - 1] + 1 != arr[i]) {
+            break;
+        }
+    }
+    if (i != arr.size()) {
+        return false;
+    }
+    return true;
+} 
+void TrySplit(vector<int>& arr, int left, vector<int>& record, int cnt, int& ans, bool& find)
+{
+    int i, j;
+    int n = arr.size();
+    if (find) {
+        return;
+    }
+    if (left == n) {
+        find = true;
+        ans = cnt;
+        return;
+    }
+    for (i = left; i < n; i++) {
+        if (record.size() == 0) {
+            record.assign(arr.begin() + left, arr.begin() + i + 1);
+            if (CheckContinuousArr(-1, record) == false) {
+                record.clear();
+                continue;
+            }
+            TrySplit(arr, i + 1, record, cnt + 1, ans, find);
+        } else {
+            vector<int> v;
+            v.assign(arr.begin() + left, arr.begin() + i + 1);
+            if (CheckContinuousArr(record[record.size() - 1], v) == false) {
+                v.clear();
+                continue;
+            }
+            record.insert(record.end(), v.begin(), v.end());
+            TrySplit(arr, i + 1, record, cnt + 1, ans, find);
+        }
+    }
+}
+int maxChunksToSorted(vector<int>& arr)
+{
+    int ans = 0;
+    bool find = false;
+    vector<int> record;
+    TrySplit(arr, 0, record, 0, ans, find);
+    return ans;
+}
+
+
+
+vector<string> removeSubfolders(vector<string>& folder)
+{
+    int i, j;
+    int n = folder.size();
+
+    sort (folder.begin(), folder.end());
+    vector<string> ans;
+    ans.emplace_back(folder[0]);
+    for (i = 0; i < n;) {
+        for (j = i + 1; j < n; j++) {
+            if (strncmp((folder[i] + "/").c_str(), (folder[j] + "/").c_str(), folder[i].size() + 1) != 0) {
+                ans.emplace_back(folder[j]);
+                break;
+            }
+        }
+        i = j;
+        if (j == n) {
+            break;
+        }
+    }
+    return ans;
+}
+
+
+void DFSInviteLady(vector<vector<int>>& grid, int row, int cnt, int& ans)
+{
+    int i, j;
+    int m = grid.size();
+    int n = grid[0].size();
+    vector<pair<int, int>> vp;
+
+    if (row == m) {
+        ans = max(ans, cnt);
+        return;
+    }
+    for (i = 0; i < n; i++) {
+        if (grid[row][i] == 1) {
+            for (j = row; j < m; j++) {
+                if (grid[j][i] == 1) {
+                    vp.emplace_back(make_pair(j, i));
+                    grid[j][i] = 0;
+                }
+            }
+            DFSInviteLady(grid, row + 1, cnt + 1, ans);
+            for (auto p : vp) {
+                grid[p.first][p.second] = 1;
+            }
+        }
+    }
+    DFSInviteLady(grid, row + 1, cnt, ans);
+}
+int maximumInvitations1(vector<vector<int>>& grid) // 超时
+{
+    int i, j;
+    int res = 0;
+    DFSInviteLady(grid, 0, 0, res);
+    return res;
 }
