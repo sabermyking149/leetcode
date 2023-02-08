@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <queue>
 #include <cmath>
+#include <cstring>
 
 #include "pub.h"
 
@@ -2015,15 +2016,6 @@ bool canBeValid(string s, string locked)
 }
 
 
-bool TrySessions(vector<int>& tasks, int sessionTime, int bucketSize)
-{
-    int i;
-    int n = tasks.size();
-    bool isOk = false;
-    vector<int> bucket(bucketSize, 0);
-    CheckBucket(tasks, sessionTime, bucket, 0, isOk);
-    return isOk;
-}
 void CheckBucket(vector<int>& tasks, int sessionTime, vector<int> &bucket, int idx, bool& isOk)
 {
     int i;
@@ -2043,6 +2035,15 @@ void CheckBucket(vector<int>& tasks, int sessionTime, vector<int> &bucket, int i
             bucket[i] -= tasks[idx];
         }
     }
+}
+bool TrySessions(vector<int>& tasks, int sessionTime, int bucketSize)
+{
+    int i;
+    int n = tasks.size();
+    bool isOk = false;
+    vector<int> bucket(bucketSize, 0);
+    CheckBucket(tasks, sessionTime, bucket, 0, isOk);
+    return isOk;
 }
 int minSessions(vector<int>& tasks, int sessionTime)
 {
@@ -2321,6 +2322,82 @@ int maxChunksToSorted(vector<int>& arr)
     return ans;
 }
 
+
+int CheckCanMakeWord(unordered_map<char, int>& alphabet, unordered_map<char, int>& word, vector<int>& score)
+{
+    int val;
+    val = 0;
+    for (auto it : word) {
+        if (alphabet[it.first] < it.second) {
+            return 0;
+        }
+        val += score[it.first - 'a'] * it.second;
+    }
+    for (auto it : word) {
+        alphabet[it.first] -= it.second;
+    }
+    return val;
+}
+void DFSChooseWord(vector<unordered_map<char, int>>& wordsAlphabet, int idx, 
+                unordered_map<char, int>& alphabet, vector<int>& score, int curScore, int& ans)
+{
+    int i;
+    int n = wordsAlphabet.size();
+    int val;
+    if (idx == n) {
+        ans = max(curScore, ans);
+        return;
+    }
+    unordered_map<char, int> um;
+    um = wordsAlphabet[idx];
+    val = CheckCanMakeWord(alphabet, um, score);
+    for (i = idx; i < n; i++) {
+        DFSChooseWord(wordsAlphabet, i + 1, alphabet, score, curScore + val, ans);
+    }
+    // 回溯
+    if (val != 0) {
+        for (auto it : um) {
+            alphabet[it.first] += it.second;
+        }
+    }
+}
+int maxScoreWords(vector<string>& words, vector<char>& letters, vector<int>& score)
+{
+    int i;
+    int n = words.size();
+    int ans;
+    bool flag;
+    unordered_map<char, int> alphabet;
+    for (auto l : letters) {
+        alphabet[l]++;
+    }
+    vector<unordered_map<char, int>> wordsAlphabet;
+    unordered_map<char, int> um;
+    for (i = 0; i < n; i++) {
+        um.clear();
+        flag = true;
+        for (auto w : words[i]) {
+            if (alphabet.find(w) == alphabet.end()) { // 剔除无法拼写单词
+                flag = false;
+                break;
+            }
+            um[w]++;
+            if (alphabet[w] < um[w]) { // 剔除无法拼写单词
+                flag = false;
+                break;
+            }
+        }
+        if (flag) {
+            wordsAlphabet.emplace_back(um);
+        }
+    }
+    ans = 0;
+    n = wordsAlphabet.size();
+    for (i = 0; i < n; i++) {
+        DFSChooseWord(wordsAlphabet, i, alphabet, score, 0, ans);
+    }
+    return ans;
+}
 
 
 vector<string> removeSubfolders(vector<string>& folder)
