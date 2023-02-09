@@ -2424,6 +2424,66 @@ vector<string> removeSubfolders(vector<string>& folder)
 }
 
 
+// dp[i][j] 从i到j的最长偶数子序列
+int longestPalindromeSubseq(string s) // 有问题
+{
+    int i, j;
+    int n = s.size();
+    vector<vector<int>> dp(n, vector<int>(n, 0));
+
+    for (i = 1; i < n; i++) {
+        for (j = i - 1; j >= 0; j--) {
+            if (s[i] == s[j]) {
+                if (i + 1 < j - 1) {
+                    dp[i][j] = dp[i + 1][j - 1] + 2;
+                } else {
+                    dp[i][j] = 2;
+                }
+            } else {
+                dp[i][j] = max(dp[i + 1][j], dp[i][j - 1]);
+            }
+        }
+    }
+    return dp[0][n - 1];
+}
+
+
+int maxEqualFreq(vector<int>& nums)
+{
+    map<int, unordered_set<int>> freqMap;
+    unordered_map<int, int> numFreq;
+    int cnt, ans;
+
+    cnt = 1;
+    for (auto n : nums) {
+        numFreq[n]++;
+        if (numFreq[n] == 1) {
+            freqMap[1].emplace(n);
+        } else {
+            if (freqMap[numFreq[n] - 1].size() == 1) {
+                freqMap.erase(numFreq[n] - 1);
+            } else {
+                freqMap[numFreq[n] - 1].erase(n);
+            }
+            freqMap[numFreq[n]].emplace(n);
+        }
+        if (freqMap.size() == 1 && (freqMap.begin()->second.size() == 1 || freqMap.count(1) == 1)) { // 2 2 2 或 1 2 3
+            ans = cnt;
+        }
+        if (freqMap.size() == 2) {
+            auto it2 = freqMap.begin();
+            auto it1 = it2++;
+            if ((it1->first + 1 == it2->first && it2->second.size() == 1) || 
+                (it1->first == 1 && it1->second.size() == 1)) { // 2 2 3 3 4 4 4 或  1 3 3 3 4 4 4
+                ans = cnt;
+            }
+        }
+        cnt++;
+    }
+    return ans;
+}
+
+
 void DFSInviteLady(vector<vector<int>>& grid, int row, int cnt, int& ans)
 {
     int i, j;
