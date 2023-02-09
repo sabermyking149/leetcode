@@ -2518,3 +2518,9 @@ int maximumInvitations1(vector<vector<int>>& grid) // 超时
     DFSInviteLady(grid, 0, 0, res);
     return res;
 }
+
+
+int func()
+{
+    cout << "hello world!\n";
+}
