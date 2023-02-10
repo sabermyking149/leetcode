@@ -2520,7 +2520,25 @@ int maximumInvitations1(vector<vector<int>>& grid) // 超时
 }
 
 
-int func()
+vector<int> deckRevealedIncreasing(vector<int>& deck)
 {
-    cout << "hello world!\n";
+    int i;
+    int t;
+    int n = deck.size();
+    vector<int> ans;
+    deque<int> dq;
+
+    sort (deck.rbegin(), deck.rend());
+    dq.push_back(deck[0]);
+    for (i = 1; i < n; i++) {
+        t = dq.front();
+        dq.pop_front();
+        dq.push_back(t);
+        dq.push_back(deck[i]);
+    }
+    while (!dq.empty()) {
+        ans.emplace_back(dq.back());
+        dq.pop_back();
+    }
+    return ans;
 }
