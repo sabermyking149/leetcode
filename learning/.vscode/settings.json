@@ -20,6 +20,7 @@
         "stack": "cpp",
         "type_traits": "cpp",
         "algorithm": "cpp",
-        "xlocale": "cpp"
+        "xlocale": "cpp",
+        "string": "cpp"
     }
 }

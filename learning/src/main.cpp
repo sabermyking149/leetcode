@@ -10,6 +10,7 @@
 #include <queue>
 #include <cmath>
 #include <cassert>
+#include <string>
 
 #include "pub.h"
 #include "leetcode.h"
@@ -32,8 +33,50 @@ void S(int) {}
 void S(double, double=1.2) {}
 void S(const char*,const char*) {}
 
+
+class Complex {
+public:
+	Complex(double r, double i) : real(r), imaginary(i) {}
+	Complex(const Complex &c)
+	{
+		real = c.real;
+		imaginary = c.imaginary;
+	}
+	Complex operator +(const Complex &a)
+	{
+		Complex temp(0, 0);
+		temp.real = a.real + real;
+		temp.imaginary = a.imaginary + imaginary;
+		return temp;
+	}
+	bool operator >(const Complex &a) {
+		return real * real + imaginary * imaginary > a.real * a.real + a.imaginary * a.imaginary;
+	}
+	static void Show(Complex &c)
+	{
+		cout << to_string(c.real) + ' ' + (c.imaginary < 0 ? '-' : '+') + ' ' + to_string(fabs(c.imaginary)) + 'i' << endl;
+	}
+private:
+	double real;
+	double imaginary;
+};
+
+class A {
+
+};
+
+class B {
+
+};
+
+class C : public B {
+public:
+	int aa;
+};
+
 class Parent {
 public:
+	int a;
 	Parent()
 	{
 		cout << "parent construct\n";
@@ -59,9 +102,11 @@ public:
 		cout << "Son destruct\n";
 		// system ("pause");
 	}
-	virtual void func() const {
+	virtual void func() {
 		cout << "Son func()\n";
 	}
+private:
+	double b;
 };
 vector<int> fib_seq(int index)
 {
@@ -339,7 +384,12 @@ int main(int argc, char *argv[])
 #endif
 	//vector<string> v = {"..E.",".EOW","..W."};
 	//ballGame(4, v);
-
+	cout << sizeof(Parent) << endl;
+	cout << sizeof(Son) << endl;
+	cout << sizeof(A) << " " << sizeof(B) << " " << sizeof(C) << endl;
+	Parent *p = new Son();
+	p->func();
+	cout << sizeof(p) << endl;
 	TreeNode *root = new TreeNode(1);
 	root->left = new TreeNode(2);
 	root->right = new TreeNode(3);
@@ -348,5 +398,13 @@ int main(int argc, char *argv[])
 	DeleteTree(root);
 	assert(root == nullptr);
 	// assert(printf ("%d\n", root->val));
+	Complex a(5, 2);
+	Complex b(3, -8);
+	Complex c = a + b;
+	Complex d(a);
+	Complex::Show(c);
+	Complex::Show(d);
+
+	cout << (a > b);
  	return 0;
 }
