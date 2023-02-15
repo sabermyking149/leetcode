@@ -1953,6 +1953,7 @@ string longestWord(vector<string>& words)
 }
 
 
+// LC1746
 int maxSumAfterOperation(vector<int>& nums)
 {
     int ans;
@@ -2539,6 +2540,106 @@ vector<int> deckRevealedIncreasing(vector<int>& deck)
     while (!dq.empty()) {
         ans.emplace_back(dq.back());
         dq.pop_back();
+    }
+    return ans;
+}
+
+
+int longestWPI(vector<int>& hours)
+{
+    int i, j;
+    int n = hours.size();
+    int ans;
+    vector<int> v;
+    vector<vector<int>> vv;
+    for (auto h : hours) {
+        if (h > 8) {
+            v.emplace_back(1);
+        } else {
+            v.emplace_back(-1);
+        }
+    }
+    vector<int> prefixSum(n, 0);
+    prefixSum[0] = v[0];
+    for (i = 1; i < n; i++) {
+        prefixSum[i] = prefixSum[i - 1] + v[i];
+    }
+
+    vector<pair<int, int>> vp;
+    for (i = 0; i < n; i++) {
+        vp.emplace_back(make_pair(prefixSum[i], i));
+    }
+    sort (vp.begin(), vp.end());
+    ans = 0;
+    v.clear();
+    v.emplace_back(vp[0].second);
+    for (i = 1; i < n; i++) {
+        if (vp[i].first == vp[i - 1].first) {
+            v.emplace_back(vp[i].second);
+        } else {
+            vv.emplace_back(v);
+            v.clear();
+            v.emplace_back(vp[i].second);
+        }
+    }
+    vv.emplace_back(v);
+    // cout << vv.size() << endl;
+    n = vv.size();
+    for (i = 0; i < n - 1; i++) {
+        if (prefixSum[vv[i][vv[i].size() - 1]] > 0) {
+            ans = max(ans, vv[i][vv[i].size() - 1] + 1);
+        }
+        for (j = i + 1; j < n; j++) {
+            if (prefixSum[vv[j][vv[j].size() - 1]] > 0) {
+                ans = max(ans, vv[j][vv[j].size() - 1] + 1);
+            } else {
+                ans = max(vv[j][vv[j].size() - 1] - vv[i][0], ans);
+            }
+        }
+    }
+    return ans;
+}
+
+
+int maxWidthRamp(vector<int>& nums)
+{
+    int i;
+    int n = nums.size();
+    int ans, minIdx;
+    vector<pair<int, int>> vp;
+    for (i = 0; i < n; i++) {
+        vp.emplace_back(make_pair(nums[i], i));
+    }
+    sort (vp.begin(), vp.end());
+    ans = 0;
+    minIdx = vp[0].second;
+    for (i = 1; i < n; i++) {
+        if (vp[i].second > minIdx) {
+            ans = max(ans, vp[i].second - minIdx);
+        }
+        minIdx = min(minIdx, vp[i].second);
+    }
+    return ans;
+}
+
+
+// LC1186
+// dp[i][j]  以i结尾是否已删除一个数字的最大子数组和 j = 0 未删 j = 1 已删
+int maximumSum(vector<int>& arr)
+{
+    int i;
+    int n = arr.size();
+    int a, b, ans;
+    vector<vector<int>> dp(n, vector<int>(2, 0));
+
+    dp[0][0] = arr[0];
+    ans = arr[0];
+    for (i = 1; i < n; i++) {
+        dp[i][0] = (dp[i - 1][0] < 0 ? arr[i] : dp[i - 1][0] + arr[i]);
+        a = dp[i - 1][0]; // arr[i] 删除
+        b = (dp[i - 1][1] < 0 ? arr[i] : dp[i - 1][1] + arr[i]); // arr[i] 不删除
+        dp[i][1] = max(a, b);
+        ans = max(ans, max(dp[i][0], dp[i][1]));
     }
     return ans;
 }
