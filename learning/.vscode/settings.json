@@ -21,6 +21,7 @@
         "type_traits": "cpp",
         "algorithm": "cpp",
         "xlocale": "cpp",
-        "string": "cpp"
+        "string": "cpp",
+        "numeric": "cpp"
     }
 }

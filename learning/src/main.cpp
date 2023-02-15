@@ -405,6 +405,8 @@ int main(int argc, char *argv[])
 	Complex::Show(c);
 	Complex::Show(d);
 
-	cout << (a > b);
+	cout << (a > b) << endl;
+	cout << std::gcd(120, 210) << endl;
+
  	return 0;
 }

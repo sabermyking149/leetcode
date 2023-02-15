@@ -16,13 +16,13 @@
 
 using namespace std;
 
-int gcd(int a, int b)
+/* int gcd(int a, int b)
 {
     if(b == 0) {
         return a;
     }
     return gcd(b, a % b);
-}
+} */
 void initVisited(vector<int>& visited, int val)
 {
     for (int i = 0; i < visited.size(); i++) {
