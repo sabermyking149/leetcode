@@ -11,6 +11,7 @@
 #include <cmath>
 #include <cassert>
 #include <string>
+#include <numeric>
 
 #include "pub.h"
 #include "leetcode.h"
@@ -407,6 +408,7 @@ int main(int argc, char *argv[])
 
 	cout << (a > b) << endl;
 	cout << std::gcd(120, 210) << endl;
-
+	cout << func(1) << " " << func(2) << " " << func(3) << endl;
+	cout << func(5) << " " << func(8) << " " << func(1000000000000) << endl;
  	return 0;
 }

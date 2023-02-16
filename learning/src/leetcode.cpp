@@ -2643,3 +2643,55 @@ int maximumSum(vector<int>& arr)
     }
     return ans;
 }
+
+
+// LC1011
+int shipWithinDays(vector<int>& weights, int days)
+{
+    int i;
+    int n = weights.size();
+    int sum = 0;
+    int cnt;
+    int left, right, mid;
+
+    left = weights[0];
+    for (auto w : weights) {
+        sum += w;
+        left = max(left, w);
+    }
+    right = sum;
+    while (left <= right) { // 所求为left
+        mid = (right - left) / 2 + left;
+        cnt = 0;
+        sum = 0;
+        for (i = 0; i < n ; i++) {
+            sum += weights[i];
+            if (sum > mid) {
+                sum = weights[i];
+                cnt++;
+            }
+        }
+        cnt++;
+        if (cnt > days) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    return left;
+}
+
+
+int func(long long n)
+{
+    int t;
+    int mod = 1000000007;
+    long long ans = 0;
+
+    while (n > 1) {
+        t = ceil(log10(n) / log10(2));
+        ans = (ans + (n - static_cast<long long>(pow(2, t - 1))) * t) % mod;
+        n = pow(2, t - 1);
+    }
+    return ans;
+}
