@@ -57,10 +57,25 @@ public:
 	{
 		cout << to_string(c.real) + ' ' + (c.imaginary < 0 ? '-' : '+') + ' ' + to_string(fabs(c.imaginary)) + 'i' << endl;
 	}
+	double GetReal() const
+	{
+		return real;
+	}
+	double GetImaginary() const
+	{
+		return imaginary;
+	}
 private:
 	double real;
 	double imaginary;
 };
+
+Complex operator-(const Complex& a, const Complex& b)
+{
+	Complex temp(a.GetReal() - b.GetReal(), a.GetImaginary() - b.GetImaginary());
+	return temp;
+}
+
 
 class A {
 
@@ -403,8 +418,10 @@ int main(int argc, char *argv[])
 	Complex b(3, -8);
 	Complex c = a + b;
 	Complex d(a);
+	Complex e = d - b;
 	Complex::Show(c);
 	Complex::Show(d);
+	Complex::Show(e);
 
 	cout << (a > b) << endl;
 	cout << std::gcd(120, 210) << endl;

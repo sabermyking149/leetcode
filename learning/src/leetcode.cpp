@@ -25,7 +25,7 @@ using namespace std;
 } */
 void initVisited(vector<int>& visited, int val)
 {
-    for (int i = 0; i < visited.size(); i++) {
+    for (unsigned int i = 0; i < visited.size(); i++) {
         visited[i] = val;
     }
 }
@@ -67,7 +67,7 @@ void DFSFindLoop(unordered_map<int, unordered_set<int>>& e, int cur, int time, u
 }
 int longestCycle(vector<int>& edges)
 {
-    int i;
+    unsigned int i;
     unordered_map<int, unordered_set<int>> e;
 
     for (i = 0; i < edges.size(); i++) {
@@ -75,7 +75,7 @@ int longestCycle(vector<int>& edges)
             e[i].emplace(edges[i]);
         }
     }
-    int n = edges.size();
+    unsigned int n = edges.size();
     vector<int> visited(n, 0);
     unordered_map<int, int> visitedTime;
     int loopSize = 0;
@@ -94,7 +94,8 @@ int longestCycle(vector<int>& edges)
 vector<TreeNode*> BSTs;
 vector<TreeNode*> CreateBSTs(int start, int end)
 {
-    int i, j, k;
+    int i;
+    unsigned int j, k;
     vector<TreeNode*> trees;
     if (start > end) {
         return {nullptr};
@@ -159,7 +160,7 @@ vector<string> MySplit(string& s, char separate)
     ans.emplace_back(s.substr(cur, n - cur));
     return ans;
 }
-void DFSCreateSentences(vector<string>& texts, int curIdx, unordered_map<string, unordered_set<string>>& synonymsWords,
+void DFSCreateSentences(vector<string>& texts, unsigned int curIdx, unordered_map<string, unordered_set<string>>& synonymsWords,
     vector<string>& words)
 {
     if (curIdx == texts.size()) {
@@ -185,7 +186,7 @@ void DFSCreateSentences(vector<string>& texts, int curIdx, unordered_map<string,
 }
 vector<string> generateSentences(vector<vector<string>>& synonyms, string text)
 {
-    int i;
+    unsigned int i;
     unordered_set<string> dict;
 
     for (auto s : synonyms) {
@@ -193,7 +194,6 @@ vector<string> generateSentences(vector<vector<string>>& synonyms, string text)
         dict.insert(s[1]);
     }
 
-    int n = dict.size();
     for (auto it : dict) {
         words.emplace_back(it);
         um[it] = words.size() - 1;
@@ -228,7 +228,7 @@ vector<string> trulyMostPopular(vector<string>& names, vector<string>& synonyms)
 {
     unordered_set<string> dict;
     string s1, s2;
-    int i;
+    unsigned int i;
     int idx;
     int num;
     vector<pair<string, string>> synonymsPair;
@@ -372,12 +372,12 @@ public:
 };
 int mostBooked(int n, vector<vector<int>>& meetings)
 {
-    int i;
+    unsigned int i;
     priority_queue<int, vector<int>, greater<int>> emptyRooms;
     priority_queue<vector<long long>, vector<vector<long long>>, CMPMostBooked> meetingTimes;
     vector<int> roomUse(n, 0);
 
-    for (i = 0; i < n; i++) {
+    for (i = 0; i < static_cast<unsigned int>(n); i++) {
         emptyRooms.push(i);
     }
     sort(meetings.begin(), meetings.end());
@@ -425,7 +425,7 @@ int mostBooked(int n, vector<vector<int>>& meetings)
     }
     int maxUse = 0;
     int ans = 0;
-    for (i = 0; i < n; i++) {
+    for (i = 0; i < static_cast<unsigned int>(n); i++) {
         if (roomUse[i] > maxUse) {
             maxUse = roomUse[i];
             ans = i;
@@ -437,8 +437,8 @@ int mostBooked(int n, vector<vector<int>>& meetings)
 
 int kSimilarity(string s1, string s2)
 {
-    int i, j, k;
-    int n, m;
+    unsigned int i, j;
+    unsigned int n, m;
     int step;
     unordered_set<string> visited;
 
@@ -464,7 +464,7 @@ int kSimilarity(string s1, string s2)
         for (i = 0; i < n; i++) {
             pair<string, int> p = q.front();
             string t = p.first;
-            int idx = p.second;
+            unsigned int idx = p.second;
             q.pop();
             if (t == ss2) {
                 return step;
@@ -516,7 +516,7 @@ vector<int> GoThrough(vector<vector<int>>& maze, vector<int>& curPos, int len, i
 }
 int shortestDistance(vector<vector<int>>& maze, vector<int>& start, vector<int>& destination)
 {
-    int i, j, k, d;
+    int i, k;
     int n;
     int row = maze.size();
     int col = maze[0].size();
@@ -717,7 +717,7 @@ bool Check(vector<vector<int>>& grid)
 }
 vector<vector<int>> Flip(vector<vector<int>>& grid, int row, int col)
 {
-    int i, j;
+    int i;
     int m = grid.size();
     int n = grid[0].size();
     int direction[4][2] = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
@@ -1813,7 +1813,7 @@ int countPairs(TreeNode* root, int distance)
     if (num < 2) {
         return 0;
     }
-    int i, j;
+    int i;
     ans = 0;
     for (i = 0; i < num; i++) {
         ans += CheckCanReach(leaves[i], distance);
@@ -1925,9 +1925,8 @@ void DFSScanWordTrie(Trie<char> *root, string& t, int point, unordered_map<strin
 }
 string longestWord(vector<string>& words)
 {
-    int i, j;
+    unsigned int i;
     int m = words.size();
-    int n;
     Trie<char> *root = new Trie('/');
 
     for (i = 0; i < m; i++) {
@@ -2019,7 +2018,7 @@ bool canBeValid(string s, string locked)
 
 void CheckBucket(vector<int>& tasks, int sessionTime, vector<int> &bucket, int idx, bool& isOk)
 {
-    int i;
+    unsigned int i;
     int n = bucket.size();
 
     if (isOk) {
@@ -2039,8 +2038,6 @@ void CheckBucket(vector<int>& tasks, int sessionTime, vector<int> &bucket, int i
 }
 bool TrySessions(vector<int>& tasks, int sessionTime, int bucketSize)
 {
-    int i;
-    int n = tasks.size();
     bool isOk = false;
     vector<int> bucket(bucketSize, 0);
     CheckBucket(tasks, sessionTime, bucket, 0, isOk);
@@ -2065,7 +2062,7 @@ int minSessions(vector<int>& tasks, int sessionTime)
 
 void DFSTrySum(vector<int>& nums, int curSum, int curMatchSubArr, int val, int k, vector<bool>& visited, bool& matchAll, int idx)
 {
-    int i;
+    unsigned int i;
     if (matchAll == true) {
         return;
     }
@@ -2265,7 +2262,7 @@ int maxCount(vector<int>& banned, int n, long long maxSum)
 
 bool CheckContinuousArr(int lastArrVal, vector<int>& arr)
 {
-    int i;
+    unsigned int i;
 
     sort(arr.begin(), arr.end());
     if (lastArrVal + 1 != arr[0]) {
@@ -2284,7 +2281,7 @@ bool CheckContinuousArr(int lastArrVal, vector<int>& arr)
 } 
 void TrySplit(vector<int>& arr, int left, vector<int>& record, int cnt, int& ans, bool& find)
 {
-    int i, j;
+    int i;
     int n = arr.size();
     if (find) {
         return;
@@ -2514,7 +2511,6 @@ void DFSInviteLady(vector<vector<int>>& grid, int row, int cnt, int& ans)
 }
 int maximumInvitations1(vector<vector<int>>& grid) // 超时
 {
-    int i, j;
     int res = 0;
     DFSInviteLady(grid, 0, 0, res);
     return res;
