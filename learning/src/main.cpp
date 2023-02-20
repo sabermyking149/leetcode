@@ -76,6 +76,16 @@ Complex operator-(const Complex& a, const Complex& b)
 	return temp;
 }
 
+vector<int> operator +(vector<int>& a, vector<int>& b)
+{
+	int i;
+	int n = a.size();
+	vector<int> ans(n);
+	for (i = 0; i < n; i++) {
+		ans[i] = a[i] + b[i];
+	}
+	return ans;
+}
 
 class A {
 
@@ -427,5 +437,11 @@ int main(int argc, char *argv[])
 	cout << std::gcd(120, 210) << endl;
 	cout << func(1) << " " << func(2) << " " << func(3) << endl;
 	cout << func(5) << " " << func(8) << " " << func(1000000000000) << endl;
+
+	vector<int> v1 = {1, 2};
+	vector<int> v2 = {3, 4};
+	vector<int> v3 = v1 + v2;
+	cout << v3[0] << " " << v3[1] << endl;
+	minOperations(54);
  	return 0;
 }

@@ -2691,3 +2691,83 @@ int func(long long n)
     }
     return ans;
 }
+
+
+// LC2571
+int minOperations(int n)
+{
+    int i, j;
+    int step;
+    int k, t;
+    vector<int> nums = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536};
+    unordered_set<int> visited;
+    queue<int> q;
+
+    step = 0;
+    q.push(n);
+    visited.emplace(n);
+    while (!q.empty()) {
+        k = q.size();
+        for (i = 0; i < k; i++) {
+            t = q.front();
+            // cout << t << " ";
+            // visited.emplace(t);
+            q.pop();
+            for (j = 0; j < nums.size(); j++) {
+                if (t == nums[j]) {
+                    return step + 1;
+                }
+                if (t - nums[j] > 0 && visited.count(t - nums[j]) == 0) {
+                    q.push(t - nums[j]);
+                    visited.emplace(t - nums[j]);
+                }
+                if (t + nums[j] < 131072 && visited.count(t + nums[j]) == 0) {
+                    q.push(t + nums[j]);
+                    visited.emplace(t + nums[j]);
+                }
+            }
+        }
+        step++;
+    }
+    return -1;
+}
+
+
+// LC898
+int subarrayBitwiseORs(vector<int>& arr)
+{
+    int i, j;
+    int n = arr.size();
+    unordered_set<int> s;
+
+    for (i = 0; i < n; i++) {
+        s.emplace(arr[i]);
+        for (j = i - 1; j >= 0; j--) {
+            if ((arr[i] | arr[j]) == arr[j]) {
+                break;
+            }
+            arr[j] |= arr[i];
+            s.emplace(arr[j]);
+        }
+    }
+    return s.size();
+}
+
+
+// LC444
+bool sequenceReconstruction(vector<int>& nums, vector<vector<int>>& sequences)
+{
+    int i;
+    unordered_map<int, unordered_set<int>> edges;
+    for (auto seq : sequences) {
+        for (i = 1; i < seq.size(); i++) {
+            edges[seq[i - 1]].emplace(seq[i]);
+        }
+    }
+    for (i = 1; i < nums.size(); i++) {
+        if (edges[nums[i - 1]].count(nums[i]) == 0) {
+            return false;
+        }
+    }
+    return true;
+}
