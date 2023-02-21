@@ -15,6 +15,7 @@
 
 #include "pub.h"
 #include "leetcode.h"
+#include "classOper.h"
 
 
 using namespace std;
@@ -132,7 +133,7 @@ public:
 		cout << "Son func()\n";
 	}
 private:
-	double b;
+	char b;
 };
 vector<int> fib_seq(int index)
 {
@@ -443,5 +444,12 @@ int main(int argc, char *argv[])
 	vector<int> v3 = v1 + v2;
 	cout << v3[0] << " " << v3[1] << endl;
 	minOperations(54);
+
+	// OnlyOnHeap ooh1;
+	OnlyOnHeap *ooh2 = OnlyOnHeap::create();
+	ooh2->destroy();
+	OnlyOnStack oos1;
+	// OnlyOnStack *oos2 = new OnlyOnStack;
+
  	return 0;
 }

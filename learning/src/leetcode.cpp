@@ -1002,20 +1002,57 @@ long long minimumFuelCost(vector<vector<int>>& roads, int seats)
 }
 
 
+// LC802
 vector<int> eventualSafeNodes(vector<vector<int>>& graph)
 {
-    int i;
+    int i, j;
     int n = graph.size();
-    vector<int> terminalNode;
-    vector<int> safeNode;
+    int m;
+    set<int> safeNode;
+    unordered_set<int> nodes;
+    vector<int> ans;
+    unordered_map<int, unordered_set<int>> edges;
+    unordered_map<int, unordered_set<int>> reverseConnected;
     for (i = 0; i < n; i++) {
-        if (graph[i].size() == 0) {
-            terminalNode.emplace_back(i);
+        m = graph[i].size();
+        for (j = 0; j < m; j++) {
+            edges[i].emplace(graph[i][j]);
+            reverseConnected[graph[i][j]].emplace(i);
         }
+        nodes.emplace(i);
     }
 
-
-    return safeNode;
+    while (1) {
+        m = nodes.size();
+        for (unordered_set<int>::iterator iter = nodes.begin(); iter != nodes.end();) {
+            if (edges.count(*iter) == 0) {
+                if (reverseConnected.count(*iter) == 0) {
+                    safeNode.emplace(*iter);
+                    nodes.erase(iter++);
+                    continue;
+                }
+                safeNode.emplace(*iter);
+                for (auto it : reverseConnected[*iter]) {
+                    if (edges[it].size() > 1) {
+                        edges[it].erase(*iter);
+                    } else {
+                        edges.erase(it);
+                    }
+                }
+                reverseConnected.erase(*iter);
+                nodes.erase(iter++);
+            } else {
+                iter++;
+            }
+        }
+        if (nodes.size() == m) {
+            break;
+        }
+    }
+    for (auto it : safeNode) {
+        ans.emplace_back(it);
+    }
+    return ans;
 }
 
 
@@ -2770,4 +2807,79 @@ bool sequenceReconstruction(vector<int>& nums, vector<vector<int>>& sequences)
         }
     }
     return true;
+}
+
+
+// LC2552
+// 0 <= i < j < k < l < n
+// nums[i] < nums[k] < nums[j] < nums[l]
+/*long long countQuadruplets(vector<int>& nums)
+{
+    long long ans;
+    // long long left, right;
+    unsigned int n = nums.size();
+    vector<vector<int>> left(n, vector<int>(n, 0)), right(n, vector<int>(n, 0));
+    // vector<int> left(n, 0), right(n, 0);
+    int j, k;
+
+    j = 1;
+    k = n - 2;
+    // left = right = 0;
+    if (nums[0] < nums[k]) {
+        left[1][k] = 1;
+    }
+    if (nums[n - 1] > nums[j]) {
+        right[n - 1][j] = 1;
+    }
+    for ()
+    ans = 0;
+    for (j = 1; j < n; j++) {
+        for (k = n - 2; k >= 0; k--) {
+            if (j >= k) {
+                break;
+            }
+            if (nums[k] >= nums[j]) {
+                continue;
+            }
+
+            ans += static_cast<long long>(left[j][k]) * right[k][j];
+        }
+    }
+    return ans;
+}*/
+
+
+// LC1131
+int maxAbsValExpr(vector<int>& arr1, vector<int>& arr2)
+{
+    int i;
+    int n = arr1.size();
+    int minVal, ans;
+
+    ans = 0;
+    // arr1[i] + arr2[i] + i
+    minVal = arr1[0] + arr2[0] + 0;
+    for (i = 1; i < n; i++) {
+        ans = max(ans, arr1[i] + arr2[i] + i - minVal);
+        minVal = min(minVal, arr1[i] + arr2[i] + i);
+    }
+    // -arr1[i] + arr2[i] + i;
+    minVal = -arr1[0] + arr2[0] + 0;
+    for (i = 1; i < n; i++) {
+        ans = max(ans, -arr1[i] + arr2[i] + i - minVal);
+        minVal = min(minVal, -arr1[i] + arr2[i] + i);
+    }
+    // arr1[i] - arr2[i] + i;
+    minVal = arr1[0] - arr2[0] + 0;
+    for (i = 1; i < n; i++) {
+        ans = max(ans, arr1[i] - arr2[i] + i - minVal);
+        minVal = min(minVal, arr1[i] - arr2[i] + i);
+    }
+    // -arr1[i] - arr2[i] + i;
+    minVal = -arr1[0] - arr2[0] + 0;
+    for (i = 1; i < n; i++) {
+        ans = max(ans, -arr1[i] - arr2[i] + i - minVal);
+        minVal = min(minVal, -arr1[i] - arr2[i] + i);
+    }
+    return ans;
 }
