@@ -2519,37 +2519,36 @@ int maxEqualFreq(vector<int>& nums)
 }
 
 
-void DFSInviteLady(vector<vector<int>>& grid, int row, int cnt, int& ans)
+// LC1820 匈牙利算法
+bool DFSInviteLady(vector<vector<int>>& grid, unordered_map<int, int>& girlLikeBoy, int boy, int girlsNum, vector<bool>& visited)
+{
+    int i;
+    for (i = 0; i < girlsNum; i++) {
+        if (visited[i] == false && grid[boy][i] == 1) {
+            visited[i] = true;
+            if (girlLikeBoy.count(i) == 0 || DFSInviteLady(grid, girlLikeBoy, girlLikeBoy[i], girlsNum, visited)) {
+                girlLikeBoy[i] = boy;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+int maximumInvitations(vector<vector<int>>& grid)
 {
     int i, j;
     int m = grid.size();
     int n = grid[0].size();
-    vector<pair<int, int>> vp;
+    int res = 0;
+    vector<bool> visited(n, false);
+    unordered_map<int, int> girlLikeBoy;
 
-    if (row == m) {
-        ans = max(ans, cnt);
-        return;
-    }
-    for (i = 0; i < n; i++) {
-        if (grid[row][i] == 1) {
-            for (j = row; j < m; j++) {
-                if (grid[j][i] == 1) {
-                    vp.emplace_back(make_pair(j, i));
-                    grid[j][i] = 0;
-                }
-            }
-            DFSInviteLady(grid, row + 1, cnt + 1, ans);
-            for (auto p : vp) {
-                grid[p.first][p.second] = 1;
-            }
+    for (i = 0; i < m; i++) {
+        visited.assign(n, false);
+        if (DFSInviteLady(grid, girlLikeBoy, i, n, visited)) {
+            res++;
         }
     }
-    DFSInviteLady(grid, row + 1, cnt, ans);
-}
-int maximumInvitations1(vector<vector<int>>& grid) // 超时
-{
-    int res = 0;
-    DFSInviteLady(grid, 0, 0, res);
     return res;
 }
 
@@ -2880,6 +2879,90 @@ int maxAbsValExpr(vector<int>& arr1, vector<int>& arr2)
     for (i = 1; i < n; i++) {
         ans = max(ans, -arr1[i] - arr2[i] + i - minVal);
         minVal = min(minVal, -arr1[i] - arr2[i] + i);
+    }
+    return ans;
+}
+
+
+// LC310
+int curLongestRouteLen = 0;
+vector<int> longestRoute;
+void DFSSearchLongestRourte(unordered_map<int, unordered_set<int>>& edge, int cur, vector<bool>& visited, vector<int>& route, bool sign, bool &quit)
+{
+    if (quit) {
+        return;
+    }
+    visited[cur] = true;
+    route.push_back(cur);
+    if (sign == false) {
+        if (curLongestRouteLen < route.size()) {
+            curLongestRouteLen = route.size();
+        }
+    } else {
+        if (route.size() == curLongestRouteLen) {
+            longestRoute = route;
+            quit = true;
+            return;
+        }
+    }
+    for (auto it : edge[cur]) {
+        if (visited[it] == false) {
+            DFSSearchLongestRourte(edge, it, visited, route, sign, quit);
+        }
+    }
+    route.pop_back();
+}
+vector<int> findMinHeightTrees(int n, vector<vector<int>>& edges)
+{
+    int i;
+    int node, num;
+    int lastNode;
+    vector<int> ans;
+    vector<bool> visited(n, false);
+    unordered_map<int, unordered_set<int>> edge;
+    if (n == 1) {
+        return {0};
+    }
+    for (auto e : edges) {
+        edge[e[0]].emplace(e[1]);
+        edge[e[1]].emplace(e[0]);
+    }
+
+    int dist;
+    queue<int> q;
+
+    dist = 0;
+    q.push(0);
+    while (q.size()) {
+        num = q.size();
+        for (i = 0; i < n; i++) {
+            node = q.front();
+            q.pop();
+            visited[node] = true;
+            for (auto it : edge[node]) {
+                if (visited[it] == false) {
+                    q.push(it);
+                    lastNode = it;
+                }
+            }
+        }
+        dist++;
+    }
+    // cout << lastNode;
+    // 从lastNode找最长路径
+    visited.assign(n, false);
+    vector<int> route;
+    bool sign = false;
+    bool quit = false;
+    DFSSearchLongestRourte(edge, lastNode, visited, route, sign, quit);
+    sign = true;
+    visited.assign(n, false);
+    DFSSearchLongestRourte(edge, lastNode, visited, route, sign, quit);
+    num = longestRoute.size();
+    if (num % 2 == 1) {
+        ans = {longestRoute[num / 2]};
+    } else {
+        ans = {longestRoute[num / 2 - 1], longestRoute[num / 2]};
     }
     return ans;
 }
