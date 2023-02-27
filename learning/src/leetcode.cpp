@@ -2966,3 +2966,99 @@ vector<int> findMinHeightTrees(int n, vector<vector<int>>& edges)
     }
     return ans;
 }
+
+
+// LC210
+vector<int> findOrder(int numCourses, vector<vector<int>>& prerequisites)
+{
+    int i;
+    int n, t;
+    vector<int> ans;
+    vector<int> degree(numCourses, 0);
+    unordered_map<int, unordered_set<int>> edge;
+    for (auto p : prerequisites) {
+        degree[p[0]]++;
+        edge[p[1]].emplace(p[0]);
+    }
+    queue<int> q;
+    for (i = 0; i < numCourses; i++) {
+        if (degree[i] == 0) {
+            q.push(i);
+        }
+    }
+    if (q.empty()) {
+        return {};
+    }
+    while (q.size()) {
+        n = q.size();
+        for (i = 0; i < n; i++) {
+            t = q.front();
+            q.pop();
+            ans.emplace_back(t);
+            if (edge.count(t) == 0) {
+                continue;
+            }
+            for (auto it : edge[t]) {
+                degree[it]--;
+                if (degree[it] == 0) {
+                    q.push(it);
+                }
+            }
+        }
+    }
+    if (ans.size() != numCourses) {
+        return {};
+    }
+    return ans;
+}
+
+
+// LC2576
+int maxNumOfMarkedIndices(vector<int>& nums)
+{
+    int i, j;
+    int n = nums.size();
+    int ans, t;
+    int left, right, mid;
+    vector<bool> visited(n, false);
+
+    sort(nums.begin(), nums.end());
+    ans = 0;
+    left = n / 2;
+    for (i = 0; i < n / 2; i++) {
+        right = n - 1;
+        t = nums[i] * 2;
+        while (left <= right) { // 所求为left
+            mid = (right - left) / 2 + left;
+            if (nums[mid] >= t) {
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        if (left >= n) {
+            break;
+        }
+        if (visited[left] != false) {
+            for (j = left; j < n; j++) {
+                if (visited[j] == false) {
+                    break;
+                }
+            }
+            if (j == n + 1) {
+                break;
+            } else {
+                left = j;
+            }
+        }
+        visited[left] = true;
+        // cout << nums[i] << " " << nums[left] << " " << left << endl;
+        ans += 2;
+
+        left++;
+        if (left >= n) {
+            break;
+        }
+    }
+    return ans;
+}

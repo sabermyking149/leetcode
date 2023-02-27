@@ -13,5 +13,6 @@ void DeleteTree(TreeNode* &node);
 int waysToMakeFair(vector<int>& nums);
 int func(long long n);
 int minOperations(int n);
+int maxNumOfMarkedIndices(vector<int>& nums);
 
 #endif

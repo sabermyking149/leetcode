@@ -89,7 +89,12 @@ vector<int> operator +(vector<int>& a, vector<int>& b)
 }
 
 class A {
-
+public:
+	int t;
+	virtual void fun() {};
+private:
+	char ch;
+	double dou;
 };
 
 class B {
@@ -101,6 +106,26 @@ public:
 	int aa;
 };
 
+class D {
+public:
+	string _t;
+};
+class E : virtual public D {
+public:
+	string t;
+};
+class F : virtual public D {
+public:
+	string t;
+};
+
+class G : public E, public F {
+public:
+	string Get()
+	{
+		return D::_t;
+	}
+};
 class Parent {
 public:
 	int a;
@@ -133,7 +158,7 @@ public:
 		cout << "Son func()\n";
 	}
 private:
-	char b;
+	double b;
 };
 vector<int> fib_seq(int index)
 {
@@ -414,6 +439,15 @@ int main(int argc, char *argv[])
 	cout << sizeof(Parent) << endl;
 	cout << sizeof(Son) << endl;
 	cout << sizeof(A) << " " << sizeof(B) << " " << sizeof(C) << endl;
+
+	G gg;
+	gg.E::_t = "ab";
+	cout << gg.Get() << endl;
+	
+	gg.F::_t = "cd";
+	cout << gg.Get() << endl;
+	cout << gg.D::_t << endl;
+
 	Parent *p = new Son();
 	p->func();
 	cout << sizeof(p) << endl;
@@ -451,5 +485,7 @@ int main(int argc, char *argv[])
 	OnlyOnStack oos1;
 	// OnlyOnStack *oos2 = new OnlyOnStack;
 
- 	return 0;
+	vector<int> nums = {1,78,27,48,14,86,79,68,77,20,57,21,18,67,5,51,70,85,47,56,22,79,41,8,39,81,59,74,14,45,49,15,10,28,16,77,22,65,8,36,79,94,44,80,72,8,96,78,39,92,69,55,9,44,26,76,40,77,16,69,40,64,12,48,66,7,59,10};
+ 	cout << maxNumOfMarkedIndices(nums) << endl;
+	return 0;
 }
