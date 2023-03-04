@@ -3132,3 +3132,29 @@ vector<vector<int>> pathWithObstacles(vector<vector<int>>& obstacleGrid)
     DFSFindPath(grid, 0, 0, route, ans, find);
     return ans;
 }
+
+
+// LC982
+int countTriplets(vector<int>& nums)
+{
+    int i, j;
+    int ans;
+    int n;
+    unordered_map<int, int> andCnt;
+
+    n = nums.size();
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            andCnt[(nums[i] & nums[j])]++;
+        }
+    }
+    ans = 0;
+    for (auto it : andCnt) {
+        for (auto n : nums) {
+            if ((n & it.first) == 0) {
+                ans += it.second;
+            }
+        }
+    }
+    return ans;
+}
