@@ -34,4 +34,42 @@ public:
     ~OnlyOnStack() {}
 };
 
+
+// 指针计数
+class AA {
+public:
+    double num;
+    int num2;
+    AA(size_t len = 1)
+    {
+        intPtr = new int;
+        *intPtr = 1;
+        arr = new int[len];
+    }
+    ~AA()
+    {
+        (*intPtr)--;
+        if (*intPtr == 0) {
+            delete []arr;
+            arr = nullptr;
+
+            delete intPtr;
+            intPtr = nullptr;
+        }
+    }
+    AA(const AA &t)
+    {
+        intPtr = t.intPtr;
+        arr = t.arr;
+        (*intPtr)++;
+    }
+    int *GetArrPoint()
+    {
+        return arr;
+    }
+private:
+    int *arr;
+    int *intPtr;
+};
+
 #endif

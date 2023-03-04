@@ -3062,3 +3062,73 @@ int maxNumOfMarkedIndices(vector<int>& nums)
     }
     return ans;
 }
+
+
+// 面试题 05.02
+string printBin(double num)
+{
+    string ans = "0.";
+    double carry = 0.5;
+    while (carry > 0.0078125) {
+        if (num >= carry) {
+            ans += '1';
+            num -= carry;
+            if (fabs(num) < 10e-7) {
+                return ans;
+            }
+        } else {
+            ans += '0';
+        }
+        carry /= 2;
+    }
+    return "ERROR";
+}
+
+
+// 面试题 08.02
+void DFSFindPath(vector<vector<int>>& obstacleGrid, int row, int col, vector<vector<int>>& route, vector<vector<int>>& ans, bool& find)
+{
+    if (find) {
+        return;
+    }
+    int i;
+    int m, n;
+    int nrow, ncol;
+    int directions[2][2] = {{0, 1}, {1, 0}};
+
+    m = obstacleGrid.size();
+    n = obstacleGrid[0].size();
+    route.push_back({row, col});
+    if (row == m - 1 && col == n - 1) {
+        find = true;
+        ans = route;
+        return;
+    }
+    for (i = 0; i < 2; i++) {
+        nrow = row + directions[i][0];
+        ncol = col + directions[i][1];
+
+        if (nrow >= 0 && nrow < m && ncol >= 0 && ncol < n && obstacleGrid[nrow][ncol] == 0) {
+            obstacleGrid[nrow][ncol] = 1;
+            DFSFindPath(obstacleGrid, nrow, ncol, route, ans, find);
+            // obstacleGrid[nrow][ncol] = 0; 此处回溯会超时
+        }
+    }
+    route.pop_back();
+}
+vector<vector<int>> pathWithObstacles(vector<vector<int>>& obstacleGrid)
+{
+    vector<vector<int>> ans;
+    vector<vector<int>> route;
+    vector<vector<int>> grid;
+    bool find = false;
+    int m = obstacleGrid.size();
+    int n = obstacleGrid[0].size();
+
+    if (obstacleGrid[0][0] == 1 || obstacleGrid[m - 1][n - 1] == 1) {
+        return ans;
+    }
+    grid = obstacleGrid;
+    DFSFindPath(grid, 0, 0, route, ans, find);
+    return ans;
+}

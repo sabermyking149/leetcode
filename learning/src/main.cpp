@@ -41,6 +41,7 @@ public:
 	Complex(double r, double i) : real(r), imaginary(i) {}
 	Complex(const Complex &c)
 	{
+		cout << "拷贝构造函数\n";
 		real = c.real;
 		imaginary = c.imaginary;
 	}
@@ -53,6 +54,15 @@ public:
 	}
 	bool operator >(const Complex &a) {
 		return real * real + imaginary * imaginary > a.real * a.real + a.imaginary * a.imaginary;
+	}
+	Complex &operator =(const Complex &c)
+	{
+		cout << "重载赋值\n";
+		if (&c != this) {
+			real = c.real;
+			imaginary = c.imaginary;
+		}
+		return *this;
 	}
 	static void Show(Complex &c)
 	{
@@ -467,6 +477,9 @@ int main(int argc, char *argv[])
 	Complex::Show(c);
 	Complex::Show(d);
 	Complex::Show(e);
+	Complex f(10, 10);
+	Complex g = f;
+	g = f;
 
 	cout << (a > b) << endl;
 	cout << std::gcd(120, 210) << endl;
@@ -487,5 +500,27 @@ int main(int argc, char *argv[])
 
 	vector<int> nums = {1,78,27,48,14,86,79,68,77,20,57,21,18,67,5,51,70,85,47,56,22,79,41,8,39,81,59,74,14,45,49,15,10,28,16,77,22,65,8,36,79,94,44,80,72,8,96,78,39,92,69,55,9,44,26,76,40,77,16,69,40,64,12,48,66,7,59,10};
  	cout << maxNumOfMarkedIndices(nums) << endl;
+
+	AA aa;
+	AA bb;
+	cout << &aa << endl;
+	cout << &aa.num2 << endl;
+	cout << aa.GetArrPoint() << endl;
+
+	cout << &bb << endl;
+	cout << &bb.num2 << endl;
+	cout << bb.GetArrPoint() << endl;
+	cout << endl;
+
+	AA cc;
+	AA dd = cc;
+	cout << &cc << endl;
+	cout << &cc.num2 << endl;
+	cout << cc.GetArrPoint() << endl;
+
+	cout << &dd << endl;
+	cout << &dd.num2 << endl;
+	cout << dd.GetArrPoint() << endl;
+	
 	return 0;
 }
