@@ -403,6 +403,73 @@ vector<int> findRedundantConnection(vector<vector<int>>& edges)
 	}
 	return edges[index];	
 }
+
+unordered_map<int, vector<int>> divisorPos;
+unordered_set<int> Divide(int num, int idx)
+{
+	int i;
+	unordered_set<int> divisor;
+	
+	i = 2;
+	while (1) {
+		if (num % i == 0) {
+			//cout << i << endl;
+			divisorPos[i].emplace_back(idx);
+			divisor.insert(i);
+			while (num % i == 0) {
+				num /= i;
+			}
+		}
+		if (num == 1) {
+			break;
+		}
+		i++;
+		if (i > sqrt(num)) {
+			divisorPos[num].emplace_back(idx);
+			divisor.insert(num);
+			break;
+		}
+	}
+	return divisor;
+}
+int findValidSplit(vector<int>& nums)
+{
+	int i;
+	int n = nums.size();
+	int idx, curIdx;
+	if (n == 1) {
+		return -1;
+	}
+	vector<unordered_set<int>> product(n);
+	for (i = 0; i < n; i++) {
+		product[i] = Divide(nums[i], i);
+	}
+
+	idx = 0;
+	for (auto it : product[0]) {
+		auto t = divisorPos[it];
+		idx = max(idx, t[t.size() - 1]);
+	}
+	curIdx = idx;
+	if (curIdx == 0) {
+		return 0;
+	}
+	for (i = 1; i < n; i++) {
+		idx = 0;
+		for (auto it : product[i]) {
+			auto t = divisorPos[it];
+			idx = max(idx, t[t.size() - 1]);
+		}
+		curIdx = max(curIdx, idx);
+		if (curIdx == n - 1) {
+			return -1;
+		}
+		if (curIdx == i) {
+			return i;
+		}
+	}
+	return -1;
+}
 int main(int argc, char *argv[])
 {
 #if 0
@@ -446,6 +513,7 @@ int main(int argc, char *argv[])
 #endif
 	//vector<string> v = {"..E.",".EOW","..W."};
 	//ballGame(4, v);
+	volatile int i = 10;
 	cout << sizeof(Parent) << endl;
 	cout << sizeof(Son) << endl;
 	cout << sizeof(A) << " " << sizeof(B) << " " << sizeof(C) << endl;
@@ -522,5 +590,16 @@ int main(int argc, char *argv[])
 	cout << &dd.num2 << endl;
 	cout << dd.GetArrPoint() << endl;
 	
+	unordered_set<int> usa, usb;
+	usa.insert(1);
+	usa.insert(2);
+	usb.insert(2);
+	usa.insert(usb.begin(), usb.end());
+	for (auto it : usa) {
+		cout << it << endl;
+	}
+	vector<unordered_set<int>> vus(2);
+	vus[0] = usa;
+	vus[1] = usb;
 	return 0;
 }

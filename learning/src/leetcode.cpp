@@ -3158,3 +3158,107 @@ int countTriplets(vector<int>& nums)
     }
     return ans;
 }
+
+
+class LC2581 {
+public:
+    int ans = 0;
+    map<long long, int> condition;
+    map<long long, int> curUsedCondition;
+    void DFS(unordered_map<int, unordered_set<int>>& gridedges, size_t cur, size_t parent, int& curk)
+    {
+        // cout << curk << endl;
+        long long t = parent << 32 | cur;
+        if (condition.count(t) == 1) {
+            // printf ("[%d %d]\n", parent, cur);
+            curk += condition[t];
+            curUsedCondition[t] = condition[t];
+        }
+        for (auto e : gridedges[cur]) {
+            if (e != parent) {
+                DFS(gridedges, e, cur, curk);
+            }
+        }
+    }
+    void ChangeRoot(unordered_map<int, unordered_set<int>>& gridedges, size_t cur, size_t parent, int curk, int k)
+    {
+        long long t = cur << 32 | parent;
+        if (condition.count(t) == 1 && curUsedCondition.count(t) == 0) {
+            curk += condition[t];
+            curUsedCondition[t] += condition[t];
+        }
+        t = parent << 32 | cur;
+        if (condition.count(t) == 1 && curUsedCondition.count(t) == 1) {
+            curk -= condition[t];
+            curUsedCondition.erase(t);
+        }
+        if (curk >= k) {
+            ans++;
+        }
+        for (auto it : gridedges[cur]) {
+            if (it != parent) {
+                ChangeRoot(gridedges, it, cur, curk, k);
+            }
+        }
+    }
+    int rootCount(vector<vector<int>>& edges, vector<vector<int>>& guesses, int k)
+    {
+        for (auto g : guesses) {
+            condition[(long long)g[0] << 32 | g[1]]++;
+        }
+        unordered_map<int, unordered_set<int>> gridedges;
+        for (auto e : edges) {
+            gridedges[e[0]].emplace(e[1]);
+            gridedges[e[1]].emplace(e[0]);
+        }
+        int i;
+        int n = edges.size() + 1;
+        int curk;
+
+        curk = 0;
+        DFS(gridedges, 0, -1, curk);
+        if (curk >= k) {
+            ans++;
+        }
+        for (auto it : gridedges[0]) {
+            ChangeRoot(gridedges, it, 0, curk, k);
+        }
+        return ans;
+    }
+};
+
+
+// LC1599
+int minOperationsMaxProfit(vector<int>& customers, int boardingCost, int runningCost)
+{
+    int ans;
+    int curProfit, t;
+    int curTime, curCustomers;
+
+    curTime = 0;
+    curCustomers = 0;
+    ans = -1;
+    t = INT_MIN;
+    curProfit = 0;
+    while (1) {
+        if (curTime < customers.size()) {
+            curCustomers += customers[curTime];
+        }
+        if (curCustomers >= 4) {
+            curProfit += 4 * boardingCost - runningCost;
+            curCustomers -= 4;
+        } else {
+            curProfit += curCustomers * boardingCost - runningCost;
+            curCustomers = 0;
+        }
+        if (curProfit > t) {
+            t = curProfit;
+            ans = curTime + 1;
+        }
+        curTime++;
+        if (curTime >= customers.size() && curCustomers == 0) {
+            break;
+        }
+    }
+    return curProfit <= 0 ? -1 : ans;
+}
