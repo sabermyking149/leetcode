@@ -3262,3 +3262,246 @@ int minOperationsMaxProfit(vector<int>& customers, int boardingCost, int running
     }
     return curProfit <= 0 ? -1 : ans;
 }
+
+
+// 面试题 16.09. 运算
+class Operations {
+public:
+    Operations() {
+
+    }
+    long negative(long n)
+    {
+        if (n == 0) {
+            return 0;
+        }
+        bool f = false;
+        long base = -1;
+        if (n < 0) {
+            f = true;
+            base = 1;
+        }
+        long i = 0;
+        while (1) {
+            if (f) { 
+                if (i + base + n > 0) {
+                    base = 1;
+                } else if (i + base + n == 0) {
+                    i += base;
+                    break;
+                } else {
+                    i += base;
+                    base += base;
+                }
+            } else {
+                if (i + base + n < 0) {
+                    base = -1;
+                } else if (i + base + n == 0) {
+                    i += base;
+                    break;
+                } else {
+                    i += base;
+                    base += base;
+                }
+            }
+        }
+        return i;
+    }
+    int minus(int a, int b)
+    {
+        return a + negative(b);
+    }
+    
+    int multiply(int a, int b)
+    {
+        if (a == 0 || b == 0) {
+            return 0;
+        }
+        bool f = false;
+        if ((a < 0 && b > 0) || (a > 0 && b < 0)) {
+            f  = true;
+        }
+        long aa, bb;
+        if (a < 0) {
+            aa = negative(a);
+        } else {
+            aa = a;
+        }
+        if (b < 0) {
+            bb = negative(b);
+        } else {
+            bb = b;
+        }
+
+        long ans = 0;
+        long base = 1;
+        long i = 0;
+        long t = aa;
+        while (1) {
+            if (i + base > bb) {
+                base = 1;
+                t = aa;
+            } else if (i + base == bb) {
+                i += base;
+                ans += t;
+                break;
+            } else {
+                ans += t;
+                i += base;
+                base += base;
+                t += t;
+            }
+        }
+        if (f) {
+            return negative(ans);
+        }
+        return ans;
+    }
+    long my_multiply(long a, long b)
+    {
+        if (a == 0 || b == 0) {
+            return 0;
+        }
+        long ans = 0;
+        long base = 1;
+        long i = 0;
+        long t = a;
+        while (1) {
+            if (i + base > b) {
+                base = 1;
+                t = a;
+            } else if (i + base == b) {
+                i += base;
+                ans += t;
+                break;
+            } else {
+                ans += t;
+                i += base;
+                base += base;
+                t += t;
+            }
+        }
+        return ans;
+    }
+    long GetHalfOfNum(long n)
+    {
+        long i;
+        long base;
+
+        base = 1;
+        i = 0;
+        while (1) {
+            if (i + base + i + base > n) {
+                base = 1;
+            } else if (i + base + i + base == n || i + base + i + base + 1 == n) {
+                i += base;
+                break;
+            } else {
+                i += base;
+                base += base;
+            }
+        }
+        return i;
+    }
+    int divide(int a, int b)
+    {
+        if (a == 0) {
+            return 0;
+        } else if (b == 1) {
+            return a;
+        } else if (b == -1) {
+            return negative(a);
+        }
+        bool f = false;
+        if ((a < 0 && b > 0) || (a > 0 && b < 0)) {
+            f  = true;
+        }
+        long aa, bb;
+        if (a < 0) {
+            aa = negative(a);
+        } else {
+            aa = a;
+        }
+        if (b < 0) {
+            bb = negative(b);
+        } else {
+            bb = b;
+        }
+        if (bb > aa) {
+            return 0;
+        }
+        long left, right, mid;
+        long t;
+
+        left = 1;
+        right = aa;
+        while (left <= right) {  // 所求为right
+            mid = GetHalfOfNum(left + right);
+            t = my_multiply(mid, bb);
+            if (t > aa) {
+                right = minus(mid, 1);
+            } else if (t < aa) {
+                left = mid + 1;
+            } else {
+                if (f) {
+                    return negative(mid);
+                }
+                return mid;
+            }
+        }
+        if (f) {
+            return negative(right);
+        }
+        return right;
+    }
+};
+
+
+// 面试题 17.05. 字母与数字
+vector<string> findLongestSubarray(vector<string>& array)
+{
+    int i;
+    int n = array.size();
+    int t;
+    int curLongest;
+    map<int, pair<int, int>> data;
+    map<int, vector<int>> diffData;
+    pair<int, int> ansIdx = {-1, -1};
+    vector<string> ans;
+
+    curLongest = 0;
+    data[0] = {0, 0};
+    for (i = 0; i < n; i++) {
+        if (i != 0) {
+            data[i] = data[i - 1];
+        }
+        if (isalpha(array[i][0])) {
+            data[i].first++;
+            diffData[data[i].first - data[i].second].emplace_back(i);
+        } else {
+            data[i].second++;
+            diffData[data[i].first - data[i].second].emplace_back(i);
+        }
+        if (data[i].first == data[i].second) {
+            if (i + 1 > curLongest) {
+                curLongest = i + 1;
+                ansIdx = {0, i};
+            }
+        } else {
+            t = data[i].first - data[i].second;
+            if (diffData.count(t) == 1 && diffData[t].size() != 1) {
+                if (i - diffData[t][0] > curLongest) {
+                    curLongest = i - diffData[t][0];
+                    ansIdx = {diffData[t][0] + 1, i};
+                }
+            }
+        }
+    }
+    if (ansIdx.first == -1) {
+        return {};
+    }
+    for (i = ansIdx.first; i <= ansIdx.second; i++) {
+        ans.emplace_back(array[i]);
+    }
+    return ans;
+}

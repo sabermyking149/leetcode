@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <cmath>
 
 using namespace std;
 
@@ -70,6 +71,53 @@ public:
 private:
     int *arr;
     int *intPtr;
+};
+
+
+class Complex {
+public:
+    Complex(double r, double i) : real(r), imaginary(i) {}
+    Complex(const Complex &c)
+    {
+        cout << "拷贝构造函数\n";
+        real = c.real;
+        imaginary = c.imaginary;
+    }
+    Complex operator +(const Complex &a)
+    {
+        Complex temp(0, 0);
+        temp.real = a.real + real;
+        temp.imaginary = a.imaginary + imaginary;
+        return temp;
+    }
+    bool operator >(const Complex &a) {
+        return real * real + imaginary * imaginary > a.real * a.real + a.imaginary * a.imaginary;
+    }
+    Complex &operator =(const Complex &c)
+    {
+        cout << "重载赋值\n";
+        if (&c != this) {
+            real = c.real;
+            imaginary = c.imaginary;
+        }
+        return *this;
+    }
+    static void Show(Complex &c)
+    {
+        cout << to_string(c.real) + ' ' + (c.imaginary < 0 ? '-' : '+') + ' ' + to_string(fabs(c.imaginary)) + 'i' << endl;
+    }
+    double GetReal() const
+    {
+        return real;
+    }
+    double GetImaginary() const
+    {
+        return imaginary;
+    }
+    // friend Complex operator -(const Complex &a, const Complex &b);
+private:
+    double real;
+    double imaginary;
 };
 
 #endif

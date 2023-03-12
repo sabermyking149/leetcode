@@ -16,7 +16,7 @@
 #include "pub.h"
 #include "leetcode.h"
 #include "classOper.h"
-
+#include "purec.h"
 
 using namespace std;
 
@@ -35,51 +35,6 @@ void S(int) {}
 void S(double, double=1.2) {}
 void S(const char*,const char*) {}
 
-
-class Complex {
-public:
-	Complex(double r, double i) : real(r), imaginary(i) {}
-	Complex(const Complex &c)
-	{
-		cout << "拷贝构造函数\n";
-		real = c.real;
-		imaginary = c.imaginary;
-	}
-	Complex operator +(const Complex &a)
-	{
-		Complex temp(0, 0);
-		temp.real = a.real + real;
-		temp.imaginary = a.imaginary + imaginary;
-		return temp;
-	}
-	bool operator >(const Complex &a) {
-		return real * real + imaginary * imaginary > a.real * a.real + a.imaginary * a.imaginary;
-	}
-	Complex &operator =(const Complex &c)
-	{
-		cout << "重载赋值\n";
-		if (&c != this) {
-			real = c.real;
-			imaginary = c.imaginary;
-		}
-		return *this;
-	}
-	static void Show(Complex &c)
-	{
-		cout << to_string(c.real) + ' ' + (c.imaginary < 0 ? '-' : '+') + ' ' + to_string(fabs(c.imaginary)) + 'i' << endl;
-	}
-	double GetReal() const
-	{
-		return real;
-	}
-	double GetImaginary() const
-	{
-		return imaginary;
-	}
-private:
-	double real;
-	double imaginary;
-};
 
 Complex operator-(const Complex& a, const Complex& b)
 {
@@ -548,6 +503,7 @@ int main(int argc, char *argv[])
 	Complex f(10, 10);
 	Complex g = f;
 	g = f;
+	Complex h = f - g;
 
 	cout << (a > b) << endl;
 	cout << std::gcd(120, 210) << endl;
@@ -601,5 +557,7 @@ int main(int argc, char *argv[])
 	vector<unordered_set<int>> vus(2);
 	vus[0] = usa;
 	vus[1] = usb;
+
+	cout << add(45, 551) << endl;
 	return 0;
 }

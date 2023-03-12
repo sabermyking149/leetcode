@@ -5,9 +5,13 @@
 
 # define the Cpp compiler to use
 CXX = g++
+CC = gcc
 
 # define any compile-time flags
 CXXFLAGS	:= -std=c++17 -Wall -Wextra -g
+CCFLAGS		:= -std=c17 -Wall -Wextra -g
+#CXXFLAGS	:= -std=c++17 -w -g
+#CCFLAGS		:= -std=c17 -w -g
 
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
@@ -51,10 +55,12 @@ INCLUDES	:= $(patsubst %,-I%, $(INCLUDEDIRS:%/=%))
 LIBS		:= $(patsubst %,-L%, $(LIBDIRS:%/=%))
 
 # define the C source files
-SOURCES		:= $(wildcard $(patsubst %,%/*.cpp, $(SOURCEDIRS)))
+SOURCES		:= $(wildcard $(patsubst %,%/*.c*, $(SOURCEDIRS)))
 
 # define the C object files 
-OBJECTS		:= $(SOURCES:.cpp=.o)
+#OBJECTS		:= $(SOURCES:.cpp=.o)
+OBJECTS = $(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(SOURCES)))
+$(info OBJECTS=$(OBJECTS))
 
 #
 # The following part of the makefile is generic; it can be used to 
@@ -79,6 +85,8 @@ $(MAIN): $(OBJECTS)
 # (see the gnu make manual section about automatic variables)
 .cpp.o:
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $<  -o $@
+.c.o:
+	$(CC) $(CCFLAGS) $(INCLUDES) -c $<  -o $@
 
 .PHONY: clean
 clean:
