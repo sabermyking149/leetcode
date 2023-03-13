@@ -11,7 +11,7 @@ CC = gcc
 CXXFLAGS	:= -std=c++17 -Wall -Wextra -g
 CCFLAGS		:= -std=c17 -Wall -Wextra -g
 #CXXFLAGS	:= -std=c++17 -w -g
-#CCFLAGS		:= -std=c17 -w -g
+#CCFLAGS	:= -std=c17 -w -g
 
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify

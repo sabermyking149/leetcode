@@ -3505,3 +3505,187 @@ vector<string> findLongestSubarray(vector<string>& array)
     }
     return ans;
 }
+
+
+// LC1617
+void DFSCalcSubTree(unordered_map<int, unordered_set<int>>& treeedges, int cur, int parent, 
+    set<int>& nodes, int dist, int& maxDist, set<int>& visited)
+{
+    visited.emplace(cur);
+    maxDist = max(dist, maxDist);
+    for (auto it : treeedges[cur]) {
+        if (it != parent && nodes.count(it) == 1) {
+            DFSCalcSubTree(treeedges, it, cur, nodes, dist + 1, maxDist, visited);
+        }
+    }
+}
+void ChooseNode(int n, int idx, int cnt,int tolcnt, vector<int>& chosenNode, vector<set<int>>& nodes)
+{
+    set<int> node;
+    if (tolcnt == cnt) {
+        for (auto n : chosenNode) {
+            // cout << n << " ";
+            node.emplace(n);
+        }
+        // cout << endl;
+        nodes.emplace_back(node);
+        return;
+    }
+    int i;
+    for (i = idx; i < n; i++) {
+        chosenNode.emplace_back(i + 1);
+        ChooseNode(n, i + 1, cnt + 1, tolcnt, chosenNode, nodes);
+        chosenNode.pop_back();
+    }
+}
+vector<int> countSubgraphsForEachDiameter(int n, vector<vector<int>>& edges)
+{
+    int i, j, k;
+    int maxDist;
+    vector<int> ans(n - 1, 0);
+    unordered_map<int, unordered_set<int>> treeedges;
+    vector<int> chosenNode; 
+    unordered_map<int, int> subTreeDistCount;
+    vector<set<int>> nodes;
+    set<int> visited;
+    // bool f = false; // 是否所有点都能有效访问
+    for (auto e : edges) {
+        treeedges[e[0]].emplace(e[1]);
+        treeedges[e[1]].emplace(e[0]);
+    }
+    for (i = 2; i <= n; i++) {
+        nodes.clear();
+        ChooseNode(n, 0, 0, i, chosenNode, nodes); // 枚举所有点的集合
+        for (j = 0; j < nodes.size(); j++) {
+            /* 超时
+            maxDist = 0;
+            for (auto it : nodes[j]) {
+                visited.clear();
+                f = false;
+                DFSCalcSubTree(treeedges, it, -1, nodes[j], 0, maxDist, visited);
+                if (visited != nodes[j]) {
+                    break;
+                }
+                f = true;
+            }
+            if (f) {
+                subTreeDistCount[maxDist]++;
+            }
+            */
+            // 两次BFS求最大距离
+            int t;
+            int m;
+            int lastNode;
+            queue<int> q;
+            if (nodes[j].size() == 3) {
+                int y = 12;
+            }
+            visited.clear(); 
+            q.push(*nodes[j].begin());
+            while (q.size()) {
+                m = q.size();
+                for (k = 0; k < m; k++) {
+                    t = q.front();
+                    lastNode = t;
+                    q.pop();
+                    visited.emplace(t);
+                    for (auto it : treeedges[t]) {
+                        if (nodes[j].count(it) == 1 && visited.count(it) == 0) {
+                            q.push(it);
+                            //lastNode = it;
+                        }
+                    }
+                }
+            }
+            // 判断点集是否能组成子树
+            if (visited != nodes[j]) {
+                continue;
+            }
+            //cout << lastNode << endl;
+            int dist;
+
+            q.push(lastNode);
+            visited.clear();
+            dist = 0;
+            while (q.size()) {
+                m = q.size();
+                for (k = 0; k < m; k++) {
+                    t = q.front();
+                    q.pop();
+                    visited.emplace(t);
+                    for (auto it : treeedges[t]) {
+                        if (nodes[j].count(it) == 1 && visited.count(it) == 0) {
+                            q.push(it);
+                            // lastNode = it;
+                        }
+                    }
+                }
+                if (q.size() != 0)
+                    dist++;
+            }
+
+            subTreeDistCount[dist]++;
+            // for (auto it : nodes[j]) {cout << it << " ";} cout << dist << endl;
+        }
+    }
+    for (auto it : subTreeDistCount ) {
+    ans[it.first - 1] = it.second;
+    }
+    return ans;
+}
+
+
+// 面试题 16.13. 平分正方形
+vector<vector<double>> CalcDot(double x, vector<int>& square, pair<double, double>& center, double k)
+{
+    double y;
+    double x1, y1;
+
+    y = k * (x - center.first) + center.second;
+    x1 = x + square[2];
+    y1 = k * (x1 - center.first) + center.second;
+    if (k > 0 && y < square[1]) {
+        y = square[1];
+        x = (y - center.second) / k + center.first;
+        y1 = square[1] + square[2];
+        x1 = (y1 - center.second) / k + center.first;
+    }
+    if (k < 0 && y > square[1] + square[2]) {
+        y = square[1] + square[2];
+        x = (y - center.second) / k + center.first;
+        y1 = square[1];
+        x1 = (y1 - center.second) / k + center.first;
+    }
+    return {{x, y}, {x1, y1}};
+}
+vector<double> cutSquares(vector<int>& square1, vector<int>& square2)
+{
+    double k;
+    pair<double, double> dot1, dot2;
+
+    dot1 = {square1[0] + square1[2] * 1.0 / 2, square1[1] + square1[2] * 1.0 / 2};
+    dot2 = {square2[0] + square2[2] * 1.0 / 2, square2[1] + square2[2] * 1.0 / 2};
+
+    vector<double> ans(4, 0);
+    if (fabs(dot1.first - dot2.first) < 10e-5) {
+        ans[0] = dot1.first;
+        ans[1] = max(dot1.second + square1[2] * 1.0 / 2,
+            dot2.second + square2[2] * 1.0 / 2);
+        ans[2] = dot2.first;
+        ans[3] = min(dot1.second - square1[2] * 1.0 / 2,
+            dot2.second - square2[2] * 1.0 / 2);
+        if (ans[1] > ans[3]) {
+            swap(ans[1], ans[3]);
+        }
+        return ans;
+    }
+    k = (dot1.second - dot2.second) / (dot1.first - dot2.first);
+
+    // 分别求直线穿过的4个点
+    vector<vector<double>> t1, t2;
+    t1 = CalcDot(square1[0], square1, dot1, k);
+    t2 = CalcDot(square2[0], square2, dot2, k);
+    t1.insert(t1.end(), t2.begin(), t2.end());
+    sort(t1.begin(), t1.end());
+    return {t1[0][0], t1[0][1], t1[3][0], t1[3][1]};
+}
