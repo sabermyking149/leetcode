@@ -34,6 +34,8 @@ public:
     vector<Trie *> children;
     Trie() : IsEnd(false) {}
     Trie(T t) : val(t), IsEnd(false) {}
+
+    static void CreateWordTrie(Trie<char> *root, string& word);
 };
 
 #endif

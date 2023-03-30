@@ -22,6 +22,7 @@
         "algorithm": "cpp",
         "xlocale": "cpp",
         "string": "cpp",
-        "numeric": "cpp"
+        "numeric": "cpp",
+        "ostream": "cpp"
     }
 }

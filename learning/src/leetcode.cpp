@@ -1918,8 +1918,8 @@ string findContestMatch(int n)
     return ans;
 }
 
-
-void CreateWordTrie(Trie<char> *root, string& word)
+template<>
+void Trie<char>::CreateWordTrie(Trie<char> *root, string& word)
 {
     int i, j;
     int n, m;
@@ -1967,7 +1967,7 @@ string longestWord(vector<string>& words)
     Trie<char> *root = new Trie('/');
 
     for (i = 0; i < m; i++) {
-        CreateWordTrie(root, words[i]);
+        Trie<char>::CreateWordTrie(root, words[i]);
     }
 
     unordered_map<string, int> wordPrefixPoint;
@@ -3577,9 +3577,6 @@ vector<int> countSubgraphsForEachDiameter(int n, vector<vector<int>>& edges)
             int m;
             int lastNode;
             queue<int> q;
-            if (nodes[j].size() == 3) {
-                int y = 12;
-            }
             visited.clear(); 
             q.push(*nodes[j].begin());
             while (q.size()) {
@@ -3688,4 +3685,239 @@ vector<double> cutSquares(vector<int>& square1, vector<int>& square2)
     t1.insert(t1.end(), t2.begin(), t2.end());
     sort(t1.begin(), t1.end());
     return {t1[0][0], t1[0][1], t1[3][0], t1[3][1]};
+}
+
+
+// 有问题
+void DFSCountNode(unordered_map<int, unordered_set<int>>& edges, int curNode, vector<bool>& visited, int& nodeCnt, vector<int>& nums, vector<int>& curNodes, int k)
+{
+    if (curNodes.size() > 1) {
+        for (int i = 0; i < curNodes.size(); i++) {
+            if (abs(curNodes[i] - nums[curNode]) == k) {
+                return;
+            }
+        }
+    }
+    curNodes.emplace_back(nums[curNode]);
+    visited[curNode] = true;
+    nodeCnt++;
+    for (auto it : edges[curNode]) {
+        if (visited[it] == false) {
+            DFSCountNode(edges, it, visited, nodeCnt, nums, curNodes, k);
+        }
+    }
+}
+int beautifulSubsets(vector<int>& nums, int k)
+{
+    int i, j;
+    int n = nums.size();
+    int ans = 0;
+    unordered_map<int, unordered_set<int>> edges;
+    vector<bool> visited(n, false);
+    for (i = 0; i < n - 1; i++) {
+        for (j = i + 1; j < n; j++) {
+            if (abs(nums[i] - nums[j]) != k) {
+                edges[i].emplace(j);
+                edges[j].emplace(i);
+            }
+        }
+    }
+    int nodeCnt = 0;
+    vector<int> curNodes;
+    for (i = 0; i < n; i++) {
+        if (visited[i]) {
+            continue;
+        }
+        nodeCnt = 0;
+        curNodes.clear();
+        DFSCountNode(edges, i, visited, nodeCnt, nums, curNodes, k);
+        if (nodeCnt > 0) {
+            ans += pow(2, nodeCnt) - 1;
+        }
+    }
+    return ans;
+}
+
+
+// LC1012
+int numDupDigitsAtMostN(int n)
+{
+    int i, k;
+    int t, x, cnt, countUnique;
+    string str;
+    vector<int> f(10, 0), prefixSum(n, 0);
+
+    f[1] = 9;
+    k = 9;
+    for (i = 2; i <= 9; i++) {
+        f[i] = f[i - 1] * k;
+        k--;
+    }
+    prefixSum[1] = f[1];
+    for (i = 2; i <= 9; i++) {
+        prefixSum[i] = prefixSum[i - 1] + f[i];
+    }
+    t = n;
+    countUnique = 0;
+    str = to_string(n);
+    
+    k = str.size();
+    //if (str[0] > '1') {
+        countUnique += prefixSum[k - 1];
+    //}
+    t = k;
+    for (i = 0; i < k; i++) {
+        if (str[i] == '0') {
+            continue;
+        }
+        x = str[i] - '0' - 1;
+        if (i == k - 1) {
+            x++;
+        }
+        countUnique += (f[t] / 9 * x);
+        t--;
+    }
+    return n - countUnique;
+}
+
+
+// LC127
+bool IsConnectedWord(string& a, string& b)
+{
+    int i;
+    int n = a.size();
+    int cnt;
+
+    cnt = 0;
+    for (i = 0; i < n; i++) {
+        if (a[i] != b[i]) {
+            cnt++;
+        }
+    }
+    return cnt == 1;
+}
+int ladderLength(string beginWord, string endWord, vector<string>& wordList)
+{
+    int i, j;
+    int n = wordList.size();
+    int ans;
+    string t;
+    unordered_set<string> visited;
+    unordered_map<string, unordered_set<string>> edges;
+
+    for (i = 0; i < n; i++) {
+        if (wordList[i] == beginWord) {
+            break;
+        }
+    }
+    if (i == n) {
+        wordList.emplace_back(beginWord);
+        n = wordList.size();
+    }
+    for (i = 0; i < n - 1; i++) {
+        for (j = i + 1; j < n; j++) {
+            if (IsConnectedWord(wordList[i], wordList[j])) {
+                edges[wordList[i]].emplace(wordList[j]);
+                edges[wordList[j]].emplace(wordList[i]);
+            }
+        }
+    }
+    /* for (auto it1 : edges) {
+        cout << it1.first << ":";
+        for (auto it2 : it1.second) {
+            cout << it2 << " ";
+        }
+        cout << endl;
+    } */
+    if (edges.count(endWord) == 0) {
+        return 0;
+    }
+
+    queue<string> q;
+    q.push(beginWord);
+    ans = 1;
+    while (!q.empty()) {
+        n = q.size();
+        for (i = 0; i < n; i++) {
+            t = q.front();
+            q.pop();
+            if (t == endWord) {
+                return ans;
+            }
+            visited.emplace(t);
+            for (auto it : edges[t]) {
+                if (visited.count(it) == 0) {
+                    q.push(it);
+                }
+            }
+        }
+        ans++;
+    }
+    return 0;
+}
+
+
+// LC820
+int minimumLengthEncoding(vector<string>& words)
+{
+    int n = words.size();
+    int m;
+    int i, j, k;
+    vector<bool> canShorten(n, false);
+    for (i = 0; i < n; i++) {
+        if (canShorten[i]) {
+            continue;
+        }
+        for (j = 0; j < n; j++) {
+            if (i == j) {
+                continue;
+            }
+            if (words[i].size() > words[j].size()) {
+                continue;
+            }
+            if (canShorten[j]) {
+                continue;
+            }
+            m = words[j].size();
+            for (k = words[i].size() - 1; k >= 0; k--) {
+                if (words[i][k] != words[j][m - 1]) {
+                    break;
+                }
+                m--;
+            }
+            if (k == -1) {
+                canShorten[i] = true;
+                break;
+            }
+        }
+    }
+    int ans = 0;
+    for (i = 0; i < n; i++) {
+        if (canShorten[i] == false) {
+            ans += words[i].size() + 1;
+        }
+    }
+    return ans;
+}
+void DFSScanTrieTree(Trie<char> *node, int curLen, int& ans)
+{
+    int i;
+    if (node->children.size() == 0) {
+        ans += curLen + 1;
+        return;
+    }
+    for (i = 0; i < node->children.size(); i++) {
+        DFSScanTrieTree(node->children[i], curLen + 1, ans);
+    }
+}
+int minimumLengthEncoding_1(vector<string>& words) // 后缀字典树
+{
+    int ans = 0;
+    Trie<char> *root = new Trie<char>('/');
+    for (auto word : words) {
+        reverse(word.begin(), word.end());
+        Trie<char>::CreateWordTrie(root, word);
+    }
+    DFSScanTrieTree(root, 0, ans);
+    return ans;
 }
