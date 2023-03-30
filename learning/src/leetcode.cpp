@@ -3921,3 +3921,184 @@ int minimumLengthEncoding_1(vector<string>& words) // 后缀字典树
     DFSScanTrieTree(root, 0, ans);
     return ans;
 }
+
+
+// LC2305
+void DFSGetFullPermutation(int n, vector<int>& record, vector<bool>& visited, vector<vector<int>>& ans)
+{
+    int i;
+    if (record.size() == n) {
+        ans.emplace_back(record);
+        return;
+    }
+    for (i = 0; i < n; i++) {
+        if (visited[i]) {
+            continue;
+        }
+        visited[i] = true;
+        record.emplace_back(i);
+        DFSGetFullPermutation(n, record, visited, ans);
+        visited[i] = false;
+        record.pop_back();
+    }
+}
+void DFSTrySplitWays(string& t, int idx, int cnt, vector<string>& ans)
+{
+    int i;
+    int n = t.size();
+    if (n - idx < cnt) {
+        return;
+    }
+    if (cnt == 0) {
+        ans.emplace_back('0' + t);
+        return;
+    }
+    for (i = idx; i < n; i++) {
+        t[i] = '1';
+        DFSTrySplitWays(t, i + 1, cnt - 1, ans);
+        t[i] = '0';
+    }
+}
+int distributeCookies(vector<int>& cookies, int k)
+{
+    int i, j, l;
+    int ans, curSum, unfairness;
+    int n = cookies.size();
+    string t(n - 1, '0');
+    vector<bool> visited(n, false);
+
+    vector<string> SplitWays;
+    vector<int> record;
+    vector<vector<int>> FullPermutation;
+
+    DFSTrySplitWays(t, 0, k - 1, SplitWays);
+    DFSGetFullPermutation(n, record, visited, FullPermutation);
+
+    int pSize = FullPermutation.size();
+    int swSize = SplitWays.size();
+
+    ans = INT_MAX;
+    for (i = 0; i < pSize; i++) {
+        for (j = 0; j < swSize; j++) {
+            curSum = 0;
+            unfairness = 0;
+            for (l = 0; l < n; l++) {
+                if (SplitWays[j][l] == '0') {
+                    curSum += cookies[FullPermutation[i][l]];
+                } else {
+                    unfairness = max(unfairness, curSum);
+                    curSum = cookies[FullPermutation[i][l]];
+                }
+            }
+            unfairness = max(unfairness, curSum);
+            ans = min(ans, unfairness);
+        }
+    }
+    return ans;
+}
+
+
+// LC711
+void ScanGraphAndRecord(vector<vector<int>>& grid, int row, int col, vector<vector<bool>> &visited, vector<pair<int, int>>& points)
+{
+    if (row < 0 || row == grid.size() || col < 0 || col == grid[0].size() || grid[row][col] == 0 || visited[row][col] == true)
+        return;
+
+    int i;
+    int direction[4][2] = {{0,1}, {1,0}, {0,-1}, {-1,0}};
+
+    visited[row][col] = true;
+    points.push_back({row, col});
+    for (i = 0; i < 4; i++)
+        ScanGraphAndRecord(grid, row + direction[i][0], col + direction[i][1], visited, points);
+}
+int numDistinctIslands2(vector<vector<int>>& grid)
+{
+    int i, j, k, l;
+    int minR, minC;
+    set<string> shape;
+    
+    if (grid.size() == 0)
+        return 0;
+
+    string shapeStr;
+    vector<vector<bool>> visited(grid.size(),vector<bool>(grid[0].size(), false));
+    vector<pair<int, int>> points, t;
+    vector<string> shapeStrColl;
+    vector<vector<int>> pontsTrans = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
+    for (i = 0; i < grid.size(); i++) {
+        for (j = 0; j < grid[0].size(); j++) {
+            if (grid[i][j] == 1 && visited[i][j] == false) {
+                points.clear();
+                shapeStrColl.clear();
+                ScanGraphAndRecord(grid, i, j, visited, points);
+
+                // 求points的8种变换坐标
+                // 即 (x,y),(−x,y),(x,−y),(−x,−y),(y,x),(−y,x),(y,−x),(−y,−x)
+                t = points;
+                for (l = 0; l < 4; l++) {
+                    for (k = 0; k < points.size(); k++) {
+                        t[k].first = points[k].first * pontsTrans[l][0];
+                        t[k].second = points[k].second * pontsTrans[l][1];
+                    }
+                    // 变换后的相对坐标
+                    minR = INT_MAX;
+                    minC = INT_MAX;
+                    for (k = 0; k < points.size(); k++) {
+                        minR = min(minR, t[k].first);
+                        minC = min(minC, t[k].second);
+                    }
+                    for (k = 0; k < points.size(); k++) {
+                        t[k].first -= minR;
+                        t[k].second -= minC;
+                    }
+                    sort(t.begin(), t.end());
+                    shapeStr.clear();
+                    for (auto p : t) {
+                    //    printf ("(%d, %d)->",p.first, p.second);
+                        shapeStr += "(" + to_string(p.first) + ", " + to_string(p.second) + ")";
+                    }
+                    // cout << endl;
+                    shapeStrColl.emplace_back(shapeStr);
+                }
+                for (k = 0; k < points.size(); k++) {
+                    int tmp = points[k].first;
+                    points[k].first = points[k].second;
+                    points[k].second = tmp;
+                }
+                t = points;
+                for (l = 0; l < 4; l++) {
+                    for (k = 0; k < points.size(); k++) {
+                        t[k].first = points[k].first * pontsTrans[l][0];
+                        t[k].second = points[k].second * pontsTrans[l][1];
+                    }
+                    // 变换后的相对坐标
+                    minR = INT_MAX;
+                    minC = INT_MAX;
+                    for (k = 0; k < points.size(); k++) {
+                        minR = min(minR, t[k].first);
+                        minC = min(minC, t[k].second);
+                    }
+                    for (k = 0; k < points.size(); k++) {
+                        t[k].first -= minR;
+                        t[k].second -= minC;
+                    }
+                    sort(t.begin(), t.end());
+                    shapeStr.clear();
+                    for (auto p : t) {
+                    //    printf ("(%d, %d)->",p.first, p.second);
+                        shapeStr += "(" + to_string(p.first) + ", " + to_string(p.second) + ")";
+                    }
+                    // cout << endl;
+                    shapeStrColl.emplace_back(shapeStr);
+                }
+                sort(shapeStrColl.begin(), shapeStrColl.end());
+                if (shape.count(shapeStrColl[0]) == 0) {
+                    shape.emplace(shapeStrColl[0]);
+                }
+            }
+            
+        }
+    }
+    return shape.size();
+}
