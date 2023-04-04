@@ -604,6 +604,7 @@ int main(int argc, char *argv[])
 	char *charp = (char *)malloc(4);
 	charp = (char *)&pp;
 	printf ("%d\n", charp[0]);
+	cout << MAX(4, 3) << endl;
 	cout << "end of main\n";
 	return 0;
 }

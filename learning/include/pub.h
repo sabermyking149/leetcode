@@ -6,6 +6,14 @@
 
 using namespace std;
 
+#define MAX(a, b) \
+({ \
+    typeof(a) _a = (a); \
+    typeof(b) _b = (b); \
+    (void)(&_a == &_b); \
+    _a > _b ? _a : _b; \
+})
+
 constexpr unsigned short w = 1024;
 constexpr int mod = 1000000007;
 

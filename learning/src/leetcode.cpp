@@ -4102,3 +4102,130 @@ int numDistinctIslands2(vector<vector<int>>& grid)
     }
     return shape.size();
 }
+
+
+// LCP12
+int minTime(vector<int>& time, int m)
+{
+    int i;
+    int n = time.size();
+    int t, cntDay, curMax;
+    int left, right, mid;
+    bool f = false;
+    if (n <= m) {
+        return 0;
+    }
+    right = 0;
+    for (i = 0; i < n; i++) {
+        // left = max(left, time[i]);
+        right += time[i];
+    }
+    left = 1;
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        t = 0;
+        cntDay = 0;
+        curMax = 0;
+        f = false;
+        for (i = 0; i < n; i++) {
+            if (i == 3) {
+                ;
+            }
+            if (t + time[i] > mid) {
+                if (f) {
+                    cntDay++;
+                    t = time[i];
+                    if (t > mid) {
+                        // cntDay++;
+                        t = 0;
+                        f = true;
+                        curMax = 0;
+                        continue;
+                    }
+                    curMax = max(curMax, time[i]);
+                    f = false;
+                    continue;
+                }
+                if (time[i] >= curMax) {
+                    f = true;
+                    curMax = 0;
+                } else {
+                    f = true;
+                    t -= curMax;
+                    t += time[i];
+                    curMax = 0;
+                }
+
+            } else {
+                t += time[i];
+                if (f == false) {
+                    curMax = max(curMax, time[i]);
+                }
+            }
+        }
+        if (t > 0 || f) {
+            cntDay++;
+        }
+        if (cntDay > m) {
+            left = mid + 1;
+        } else if (cntDay <= m) {
+            right = mid - 1;
+        }
+    }
+    return left;
+}
+
+
+
+// LCP45
+vector<vector<int>> bicycleYard(vector<int>& position, vector<vector<int>>& terrain, vector<vector<int>>& obstacle)
+{
+    int i, k;
+    int x, y, v, newV;
+    int n = terrain.size();
+    int m = terrain[0].size();
+    int size;
+    vector<int> pos;
+    vector<vector<int>> ans;
+    vector<vector<int>> directions = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+    set<vector<int>> visited;
+    set<vector<int>> sameVPos;
+    queue<vector<int>> q;
+    vector<int> start = {position[0], position[1], 1, -1}; // x, y坐标, 速度, 方向
+
+    q.push(start);
+    // visited[position[0]][position[1]] = true;
+    visited.insert({position[0], position[1], 1, 0});
+    visited.insert({position[0], position[1], 1, 1});
+    visited.insert({position[0], position[1], 1, 2});
+    visited.insert({position[0], position[1], 1, 3});
+    while (q.size()) {
+        size = q.size();
+        for (i = 0; i < size; i++) {
+            pos = q.front();
+            q.pop();
+            for (k = 0; k < 4; k++) {
+                x = pos[0] + directions[k][0];
+                y = pos[1] + directions[k][1];
+                v = pos[2];
+
+                if (x < 0 || x >= n || y < 0 || y >= m) {
+                    continue;
+                }
+                newV = v + terrain[pos[0]][pos[1]] - terrain[x][y] - obstacle[x][y];
+                if (newV <= 0 || visited.count({x, y, newV, k}) == 1) {
+                    continue;
+                }
+                visited.insert({x, y, newV, k});
+                if (newV == 1) {
+                    sameVPos.insert({x, y});
+                }
+                q.push({x, y, newV});
+            }
+        }
+    }
+    for (auto it : sameVPos) {
+        ans.emplace_back(it);
+    }
+    return ans;
+}
