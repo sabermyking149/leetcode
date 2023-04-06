@@ -4229,3 +4229,82 @@ vector<vector<int>> bicycleYard(vector<int>& position, vector<vector<int>>& terr
     }
     return ans;
 }
+
+
+// LCP41
+template<typename T>
+void ClearQueue(queue<T>& q)
+{
+    queue<T> empty;
+    swap(empty, q);
+}
+int CntChess(vector<string>& chessboard, int row, int col)
+{
+    int cnt, t;
+    int i, j, k;
+    int n = chessboard.size();
+    int m = chessboard[0].size();
+    vector<vector<int>> directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}, {-1, -1}, {1, -1}, {-1, 1}, {1, 1}};
+    queue<pair<int, int>> q, tq;
+    cnt = 0;
+    for (k = 0; k < directions.size(); k++) {
+        t = 0;
+        i = row;
+        j = col;
+        while (1) {
+            i += directions[k][0];
+            j += directions[k][1];
+            if (i < 0 || i >= n || j < 0 || j >= m) {
+                ClearQueue<pair<int, int>>(q);
+                break;
+            }
+            if (chessboard[i][j] == 'O') {
+                q.push({i, j});
+            } else if (chessboard[i][j] == 'X') {
+                if (q.size() == 0) {
+                    break;
+                }
+                t += q.size();
+                while (!q.empty()) {
+                    auto p = q.front();
+                    tq.push(p);
+                    chessboard[p.first][p.second] = 'X';
+                    q.pop();
+                }
+                while (!tq.empty()) {
+                    auto p = tq.front();
+                    t += CntChess(chessboard, p.first, p.second);
+                    tq.pop();
+                }
+                break;
+            } else if (chessboard[i][j] == '.') {
+                ClearQueue<pair<int, int>>(q);
+                break;
+            }
+        }
+        cnt += t;
+    }
+    return cnt;
+}
+int flipChess(vector<string>& chessboard)
+{
+    int i, j;
+    int ans;
+    int n = chessboard.size();
+    int m = chessboard[0].size();
+    vector<string> tmpChess;
+
+    ans = 0;
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < m; j++) {
+            if (chessboard[i][j] == '.') {
+                tmpChess = chessboard;
+                tmpChess[i][j] = 'X';
+                ans = max(ans, CntChess(tmpChess, i, j));
+            }
+        }
+    }
+    return ans;
+}
+
+

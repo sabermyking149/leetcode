@@ -605,6 +605,9 @@ int main(int argc, char *argv[])
 	charp = (char *)&pp;
 	printf ("%d\n", charp[0]);
 	cout << MAX(4, 3) << endl;
+
+	vector<string> chessboard = {"X....", "O.X..", "OOOOX", "....."};
+	cout << flipChess(chessboard) << endl;
 	cout << "end of main\n";
 	return 0;
 }
