@@ -4308,3 +4308,64 @@ int flipChess(vector<string>& chessboard)
 }
 
 
+// LC300
+int lengthOfLIS(vector<int> &nums)
+{
+    int i, j;
+    int n = nums.size();
+    int ans;
+    vector<int> dp(n, 1); // 以i下标结尾的最长递增子序列长度
+
+    for (i = 1; i < n; i++) {
+        for (j = 0; j < i; j++) {
+            if (nums[i] > nums[j]) {
+                dp[i] = max(dp[i], dp[j] + 1);
+            }
+        }
+    }
+    ans = dp[0];
+    for (i = 1; i < n; i++) {
+        ans = max(ans, dp[i]);
+    }
+    return ans;
+}
+// LC673
+int findNumberOfLIS(vector<int>& nums)
+{
+    int i, j;
+    int n = nums.size();
+    vector<int> t;
+    int curLen, cnt;
+    vector<pair<int, int>> dp(n, {0, 0}); // 以i下标结尾的最长递增子序列长度, 以及对应的序列个数
+
+    dp[0] = {1, 1};
+    for (i = 1; i < n; i++) {
+        cnt = curLen = 0;
+        for (j = i - 1; j >= 0; j--) {
+            if (nums[i] > nums[j]) {
+                if (dp[j].first + 1 > curLen) {
+                    curLen = dp[j].first + 1;
+                    cnt = dp[j].second;
+                } else if (dp[j].first + 1 == curLen) {
+                    cnt += dp[j].second;
+                }
+            }
+        }
+        if (curLen == 0) {
+            dp[i] = {1, 1};
+        } else {
+            dp[i] = {curLen, cnt};
+        }
+    }
+    int maxLen = 0;
+    int ans = 0;
+    for (i = 0; i < n; i++) {
+        if (dp[i].first > maxLen) {
+            maxLen = dp[i].first;
+            ans = dp[i].second;
+        } else if (dp[i].first == maxLen) {
+            ans += dp[i].second;
+        }
+    }
+    return ans;
+}
