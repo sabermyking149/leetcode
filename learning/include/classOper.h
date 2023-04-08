@@ -115,6 +115,7 @@ public:
         return imaginary;
     }
     // friend Complex operator -(const Complex &a, const Complex &b);
+    friend double operator /(const Complex &a, const Complex &b);
 private:
     double real;
     double imaginary;

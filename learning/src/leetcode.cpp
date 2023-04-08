@@ -4369,3 +4369,61 @@ int findNumberOfLIS(vector<int>& nums)
     }
     return ans;
 }
+
+
+// LC1125
+void DFSFindSmallestSufficientTeam(vector<string>& req_skills, int curIdx, unordered_map<string, vector<int>>& skillsPeopleKnow,
+    unordered_map<int, unordered_set<string>>& peopleSkills, vector<int>& record, vector<int>& ans, int& minTeamSize)
+{
+    if (curIdx == req_skills.size()) {
+        if (minTeamSize == -1 || record.size() < minTeamSize) {
+            minTeamSize = record.size();
+            ans = record;
+        }
+        return;
+    }
+    int i;
+    bool f = false;
+    // 判断这个技能是否已经有人在前面会了
+    for (auto r : record) {
+        if (peopleSkills[r].count(req_skills[curIdx]) == 1) {
+            f = true;
+            break;
+        }
+    }
+    if (f) {
+        DFSFindSmallestSufficientTeam(req_skills, curIdx + 1, skillsPeopleKnow, peopleSkills, record, ans, minTeamSize);
+    } else {
+        for (auto it : skillsPeopleKnow[req_skills[curIdx]]) {  // 这些人会req_skills[curIdx]
+            record.emplace_back(it);
+            if (minTeamSize != -1 && record.size() > minTeamSize) {
+                record.pop_back();
+                return;
+            }
+            DFSFindSmallestSufficientTeam(req_skills, curIdx + 1, skillsPeopleKnow, peopleSkills, record, ans, minTeamSize);
+            record.pop_back();
+        }
+    }
+}
+vector<int> smallestSufficientTeam(vector<string>& req_skills, vector<vector<string>>& people)
+{
+    int minTeamSize;
+    unordered_map<string, vector<int>> skillsPeopleKnow; // 技能 - 会的人物列表
+    unordered_map<int, unordered_set<string>> peopleSkills; // 人物 - 会的技能列表
+    vector<int> ans;
+    vector<int> record;
+    vector<vector<int>> results;
+
+    int i, j;
+    int num = people.size();
+    for (i = 0; i < num; i++) {
+        for (j = 0; j < people[i].size(); j++) {
+            skillsPeopleKnow[people[i][j]].emplace_back(i);
+            peopleSkills[i].emplace(people[i][j]);
+        }
+    }
+    minTeamSize = -1;
+    DFSFindSmallestSufficientTeam(req_skills, 0, skillsPeopleKnow, peopleSkills, record, ans, minTeamSize);
+
+    return ans;
+}

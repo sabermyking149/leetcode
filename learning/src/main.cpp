@@ -49,6 +49,10 @@ Complex operator-(const Complex& a, const Complex& b)
 	return temp;
 }
 
+double operator /(const Complex &a, const Complex &b)
+{
+	return a.real * 1.0 /  (b.real == 0 ? 1 : b.real);
+}
 vector<int> operator +(vector<int>& a, vector<int>& b)
 {
 	int i;
@@ -515,6 +519,7 @@ int main(int argc, char *argv[])
 	Complex g = f;
 	g = f;
 	Complex h = f - g;
+	cout << "c / e = " << c / e << endl;
 
 	cout << (a > b) << endl;
 	cout << std::gcd(120, 210) << endl;
