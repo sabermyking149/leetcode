@@ -613,6 +613,9 @@ int main(int argc, char *argv[])
 
 	vector<string> chessboard = {"X....", "O.X..", "OOOOX", "....."};
 	cout << flipChess(chessboard) << endl;
+
+	string instructions = "LLGRL";
+	cout << isRobotBounded(instructions) << endl;
 	cout << "end of main\n";
 	return 0;
 }

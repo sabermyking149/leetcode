@@ -15,4 +15,5 @@ int func(long long n);
 int minOperations(int n);
 int maxNumOfMarkedIndices(vector<int>& nums);
 int flipChess(vector<string>& chessboard);
+bool isRobotBounded(string instructions);
 #endif

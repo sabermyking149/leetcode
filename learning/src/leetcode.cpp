@@ -4427,3 +4427,86 @@ vector<int> smallestSufficientTeam(vector<string>& req_skills, vector<vector<str
 
     return ans;
 }
+
+
+// LC1041
+bool CheckIfEqual(int len, vector<vector<int>>& source, int startIdx)
+{
+    int n = source.size();
+    int i, j;
+
+    for (i = 0; i < len; i++) {
+        if (i + startIdx >= n) {
+            break;
+        }
+        if (source[i + startIdx] != source[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+bool isRobotBounded(string instructions)
+{
+    int i, k;
+    int n = instructions.size();
+    int directions[4][2] = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
+    int curD, x, y;
+    bool loop = false;
+    vector<vector<int>> pos;
+    vector<int> curPos;
+    vector<int> t;
+
+    pos.push_back({0, 0, 0});
+    curD = 0;
+    curPos = {0, 0};
+    for (k = 0; k < 10; k++) {
+        for (i = 0; i < n; i++) {
+            if (instructions[i] == 'G') {
+                x = curPos[0] + directions[curD][0];
+                y = curPos[1] + directions[curD][1];
+                t = {x, y, curD};
+                curPos = {x, y};
+                pos.emplace_back(t);
+            } else if (instructions[i] == 'L') {
+                curD = (curD + 3) % 4;
+                t = {curPos[0], curPos[1], curD};
+                pos.emplace_back(t);
+            } else {
+                curD = (curD + 1) % 4;
+                t = {curPos[0], curPos[1], curD};
+                pos.emplace_back(t);
+            }
+        }
+    }
+    /*for (auto p : pos) {
+        for (auto a : p) {
+            cout << a << " ";
+        }
+        cout << endl;
+    } */
+    n = pos.size();
+    int len = 1;
+    while (1) {
+        loop = true;
+        i = len;
+        while (1) {
+            if (CheckIfEqual(len, pos, i) == false) {
+                loop = false;
+                break;
+            }
+            i += len;
+            if (i >= n) {
+                loop = true;
+                break;
+            }
+        }
+        if (loop) {
+            return true;
+        }
+        len++;
+        if (len * 2 > n) {
+            break;
+        }
+    }
+    return false;
+}
