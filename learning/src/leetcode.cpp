@@ -4510,3 +4510,125 @@ bool isRobotBounded(string instructions)
     }
     return false;
 }
+
+
+// LC2560
+// 求k个不相邻最大值中的最小值
+int minCapability(vector<int>& nums, int k)
+{
+    int i;
+    int size = nums.size();
+    if (size == 1) {
+        return nums[0];
+    } else if (size == 2) {
+        return min(nums[0], nums[1]);
+    }
+
+    int left, right, mid;
+    int curMaxSteal;
+    vector<int> dp(size, 0);
+    left = INT_MAX;
+    right = INT_MIN;
+    for (auto n : nums) {
+        left = min(left, n);
+        right = max(right, n);
+    }
+    // dp[i] = max(dp[i - 1], dp[i - 2] + 1) 下标i选择窃取或不窃取能得手的最大房间数
+    while (left <= right) {
+        mid = (right - left) / 2 + left;  // 可能的最大窃取金额
+        curMaxSteal = 0;
+        if (nums[0] <= mid) {
+            dp[0] = 1;
+            curMaxSteal = 1;
+        } else {
+            dp[0] = 0;
+        }
+        if (nums[1] <= mid) {
+            dp[1] = 1;
+            curMaxSteal = 1;
+        } else {
+            dp[1] = dp[0];
+        }
+        for (i = 2; i < size; i++) {
+            if (nums[i] <= mid) {
+                dp[i] = max(dp[i - 1], dp[i - 2] + 1);
+                curMaxSteal = max(curMaxSteal, dp[i]);
+            } else {
+                dp[i] = dp[i - 1];
+            }
+        }
+        if (curMaxSteal >= k) {
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    return left;
+}
+
+
+// LC2616
+// 求p个不相邻最小值中的最大值,与上题相反
+int minimizeMax(vector<int>& nums, int p)
+{
+    int i;
+    int n = nums.size();
+    vector<int> diff;
+
+    if (p == 0) {
+        return 0;
+    }
+    sort(nums.begin(), nums.end());
+    for (i = 1; i < n; i++) {
+        diff.emplace_back(nums[i] - nums[i - 1]);
+    }
+    n = diff.size();
+    if (n == 1) {
+        return diff[0];
+    } else if (n == 2) {
+        return min(diff[0], diff[1]);
+    }
+
+    vector<int> dp(n, 0);
+    int left, right, mid;
+    int curMinCnt;
+
+    left = INT_MAX;
+    right = INT_MIN;
+    for (auto d : diff) {
+        left = min(d, left);
+        right = max(d, right);
+    }
+    while (left <= right) {
+        mid = (right - left) / 2 + left; // mid 可能的最大值
+        curMinCnt = 0;
+        if (diff[0] <= mid) {
+            dp[0] = 1;
+            curMinCnt = 1;
+        } else {
+            dp[0] = 0;
+        }
+
+        if (diff[1] <= mid) {
+            dp[1] = 1;
+            curMinCnt = 1;
+        } else {
+            dp[1] = dp[0];
+        }
+
+        for (i = 2; i < n; i++) {
+            if (diff[i] <= mid) {
+                dp[i] = max(dp[i - 1], dp[i - 2] + 1);
+                curMinCnt = max(curMinCnt, dp[i]);
+            } else {
+                dp[i] = dp[i - 1];
+            }
+        }
+        if (curMinCnt >= p) {
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    return left;
+}
