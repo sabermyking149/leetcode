@@ -23,6 +23,7 @@
         "xlocale": "cpp",
         "string": "cpp",
         "numeric": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "numbers": "cpp"
     }
 }

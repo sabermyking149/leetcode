@@ -4632,3 +4632,88 @@ int minimizeMax(vector<int>& nums, int p)
     }
     return left;
 }
+
+
+// LC2608
+int BFSFindMinLoopSize(int n, unordered_map<int, unordered_set<int>>& edges, int curNode)
+{
+    int d, val, loopSize, minLoopSize;
+    int i, k;
+    queue<pair<int, int>> q; // curNode - fromNode
+    pair<int, int> t;
+    vector<bool> visited(n, false);
+    vector<int> distance(n);
+
+    q.push({curNode, - 1});
+    d = 0;
+    minLoopSize = INT_MAX;
+    while (q.size()) {
+        k = q.size();
+        for (i = 0; i < k; i++) {
+            t = q.front();
+            q.pop();
+            visited[t.first] = true;
+            distance[t.first] = d;
+            for (auto it : edges[t.first]) {
+                if (it != t.second && visited[it] == true) {
+                    loopSize = distance[it] + distance[t.first] + 1;
+                    // printf ("n = %d, loopSize = %d\n", curNode, loopSize);
+                    minLoopSize = min(minLoopSize, loopSize);
+                    // return loopSize; 不能直接退出
+                }
+                if (it != t.second && visited[it] == false) {
+                    q.push({it, t.first});
+                }
+            }
+        }
+        d++;
+    }
+    return minLoopSize == INT_MAX ? -1 : minLoopSize;
+}
+int findShortestCycle(int n, vector<vector<int>>& edges)
+{
+    unsigned int i;
+    int loopSize, ans;
+    unordered_map<int, unordered_set<int>> e;
+    for (i = 0; i < edges.size(); i++) {
+        e[edges[i][0]].emplace(edges[i][1]);
+        e[edges[i][1]].emplace(edges[i][0]);
+    }
+
+    ans = INT_MAX;
+    for (i = 0; i < n; i++) {
+        loopSize = BFSFindMinLoopSize(n, e, i);
+        if (loopSize > 0) {
+            ans = min(ans, loopSize);
+        }
+    }
+    return ans == INT_MAX ? -1 : ans;
+}
+
+
+// LC2064
+int minimizedMaximum(int n, vector<int>& quantities)
+{
+    int sum;
+    int left, right, mid;
+
+    left = 1;
+    right = quantities[0];
+    for (auto q : quantities) {
+        right = max(right, q);
+    }
+
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        sum = 0;
+        for (auto q : quantities) {
+            sum += static_cast<int>(ceil(q * 1.0 / mid));
+        }
+        if (sum > n) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    return left;
+}
