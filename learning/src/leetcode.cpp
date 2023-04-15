@@ -4717,3 +4717,96 @@ int minimizedMaximum(int n, vector<int>& quantities)
     }
     return left;
 }
+
+
+// LC1042
+vector<int> gardenNoAdj(int n, vector<vector<int>>& paths)
+{
+    int i, j;
+    int curVal;
+    vector<int> ans(n, 0);
+    unordered_map<int, int> gardenVal;
+    unordered_map<int, unordered_set<int>> edges;
+    unordered_set<int> s;
+    bool comflict = false;
+
+    for (auto p : paths) {
+        edges[p[0]].emplace(p[1]);
+        edges[p[1]].emplace(p[0]);
+    }
+    for (i = 1; i <= n; i++) {
+        if (gardenVal.count(i) == 0) {
+            gardenVal[i] = 1;
+            for (auto e : edges[i]) {
+                if (gardenVal.count(e) == 0) {
+                    s.clear();
+                    for (auto it : edges[e]) {
+                        if (gardenVal.count(it) == 1) {
+                            s.emplace(gardenVal[it]);
+                        }
+                    }
+                    for (j = 1; j <= 4; j++) {
+                        if (s.count(j) == 0) {
+                            gardenVal[e] = j;
+                            break;
+                        }
+                    }
+                }
+            }
+        } else {
+            s.clear();
+            for (auto e : edges[i]) {
+                if (gardenVal.count(e) == 1) {
+                    s.emplace(gardenVal[e]);
+                }
+            }
+            comflict = false;
+            for (auto it : s) {
+                if (it == gardenVal[i]) {
+                    comflict = true;
+                    break;
+                }
+            }
+            if (comflict) {
+                for (j = 1; j <= 4; j++) {
+                    if (s.count(j) == 0) {
+                        gardenVal[i] = j;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    for (auto it : gardenVal) {
+        ans[it.first - 1] = it.second;
+    }
+    return ans;
+}
+vector<int> gardenNoAdj_1(int n, vector<vector<int>>& paths)
+{
+    int i, j;
+    int curVal;
+    vector<int> ans(n, 0);
+    unordered_map<int, unordered_set<int>> edges;
+    unordered_set<int> s;
+
+    for (auto p : paths) {
+        edges[p[0]].emplace(p[1]);
+        edges[p[1]].emplace(p[0]);
+    }
+    for (i = 1; i <= n; i++) {
+        s.clear();
+        for (auto e : edges[i]) {
+            if (ans[e - 1] != 0) {
+                s.emplace(ans[e - 1]);
+            }
+        }
+        for (j = 1; j <= 4; j++) {
+            if (s.count(j) == 0) {
+                ans[i - 1] = j;
+                break;
+            }
+        }
+    }
+    return ans;
+}
