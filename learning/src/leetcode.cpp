@@ -4810,3 +4810,300 @@ vector<int> gardenNoAdj_1(int n, vector<vector<int>>& paths)
     }
     return ans;
 }
+
+
+TreeNode* replaceValueInTree(TreeNode* root)
+{
+    int i, j;
+    int n;
+    queue<pair<TreeNode *, TreeNode *>> q; // pair 子 - 父
+    vector<vector<pair<TreeNode *, TreeNode *>>> treeLayerLists;
+    vector<pair<TreeNode *, TreeNode *>> v;
+    pair<TreeNode *, TreeNode *> t;
+
+    q.push({root, nullptr});
+    while (q.size()) {
+        n = q.size();
+        v.clear();
+        for (i = 0; i < n; i++) {
+            t = q.front();
+            q.pop();
+            v.emplace_back(t);
+            if (t.first->left != nullptr) {
+                q.push({t.first->left, t.first});
+            }
+            if (t.first->right != nullptr) {
+                q.push({t.first->right, t.first});
+            }
+        }
+        treeLayerLists.emplace_back(v);
+    }
+    unordered_map<TreeNode *, int> fatherSum;
+    n = treeLayerLists.size();
+    vector<int> layerSum(n, 0);
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < treeLayerLists[i].size(); j++) {
+            fatherSum[treeLayerLists[i][j].second] += treeLayerLists[i][j].first->val;
+            layerSum[i] += treeLayerLists[i][j].first->val;
+        }
+    }
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < treeLayerLists[i].size(); j++) {
+            treeLayerLists[i][j].first->val = layerSum[i] - fatherSum[treeLayerLists[i][j].second];
+        }
+    }
+    return root;
+}
+
+
+// LC2642
+class Graph {
+public:
+    unordered_map<int, set<vector<int>>> edges;
+    int n;
+    Graph(int n, vector<vector<int>>& edges)
+    {
+        for (auto e : edges) {
+            (this->edges)[e[0]].insert({e[1], e[2]});
+        }
+        this->n = n;
+    }
+    
+    void addEdge(vector<int> edge)
+    {
+        (this->edges)[edge[0]].insert({edge[1], edge[2]});
+    }
+    
+    int shortestPath(int node1, int node2) // 超时
+    {
+        int i;
+        int size;
+        pair<int, int> t;
+        vector<bool> visited(n, false);
+        // unordered_map<int, int> nodeDist;
+        vector<int> nodeDist(n, 0);
+        queue<pair<int, int>> q;
+
+        if (node1 == node2) {
+            return 0;
+        }
+        q.push({node1, 0});
+        while (q.size()) {
+            size = q.size();
+            for (i = 0; i < size; i++) {
+                t = q.front();
+                q.pop();
+                if (nodeDist[node2] > 0 && nodeDist[node2] <= t.second) {
+                    continue;
+                }
+                if (visited[t.first] == false) {
+                    nodeDist[t.first] = t.second;
+                    visited[t.first] = true;
+                } else {
+                    if (nodeDist[t.first] > t.second) {
+                        nodeDist[t.first] = t.second;
+                    } else {
+                        continue;
+                    }
+                }
+                if (t.first == node2) {
+                    continue;
+                }
+                for (auto e : edges[t.first]) {
+                    q.push({e[0], t.second + e[1]});
+                }
+            }
+        }
+        if (nodeDist[node2] > 0) {
+            return nodeDist[node2];
+        }
+        return -1;
+    }
+};
+
+
+// LC2646
+unordered_map<int, int> tripCostData;
+void DFSCalcTripCost(unordered_map<int, unordered_set<int>>& e, int from, int cur, int dest, string route, vector<int>& price, bool& find)
+{
+    if (find) {
+        return;
+    }
+    if (cur == dest) {
+        route[route.size() - 1] = '\0';
+        
+        int i;
+        int node;
+        int t;
+        vector<string> vs = MySplit(route, '_');
+        for (i = 0; i < vs.size(); i++) {
+            node = atoi(vs[i].c_str());
+            tripCostData[node] += price[node];
+        }
+        find = true;
+        return;
+    }
+    for (auto it : e[cur]) {
+        if (it != from) {
+            DFSCalcTripCost(e, cur, it, dest, route + to_string(it) + "_", price, find);
+        }
+    }
+}
+int CalcMaxLessCost(unordered_map<int, unordered_set<int>>& edges, int cur, int from, bool chosen,
+    unordered_map<int, int>& tripCostData, map<pair<int, bool>, int>& lessCost)
+{
+    if (edges[cur].size() == 1 && *edges[cur].begin() == from) {
+        if (chosen) {
+            lessCost[{cur, chosen}] = tripCostData[cur] / 2;
+        } else {
+            lessCost[{cur, chosen}] = 0;
+        }
+        return lessCost[{cur, chosen}];
+    }
+    for (auto it : edges[cur]) {
+        if (it != from) {
+            if (lessCost.count({it, false}) == 0) {
+                lessCost[{it, false}] = CalcMaxLessCost(edges, it, cur, false, tripCostData, lessCost);
+            }
+            if (lessCost.count({it, true}) == 0) {
+                lessCost[{it, true}] = CalcMaxLessCost(edges, it, cur, true, tripCostData, lessCost);
+            }
+        }
+    }
+    int ans = 0;
+    if (chosen) {
+        ans = tripCostData[cur] / 2;
+        for (auto it : edges[cur]) {
+            if (it != from) {
+                ans += lessCost[{it, false}];
+            }
+        }
+        lessCost[{cur, chosen}] = ans;
+    } else {
+        for (auto it : edges[cur]) {
+            if (it != from) {
+                ans += max(lessCost[{it, false}], lessCost[{it, true}]);
+            }
+        }
+        lessCost[{cur, chosen}] = ans;
+    }
+    return ans;
+}
+int minimumTotalPrice(int n, vector<vector<int>>& edges, vector<int>& price, vector<vector<int>>& trips)
+{
+    int ans;
+    unordered_map<int, unordered_set<int>> e;
+    unordered_set<int> curChosenNode;
+    bool find = false;
+
+    if (edges.size() == 0) {
+        ans = 0;
+        for (auto trip : trips) {
+            ans += price[trip[0]] / 2;
+        }
+        return ans;
+    }
+    for (auto edge : edges) {
+        e[edge[0]].emplace(edge[1]);
+        e[edge[1]].emplace(edge[0]);
+    }
+    string route;
+    for (auto trip : trips) {
+        if (trip[0] == trip[1]) {
+            tripCostData[trip[0]] += price[trip[0]];
+            continue;
+        }
+        find = false;
+        route.clear();
+        route = to_string(trip[0]) + "_";
+        DFSCalcTripCost(e, -1, trip[0], trip[1], route, price, find);
+    }
+
+    ans = 0;
+    for (auto it : tripCostData) {
+        // printf ("%d : %d\n", it.first, it.second);
+        ans += it.second;
+    }
+    // printf ("ans = %d\n", ans);
+    int startNode = tripCostData.begin()->first;
+    map<pair<int, bool>, int> lessCost; // <node - 是否减半> - 所节约的最大费用
+    int a = CalcMaxLessCost(e, startNode, -1, true, tripCostData, lessCost); // 从startNode出发, 该点选择减半
+    int b = CalcMaxLessCost(e, startNode, -1, false, tripCostData, lessCost); // 从startNode出发, 该点选择不减半
+    return ans - max(a, b);
+}
+
+
+// LC1733
+int minimumTeachings(int n, vector<vector<int>>& languages, vector<vector<int>>& friendships)
+{
+    int i;
+    int m = languages.size();
+    int popularPerson, lessPopularPerson;
+    unordered_map<int, unordered_set<int>> skill;
+    unordered_map<int, int> langCnt;
+    for (i = 0; i < m; i++) {
+        for (auto lang : languages[i]) {
+            skill[i + 1].emplace(lang);
+        }
+    }
+    int sk;
+    unordered_set<int> cantCommunicate;
+    for (auto fr : friendships) {
+        unordered_set<int>::iterator it;
+        for (it = skill[fr[0]].begin(); it != skill[fr[0]].end(); it++) {
+            if (skill[fr[1]].count(*it) == 1) {
+                break; 
+            } else {
+                sk = *it;
+            }
+        }
+        if (it == skill[fr[0]].end()) {
+            cantCommunicate.emplace(fr[0]);
+            cantCommunicate.emplace(fr[1]);
+        }
+    }
+    for (auto it : cantCommunicate) {
+        for (auto lang : skill[it]) {
+            langCnt[lang]++;
+        }
+    }
+    int t = 0;
+    int lang = 0;
+    for (auto it : langCnt) {
+        if (t < it.second) {
+            t = it.second;
+            lang = it.first;
+        }
+    }
+    int ans = 0;
+    for (auto it : cantCommunicate) {
+        if (skill[it].count(lang) == 0) {
+            ans++;
+        }
+    }
+    return ans;
+}
+
+
+// 投n个6面骰子概率分布
+vector<double> dicesProbability(int n)
+{
+    // p[n][sum] - 投n个骰子和为sum的概率
+    vector<vector<double>> p(n + 1, vector<double>(6 * n + 1, 0.0));
+    int i, j, k;
+    for (i = 1; i <= 6; i++) {
+        p[1][i] = 1.0 / 6;
+    }
+    for (i = 2; i <= n; i++) {
+        for (j = i - 1; j <= 6 * (i - 1); j++) {
+            for (k = 1; k <= 6; k++) {
+                p[i][j + k] += p[i - 1][j] * (1.0 / 6);
+            }
+        }
+    }
+    vector<double> ans;
+    for (i = n; i <= n * 6; i++) {
+        ans.emplace_back(p[n][i]);
+    }
+    return ans;
+}

@@ -439,6 +439,12 @@ int findValidSplit(vector<int>& nums)
 	}
 	return -1;
 }
+
+int MySum(int n)
+{
+	n != 0 && (n += MySum(n - 1));
+	return n;
+}
 Parent par;
 int main(int argc, char *argv[])
 {
@@ -616,6 +622,7 @@ int main(int argc, char *argv[])
 
 	string instructions = "LLGRL";
 	cout << isRobotBounded(instructions) << endl;
+	cout << MySum(10) << endl;
 	cout << "end of main\n";
 	return 0;
 }
