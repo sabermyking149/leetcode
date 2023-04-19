@@ -4812,6 +4812,7 @@ vector<int> gardenNoAdj_1(int n, vector<vector<int>>& paths)
 }
 
 
+// LC2641
 TreeNode* replaceValueInTree(TreeNode* root)
 {
     int i, j;
@@ -5104,6 +5105,54 @@ vector<double> dicesProbability(int n)
     vector<double> ans;
     for (i = n; i <= n * 6; i++) {
         ans.emplace_back(p[n][i]);
+    }
+    return ans;
+}
+
+
+// LC1043
+int maxSumAfterPartitioning(vector<int>& arr, int k)
+{
+    // dp[i][j] - 以i为下标长度为j的子数组最大和, j <= i + 1, j >= 0, j <= k
+    int i, j, p;
+    int t, len;
+    int n = arr.size();
+    vector<vector<int>> dp(n, vector<int>(k + 1, 0));
+
+    // 从后往前找以i为下标,长度为k的子数组中的最大值
+    vector<vector<int>> rangeMax(n, vector<int>(n, 0));
+    for (i = n - 1; i >= 0; i--) {
+        t = 0;
+        for (j = i; j >= 0; j--) {
+            if (j + k == i) {
+                break;
+            }
+            t = max(t, arr[j]);
+            rangeMax[j][i] = t;
+        }
+    }
+    dp[0][1] = arr[0];
+    for (i = 1; i < n; i++) {
+        for (j = i; j >= 0; j--) {
+            if (j + k == i) {
+                break;
+            }
+            len = i - j + 1;
+            dp[i][len] = rangeMax[j][i] * len;
+            t = 0;
+            for (p = 1; p <= k; p++) {
+                if (i - len + 1 - p < 0) {
+                    break;
+                }
+                t = max(t, dp[i - len][p]);
+            }
+            dp[i][i - j + 1] += t;
+        }
+    }
+    int ans = 0;
+
+    for (p = 1; p <= k; p++) {
+        ans = max(ans, dp[n - 1][p]);
     }
     return ans;
 }
