@@ -3688,56 +3688,100 @@ vector<double> cutSquares(vector<int>& square1, vector<int>& square2)
 }
 
 
-// 有问题
-void DFSCountNode(unordered_map<int, unordered_set<int>>& edges, int curNode, vector<bool>& visited, int& nodeCnt, vector<int>& nums, vector<int>& curNodes, int k)
+// LC2597
+void ChooseNode(int n, int idx, int cnt, int tolcnt, int numsArr[], int numsArrSize, int chosenNode[], int k, int& ans)
 {
-    if (curNodes.size() > 1) {
-        for (int i = 0; i < curNodes.size(); i++) {
-            if (abs(curNodes[i] - nums[curNode]) == k) {
-                return;
+    if (tolcnt - cnt > numsArrSize - idx) {
+        return;
+    }
+    if (tolcnt == cnt) {
+        ans++;
+        return;
+    }
+    int i, j;
+    for (i = idx; i < numsArrSize; i++) {
+        if (cnt > 0) {
+            for (j = 0; j < cnt; j++) {
+                if (abs(chosenNode[j] - numsArr[i]) == k) {
+                    break;
+                }
+            }
+            if (j != cnt) {
+                continue;
             }
         }
-    }
-    curNodes.emplace_back(nums[curNode]);
-    visited[curNode] = true;
-    nodeCnt++;
-    for (auto it : edges[curNode]) {
-        if (visited[it] == false) {
-            DFSCountNode(edges, it, visited, nodeCnt, nums, curNodes, k);
-        }
+        chosenNode[cnt] = numsArr[i];
+        ChooseNode(n, i + 1, cnt + 1, tolcnt, numsArr, numsArrSize, chosenNode, k, ans);
     }
 }
 int beautifulSubsets(vector<int>& nums, int k)
 {
-    int i, j;
+    int i;
     int n = nums.size();
+    int chosenNode[20] = {0};
+    int numsArr[20] = {0};
+    for (i = 0; i < n; i++) {
+        numsArr[i] = nums[i];
+    }
     int ans = 0;
-    unordered_map<int, unordered_set<int>> edges;
-    vector<bool> visited(n, false);
-    for (i = 0; i < n - 1; i++) {
-        for (j = i + 1; j < n; j++) {
-            if (abs(nums[i] - nums[j]) != k) {
-                edges[i].emplace(j);
-                edges[j].emplace(i);
+    for (i = 2; i <= n; i++) {
+        ChooseNode(n, 0, 0, i, numsArr, n, chosenNode, k, ans);
+    }
+    return ans + n;
+}
+int beautifulSubsets_1(vector<int>& nums, int k) // 动态规划
+{
+    int i;
+    int n = nums.size();
+    int mod, t;
+    int ans;
+    vector<int> f(n + 1, 0);
+    vector<int> v;
+    unordered_map<int, vector<int>> modK;
+    unordered_map<int, int> numCnt;
+
+    sort(nums.begin(), nums.end()); 
+    for (i = 0; i < n; i++) {
+        numCnt[nums[i]]++;
+        mod = nums[i] % k;
+        if (modK.count(mod) == 0) {
+            modK[mod].emplace_back(nums[i]);
+        } else {
+            t = modK[mod][modK[mod].size() - 1];
+            if (t != nums[i]) {
+                modK[mod].emplace_back(nums[i]);
             }
         }
     }
-    int nodeCnt = 0;
-    vector<int> curNodes;
-    for (i = 0; i < n; i++) {
-        if (visited[i]) {
-            continue;
+    ans = 0;
+    vector<int> sum;
+    for (auto it : modK) {
+        v = it.second;
+        f[0] = 1;
+        f[1] = pow(2, numCnt[it.second[0]]);
+        for (i = 1; i < v.size(); i++) {
+            if (v[i] - v[i - 1] != k) {
+                f[i + 1] = f[i] * pow(2, numCnt[v[i]]);
+            } else {
+                f[i + 1] = f[i] + f[i - 1] * (pow(2, numCnt[v[i]]) - 1);
+            }
         }
-        nodeCnt = 0;
-        curNodes.clear();
-        DFSCountNode(edges, i, visited, nodeCnt, nums, curNodes, k);
-        if (nodeCnt > 0) {
-            ans += pow(2, nodeCnt) - 1;
+        // cout << f[v.size()] << endl;;
+        if (sum.size() == 0) {
+            sum.emplace_back(f[v.size()] - 1);
+        } else {
+            n = sum.size();
+            for (i = 0; i < n; i++) {
+                sum.emplace_back(sum[i] * (f[v.size()] - 1));
+            }
+            sum.emplace_back(f[v.size()] - 1);
         }
+    }
+    for (auto s : sum) {
+        ans += s;
     }
     return ans;
 }
-
 
 // LC1012
 int numDupDigitsAtMostN(int n)
@@ -5154,5 +5198,27 @@ int maxSumAfterPartitioning(vector<int>& arr, int k)
     for (p = 1; p <= k; p++) {
         ans = max(ans, dp[n - 1][p]);
     }
+    return ans;
+}
+
+
+// LC2320
+int countHousePlacements(int n)
+{
+    // dp[i][0] - 下标i处不放置房子方案数; dp[i][1] - 下标i处放置房子方案数; 下标从1开始
+    // dp[i][1] = dp[i - 1][0]; dp[i][0] = dp[i - 1][0] + dp[i - 1][1];
+    int i;
+    int mod = 1000000007;
+    long long ans, t;
+    vector<vector<long long>> dp(n + 1, vector<long long>(2, 0));
+
+    dp[1][0] = 1;
+    dp[1][1] = 1;
+    for (i = 2; i <= n; i++) {
+        dp[i][1] = dp[i - 1][0];
+        dp[i][0] = (dp[i - 1][0] + dp[i - 1][1]) % mod;
+    }
+    t = dp[n][0] + dp[n][1];
+    ans = t * t % mod;
     return ans;
 }
