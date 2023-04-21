@@ -3782,6 +3782,47 @@ int beautifulSubsets_1(vector<int>& nums, int k) // 动态规划
     }
     return ans;
 }
+int beautifulSubsets_2(vector<int>& nums, int k) // 动态规划,更好方法
+{
+    int i;
+    int n = nums.size();
+    int mod, t;
+    int ans;
+    vector<int> f(n + 1, 0);
+    vector<int> v;
+    unordered_map<int, vector<int>> modK;
+    unordered_map<int, int> numCnt;
+
+    sort(nums.begin(), nums.end()); 
+    for (i = 0; i < n; i++) {
+        numCnt[nums[i]]++;
+        mod = nums[i] % k;
+        if (modK.count(mod) == 0) {
+            modK[mod].emplace_back(nums[i]);
+        } else {
+            t = modK[mod][modK[mod].size() - 1];
+            if (t != nums[i]) {
+                modK[mod].emplace_back(nums[i]);
+            }
+        }
+    }
+    ans = 1;
+    for (auto it : modK) {
+        v = it.second;
+        f[0] = 1;
+        f[1] = pow(2, numCnt[it.second[0]]);
+        for (i = 1; i < v.size(); i++) {
+            if (v[i] - v[i - 1] != k) {
+                f[i + 1] = f[i] * pow(2, numCnt[v[i]]);
+            } else {
+                f[i + 1] = f[i] + f[i - 1] * (pow(2, numCnt[v[i]]) - 1);
+            }
+        }
+        // cout << f[v.size()] << endl;
+        ans *= f[v.size()];
+    }
+    return ans - 1;
+}
 
 // LC1012
 int numDupDigitsAtMostN(int n)
@@ -5220,5 +5261,69 @@ int countHousePlacements(int n)
     }
     t = dp[n][0] + dp[n][1];
     ans = t * t % mod;
+    return ans;
+}
+
+
+// LC1178
+void DFSGetPuzzlesHash(string& t, int idx, string& ori, unordered_map<string, int>& wordsHashCnt,
+    unordered_map<string, int>& puzzlesCnt)
+{
+    int i;
+    if (idx == ori.size()) {
+        if (wordsHashCnt.count(t) == 1) {
+            puzzlesCnt[ori] += wordsHashCnt[t];
+        }
+        return;
+    }
+    for (i = 0; i <= 1; i++) {
+        t[ori[idx] - 'a'] = i + '0';
+        DFSGetPuzzlesHash(t, idx + 1, ori, wordsHashCnt, puzzlesCnt);
+    }
+}
+vector<int> findNumOfValidWords(vector<string>& words, vector<string>& puzzles)
+{
+    int i;
+    unordered_set<char> wordHash;
+    unordered_map<string, int> puzzlesCnt;
+    unordered_set<string> uniquePuzzlesSet;
+    unordered_map<string, int> wordsHashCnt;
+    unordered_map<string, string> uniqueWordsHashMap;
+    string t(26, '0');
+    int n = puzzles.size();
+    vector<int> ans(n, 0);
+
+    for (auto word : words) {
+        if (uniqueWordsHashMap.count(word) == 1) {
+            wordsHashCnt[uniqueWordsHashMap[word]]++;
+            continue;
+        }
+        wordHash.clear();
+        t.assign(26, '0');
+        for (i = 0; i < word.size(); i++) {
+            t[word[i] - 'a'] = '1';
+            wordHash.emplace(word[i]);
+            if (wordHash.size() > 7) {
+                break;
+            }
+        }
+        if (i == word.size()) {
+            wordsHashCnt[t]++;
+            uniqueWordsHashMap[word] = t;
+        }
+    }
+    for (auto p : puzzles) {
+        if (uniquePuzzlesSet.count(p) == 1) {
+            continue;
+        }
+        uniquePuzzlesSet.emplace(p);
+        t.assign(26, '0');
+        t[p[0] - 'a'] = '1';
+        DFSGetPuzzlesHash(t, 1, p, wordsHashCnt, puzzlesCnt);
+        // cout << usedPuzzlesHash.size() << endl;
+    }
+    for (i = 0; i < n; i++) {
+        ans[i] = puzzlesCnt[puzzles[i]];
+    }
     return ans;
 }
