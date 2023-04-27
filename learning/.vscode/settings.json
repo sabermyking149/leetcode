@@ -24,6 +24,7 @@
         "string": "cpp",
         "numeric": "cpp",
         "ostream": "cpp",
-        "numbers": "cpp"
+        "numbers": "cpp",
+        "*.tcc": "cpp"
     }
 }

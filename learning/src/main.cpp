@@ -446,7 +446,7 @@ int MySum(int n)
 	return n;
 }
 Parent par;
-int main(int argc, char *argv[])
+int main0(int argc, char *argv[])
 {
 #if 0
 	cout << "abc\n";
@@ -624,5 +624,11 @@ int main(int argc, char *argv[])
 	cout << isRobotBounded(instructions) << endl;
 	cout << MySum(10) << endl;
 	cout << "end of main\n";
+	return 0;
+}
+
+
+int main(int argc, char *argv[])
+{
 	return 0;
 }

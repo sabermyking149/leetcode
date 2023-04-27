@@ -4945,8 +4945,8 @@ TreeNode* replaceValueInTree(TreeNode* root)
 // LC2642
 class Graph {
 public:
-    unordered_map<int, set<vector<int>>> edges;
     int n;
+    unordered_map<int, set<vector<int>>> edges;
     Graph(int n, vector<vector<int>>& edges)
     {
         for (auto e : edges) {
@@ -4962,12 +4962,8 @@ public:
     
     int shortestPath(int node1, int node2) // 超时
     {
-        int i;
-        int size;
         pair<int, int> t;
-        vector<bool> visited(n, false);
-        // unordered_map<int, int> nodeDist;
-        vector<int> nodeDist(n, 0);
+        vector<int> nodeDist(n, INT_MAX);
         queue<pair<int, int>> q;
 
         if (node1 == node2) {
@@ -4975,38 +4971,67 @@ public:
         }
         q.push({node1, 0});
         while (q.size()) {
-            size = q.size();
-            for (i = 0; i < size; i++) {
-                t = q.front();
-                q.pop();
-                if (nodeDist[node2] > 0 && nodeDist[node2] <= t.second) {
-                    continue;
-                }
-                if (visited[t.first] == false) {
-                    nodeDist[t.first] = t.second;
-                    visited[t.first] = true;
-                } else {
-                    if (nodeDist[t.first] > t.second) {
-                        nodeDist[t.first] = t.second;
-                    } else {
-                        continue;
-                    }
-                }
-                if (t.first == node2) {
-                    continue;
-                }
-                for (auto e : edges[t.first]) {
+            t = q.front();
+            q.pop();
+            if (nodeDist[t.first] < t.second) {
+                continue;
+            }
+            nodeDist[t.first] = t.second;
+            for (auto e : edges[t.first]) {
+                if (nodeDist[e[0]] > t.second + e[1]) {
+                    nodeDist[e[0]] = t.second + e[1];
                     q.push({e[0], t.second + e[1]});
                 }
             }
         }
-        if (nodeDist[node2] > 0) {
-            return nodeDist[node2];
-        }
-        return -1;
+        return nodeDist[node2] == INT_MAX ? -1 : nodeDist[node2];
     }
 };
 
+class Graph1 {
+public:
+    int n;
+    vector<vector<pair<int, int>>> edges;
+    Graph1(int n, vector<vector<int>>& edges)
+    {
+        this->n = n;
+        this->edges = vector<vector<pair<int, int>>>(n);
+        for (auto e : edges) {
+            (this->edges)[e[0]].push_back({e[1], e[2]});
+        }
+    }
+    
+    void addEdge(vector<int> edge)
+    {
+        (this->edges)[edge[0]].push_back({edge[1], edge[2]});
+    }
+    
+    int shortestPath(int node1, int node2)
+    {
+        pair<int, int> t;
+        vector<int> nodeDist(n, INT_MAX);
+        queue<pair<int, int>> q;
+        if (node1 == node2) {
+            return 0;
+        }
+        q.push({node1, 0});
+        while (q.size()) {
+            t = q.front();
+            q.pop();
+            if (nodeDist[t.first] < t.second) {
+                continue;
+            }
+            nodeDist[t.first] = t.second;
+            for (auto e : edges[t.first]) {
+                if (nodeDist[e.first] > t.second + e.second) {
+                    nodeDist[e.first] = t.second + e.second;
+                    q.push({e.first, t.second + e.second});
+                }
+            }
+        }
+        return nodeDist[node2] == INT_MAX ? -1 : nodeDist[node2];
+    }
+};
 
 // LC2646
 unordered_map<int, int> tripCostData;
@@ -5324,6 +5349,416 @@ vector<int> findNumOfValidWords(vector<string>& words, vector<string>& puzzles)
     }
     for (i = 0; i < n; i++) {
         ans[i] = puzzlesCnt[puzzles[i]];
+    }
+    return ans;
+}
+
+
+// LCP72
+vector<int> supplyWagon(vector<int>& supplies)
+{
+    int i;
+    int n;
+    vector<int> t, v;
+    pair<int, int> p;
+    vector<pair<int, int>> vp;
+
+    v = supplies;
+    while (v.size() > supplies.size() / 2) {
+        t.clear();
+        n = v.size();
+        for (i = 1; i < n; i++) {
+            vp.push_back({v[i] + v[i - 1], i - 1});
+        }
+        sort (vp.begin(), vp.end());
+        p = vp[0];
+        vp.clear();
+        for (i = 0; i < n; i++) {
+            if (i == p.second) {
+                t.emplace_back(p.first);
+                i++;
+            } else {
+                t.emplace_back(v[i]);
+            }
+        }
+        v = t;
+    }
+    return v;
+}
+
+
+// LCP73
+vector<string> MySplit(string& s, string separate)
+{
+    int idx;
+    string t;
+    vector<string> ans;
+
+    t = s;
+    while (1) {
+        idx = t.find(separate);
+        if (idx == string::npos) {
+            ans.emplace_back(t);
+            break;
+        }
+        ans.emplace_back(t.substr(0, idx));
+        t = t.substr(idx + separate.size());
+    }
+    return ans;
+}
+int adventureCamp(vector<string>& expeditions)
+{
+    int i;
+    int ans, newFound;
+    int n = expeditions.size();
+    vector<int> newFoundSite(n, 0);
+    unordered_set<string> visitedSite;
+    vector<string> vs;
+
+    if (expeditions[0].size() > 0) {
+        vs = MySplit(expeditions[0], "->");
+        for (auto t : vs) {
+            visitedSite.emplace(t);
+        }
+    }
+    for (i = 1; i < n; i++) {
+        if (expeditions[i].size() == 0) {
+            continue;
+        }
+        vs = MySplit(expeditions[i], "->");
+        for (auto t : vs) {
+            if (visitedSite.count(t) == 0) {
+                newFoundSite[i]++;
+                visitedSite.emplace(t);
+            }
+        }
+    }
+    ans = -1;
+    newFound = 0;
+    for (i = 1; i < n; i++) {
+        if (newFoundSite[i] > newFound) {
+            newFound = newFoundSite[i];
+            ans = i;
+        }
+    }
+    return ans;
+}
+
+
+// LCP74 有问题
+// [x1, y1, x2, y2] [x3, y3, x4, y4]
+// (x4 - x1) * (x3 - x2) <= 0 且 (y4 - y1) * (y3 - y2) <= 0
+bool CheckIfCoincided(vector<double>& a, vector<double>& b)
+{
+    return ((b[2] - a[0]) * (b[0] - a[2])) <= 0 && ((b[3] - a[1]) * (b[1] - a[3]) <= 0);
+}
+int fieldOfGreatestBlessing(vector<vector<int>>& forceField)
+{
+    int i, j, k, l;
+    int m, cnt, ans;
+    // 转换forceFiel为左下-右上坐标
+    vector<vector<double>> newForceField;
+    for (auto t : forceField) {
+        newForceField.push_back({t[0] - t[2] / 2.0, t[1] - t[2] / 2.0, t[0] + t[2] / 2.0, t[1] + t[2] / 2.0});
+    }
+    /*for (auto t : newForceField) {
+        for (auto v : t) {
+            cout << v << " ";
+        }
+        cout << endl;
+    }*/
+
+    vector<vector<double>> coincidedTriange;
+    ans = 1;
+    m = newForceField.size();
+    for (i = 0; i < m; i++) {
+        coincidedTriange.clear();
+        coincidedTriange.emplace_back(newForceField[i]);
+        for (j = i + 1; j < m; j++) {
+            // [x1, y1, x2, y2] [x3, y3, x4, y4]
+            // (x4 - x1) * (x3 - x2) <= 0 且 (y4 - y1) * (y3 - y2) <= 0
+            /*if ((newForceField[j][2] - newForceField[i][0]) * (newForceField[j][0] - newForceField[i][2]) <= 0 &&
+                (newForceField[j][3] - newForceField[i][1]) * (newForceField[j][1] - newForceField[i][3]) <= 0)
+            {
+                cnt++;
+            }*/
+            // coincidedTriange.clear();
+            if (CheckIfCoincided(newForceField[i], newForceField[j])) {
+                // coincidedTriange.emplace_back(newForceField[i]);
+                coincidedTriange.emplace_back(newForceField[j]);
+                for (k = j + 1; k < m; k++) {
+                    for (l = 0; l < coincidedTriange.size(); l++) {
+                        if (CheckIfCoincided(newForceField[l], newForceField[k]) == false) {
+                            break;
+                        }
+                    }
+                    if (l == coincidedTriange.size()) {
+                        coincidedTriange.emplace_back(newForceField[k]);
+                    }
+                }
+                ans = max(ans, static_cast<int>(coincidedTriange.size()));
+            }
+        }
+    }
+    return ans;
+}
+
+void DFSGetMaxCoincided(vector<vector<double>>& forceField, int curIdx, vector<vector<double>>& coincidedTriange, int cnt, int& maxNum)
+{
+    int i, k;
+    int n = forceField.size();
+
+    if (curIdx == n) {
+        maxNum = max(cnt, maxNum);
+        return;
+    }
+    for (i = curIdx; i < n; i++) {
+        if (coincidedTriange.size() == 0) {
+            coincidedTriange.emplace_back(forceField[i]);
+            DFSGetMaxCoincided(forceField, i + 1, coincidedTriange, cnt + 1, maxNum);
+            coincidedTriange.pop_back();
+        } else {
+            for (k = 0; k < coincidedTriange.size(); k++) {
+                if (CheckIfCoincided(forceField[k], forceField[curIdx]) == false) {
+                    break;
+                }
+            }
+            if (k == coincidedTriange.size()) {
+                coincidedTriange.emplace_back(forceField[curIdx]);
+                DFSGetMaxCoincided(forceField, i + 1, coincidedTriange, cnt + 1, maxNum);
+                coincidedTriange.pop_back();
+            } else {
+                DFSGetMaxCoincided(forceField, i + 1, coincidedTriange, cnt, maxNum);
+            }
+        }
+    }
+}
+int fieldOfGreatestBlessing(vector<vector<int>>& forceField)
+{
+    int i, j, k, l;
+    int m, cnt, ans;
+    // 转换forceFiel为左下-右上坐标
+    vector<vector<double>> newForceField;
+    for (auto t : forceField) {
+        newForceField.push_back({t[0] - t[2] / 2.0, t[1] - t[2] / 2.0, t[0] + t[2] / 2.0, t[1] + t[2] / 2.0});
+    }
+    /*for (auto t : newForceField) {
+        for (auto v : t) {
+            cout << v << " ";
+        }
+        cout << endl;
+    }*/
+
+    vector<vector<double>> coincidedTriange;
+    ans = 1;
+    m = newForceField.size();
+    for (i = 0; i < m; i++) {
+        coincidedTriange.clear();
+        coincidedTriange.emplace_back(newForceField[i]);
+        for (j = i + 1; j < m; j++) {
+            for (k = 0; k < coincidedTriange.size(); k++) {
+                if (CheckIfCoincided(newForceField[k], newForceField[j]) == false) {
+                    break;
+                }
+            }
+            if (k == coincidedTriange.size()) {
+                coincidedTriange.emplace_back(newForceField[j]);
+            }
+        }
+        ans = max(ans, static_cast<int>(coincidedTriange.size()));
+    }
+    return ans;
+}
+
+
+// LC2653
+vector<int> getSubarrayBeauty(vector<int>& nums, int k, int x)
+{
+    int i;
+    int n = nums.size();
+    int t;
+    vector<int> ans;
+    map<int, int> cnt;
+    for (i = 0; i < k; i++) {
+        cnt[nums[i]]++;
+    }
+    t = 0;
+    for (auto it : cnt) {
+        t += it.second;
+        if (t >= x) {
+            ans.emplace_back(it.first < 0 ? it.first : 0);
+            break;
+        }
+    }
+    for (i = k; i < n; i++) {
+        cnt[nums[i]]++;
+        if (cnt[nums[i - k]] == 1) {
+            cnt.erase(nums[i - k]);
+        } else {
+            cnt[nums[i - k]]--;
+        }
+        t = 0;
+        for (auto it : cnt) {
+            t += it.second;
+            if (t >= x) {
+                ans.emplace_back(it.first < 0 ? it.first : 0);
+                break;
+            }
+        }
+    }
+    return ans;
+}
+
+// LC241 有问题
+void DivideExpression(string& expression, vector<int>& nums, vector<char>& signs)
+{
+    int i;
+    int curIdx;
+    int n = expression.size();
+    unordered_set<char> sign = {'+', '-', '*'};
+
+    curIdx = 0;
+    for (i = 0; i < n; i++) {
+        if (sign.count(expression[i]) == 1) {
+            signs.emplace_back(expression[i]);
+            nums.emplace_back(atoi(expression.substr(curIdx, i - curIdx).c_str()));
+            curIdx = i + 1;
+        }
+    }
+    nums.emplace_back(atoi(expression.substr(curIdx).c_str()));
+}
+void BFAllPossibleExpression(int n, vector<int>& record, vector<bool>& visited, 
+    vector<tuple<char, int , int>>& expressionData, set<vector<int>>& possibleAns)
+{
+    int i;
+    int no, t, a, b;
+    char sign;
+    vector<int> middleAns;
+    if (record.size() == n) {
+        middleAns.clear();
+        auto tmpExpressionData = expressionData;
+        for (i = 0; i < record.size(); i++) {
+            no = record[i];
+            sign = get<0>(tmpExpressionData[no]);
+            a = get<1>(tmpExpressionData[no]);
+            b = get<2>(tmpExpressionData[no]);
+            if (sign == '+') {
+                t = a + b;
+            } else if (sign == '-') {
+                t = a - b;
+            } else {
+                t = a * b;
+            }
+            middleAns.emplace_back(t);
+            if (no >= 1) {
+                get<2>(tmpExpressionData[no - 1]) = t;
+            }
+            if (no < n - 1) {
+                get<1>(tmpExpressionData[no + 1]) = t;
+            }
+        }
+        possibleAns.emplace(middleAns);
+        return;
+    }
+    for (i = 0; i < n ; i++) {
+        if (visited[i] == false) {
+            visited[i] = true;
+            record.emplace_back(i);
+            BFAllPossibleExpression(n, record, visited, expressionData, possibleAns);
+            visited[i] = false;
+            record.pop_back();
+        }
+    }
+}
+vector<int> diffWaysToCompute(string expression)
+{
+    int i;
+    vector<int> ans;
+    vector<int> nums;
+    vector<char> signs;
+
+    DivideExpression(expression, nums, signs);
+    if (signs.size() == 0) {
+        return nums;
+    }
+    vector<tuple<char, int , int>> expressionData;
+    for (i = 0; i < signs.size(); i++) {
+        expressionData.push_back({signs[i], nums[i], nums[i + 1]});
+    }
+    // 根据signs大小枚举所有运算顺序, 共 (signs.size())!种
+    int n = signs.size();
+    set<vector<int>> possibleAns;
+    vector<int> record;
+    vector<bool> visited(n, false);
+    BFAllPossibleExpression(n, record, visited, expressionData, possibleAns);
+    for (auto it : possibleAns) {
+        ans.emplace_back(it[it.size() - 1]);
+    }
+    return ans;
+}
+
+
+// LC2439
+int minimizeArrayValue(vector<int>& nums)
+{
+    int i;
+    int n = nums.size();
+    int left, right, mid;
+    long long diff;
+
+    left = right = nums[0];
+    for (i = 0; i < n; i++) {
+        left = min(left, nums[i]);
+        right = max(right, nums[i]);
+    }
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        diff = 0;
+        for (i = 0; i < n; i++) {
+            diff += static_cast<long long>(mid) - nums[i];
+            if (diff < 0) {
+                break;
+            }
+        }
+        if (diff < 0) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    return right + 1;
+}
+
+
+// LC935
+int knightDialer(int n)
+{
+    // dp[n][x] - 走n步落在x的总情况
+    // 1 - (6, 8) 2 - (7, 9) 3 - (4, 8) 4 - （0, 3, 9）
+    // 5 - () 6 - (0, 1, 7) 7 - (2, 6)
+    // 8 - (1, 3) 9 - (2, 4) 0 - (4, 6)
+    // dp[n][x] = dp[n - 1][a] + dp[n - 1][b] + ..., 所求 sum(dp[n])
+    int i;
+    int mod = 1000000007;
+    vector<vector<long long>> dp(n + 1, vector<long long>(10, 0));
+    
+    for (i = 0; i < 10; i++) {
+        dp[1][i] = 1;
+    }
+    for (i = 2; i <= n; i++) {
+        dp[i][1] = (dp[i - 1][6] + dp[i - 1][8]) % mod;
+        dp[i][2] = (dp[i - 1][7] + dp[i - 1][9]) % mod;
+        dp[i][3] = (dp[i - 1][4] + dp[i - 1][8]) % mod;
+        dp[i][4] = (dp[i - 1][0] + dp[i - 1][3] + dp[i - 1][9]) % mod;
+        dp[i][6] = (dp[i - 1][0] + dp[i - 1][1] + dp[i - 1][7]) % mod;
+        dp[i][7] = (dp[i - 1][2] + dp[i - 1][6]) % mod;
+        dp[i][8] = (dp[i - 1][1] + dp[i - 1][3]) % mod;
+        dp[i][9] = (dp[i - 1][2] + dp[i - 1][4]) % mod;
+        dp[i][0] = (dp[i - 1][4] + dp[i - 1][6]) % mod;
+    }
+    long long ans = 0;
+    for (i = 0; i < 10; i++) {
+        ans = (ans + dp[n][i]) % mod;
     }
     return ans;
 }
