@@ -5762,3 +5762,99 @@ int knightDialer(int n)
     }
     return ans;
 }
+
+
+// LC2655
+vector<vector<int>> findMaximalUncoveredRanges(int n, vector<vector<int>>& ranges)
+{
+    vector<vector<int>> combinedRange, ans;
+    vector<int> t(2);
+    int size = ranges.size();
+    int i;
+
+    if (size == 0) {
+        return {{0, n - 1}};
+    }
+    sort(ranges.begin(), ranges.end());
+    t[0] = ranges[0][0];
+    t[1] = ranges[0][1];
+    for (i = 1; i < size; i++) {
+        if (ranges[i][0] <= t[1] + 1) {
+            t[1] = max(ranges[i][1], t[1]);
+        } else {
+            combinedRange.emplace_back(t);
+            t[0] = ranges[i][0];
+            t[1] = ranges[i][1];
+        }
+    }
+    combinedRange.emplace_back(t);
+
+    if (combinedRange[0][0] >= 1) {
+        ans.push_back({0, combinedRange[0][0] - 1});
+    }
+    size = combinedRange.size();
+    for (i = 1; i < size; i++) {
+        ans.push_back({combinedRange[i - 1][1] + 1, combinedRange[i][0] - 1});
+    }
+    if (combinedRange[size - 1][1] + 1 < n) {
+        ans.push_back({combinedRange[size - 1][1] + 1, n - 1});
+    }
+    return ans;
+}
+
+
+// LC1334
+int findTheCity(int n, vector<vector<int>>& edges, int distanceThreshold)
+{
+    int i, k;
+    int size = edges.size();
+    int cnt;
+    vector<int> dist;
+    vector<int> cityCnt(n, 0);
+    vector<vector<pair<int, int>>> edgeWithWeight(n);
+    queue<pair<int, int>> q;
+    pair<int, int> t;
+
+    for (i = 0; i < size; i++) {
+        edgeWithWeight[edges[i][0]].push_back({edges[i][1], edges[i][2]});
+        edgeWithWeight[edges[i][1]].push_back({edges[i][0], edges[i][2]});
+    }
+
+    for (i = 0; i < n; i++) {
+        dist.assign(n, INT_MAX);
+
+        q.push({i, 0});
+        while (q.size()) {
+            t = q.front();
+            q.pop();
+
+            if (dist[t.first] < t.second) {
+                continue;
+            }
+            dist[t.first] = t.second;
+            size = edgeWithWeight[t.first].size();
+            for (auto e : edgeWithWeight[t.first]) {
+                if (e.second + t.second < dist[e.first]) {
+                    dist[e.first] = e.second + t.second;
+                    q.push({e.first, dist[e.first]});
+                }
+            }
+        }
+        cnt = 0;
+        for (k = 0; k < n; k++) {
+            if (k != i && dist[k] <= distanceThreshold) {
+                cnt++;
+            }
+        }
+        cityCnt[i] = cnt;
+    }
+    int ans = 0;
+    int cur = INT_MAX;
+    for (i = 0; i < n; i++) {
+        if (cityCnt[i] <= cur) {
+            cur = cityCnt[i];
+            ans = i;
+        }
+    }
+    return ans;
+}
