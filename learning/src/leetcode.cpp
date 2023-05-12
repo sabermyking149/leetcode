@@ -5858,3 +5858,280 @@ int findTheCity(int n, vector<vector<int>>& edges, int distanceThreshold)
     }
     return ans;
 }
+
+
+// LC2658
+void DFSScanGridForFish(vector<vector<int>>& grid, int row, int col, vector<vector<bool>>& visited, int& cnt)
+{
+    visited[row][col] = true;
+    cnt += grid[row][col];
+
+    int i;
+    int directions[4][2] = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
+    int newR, newC;
+    int m = grid.size();
+    int n = grid[0].size();
+    for (i = 0; i < 4; i++) {
+        newR = row + directions[i][0];
+        newC = col + directions[i][1];
+        if (newR >= 0 && newR < m && newC >= 0 && newC < n && grid[newR][newC] > 0 && visited[newR][newC] == false) {
+            DFSScanGridForFish(grid, newR, newC, visited, cnt);
+        }
+    }
+}
+int findMaxFish(vector<vector<int>>& grid)
+{
+    int i, j;
+    int m = grid.size();
+    int n = grid[0].size();
+    int ans, cnt;
+    vector<vector<bool>> visited(m, vector<bool>(n, false));
+
+    ans = 0;
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            if (visited[i][j] == false && grid[i][j] > 0) {
+                cnt = 0;
+                DFSScanGridForFish(grid, i, j, visited, cnt);
+                ans = max(ans, cnt);
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LC2662
+int minimumCost1(vector<int>& start, vector<int>& target, vector<vector<int>>& specialRoads)
+{
+    int i, j;
+    int m = specialRoads.size();
+    int n = 5;
+    // vector<vector<int>> trueRoads;
+    int row = target[0];
+    int col = target[1];
+    int r, c, nr, nc;
+    long long pos;
+    int cost, point;
+    int directions[4][2] = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
+    unordered_map<long long, vector<long long>> trueRoads; // 二维坐标转一维
+    unordered_map<long long, long long> costData;
+    queue<tuple<int, int, long long>> q;
+
+    for (i = 0; i < m; i++) {
+        cost = abs(specialRoads[i][0] - specialRoads[i][2]) +
+                abs(specialRoads[i][1] - specialRoads[i][3]);
+        if (cost > specialRoads[i][4]) {
+            // trueRoads.emplace_back(specialRoads[i]);
+            trueRoads[static_cast<long long>(specialRoads[i][0]) * col + specialRoads[i][1]] = 
+            {static_cast<long long>(specialRoads[i][2]) * col + specialRoads[i][3], specialRoads[i][4]};
+
+            
+            // cout << static_cast<long long>(specialRoads[i][0]) * col + specialRoads[i][1] << endl;
+            trueRoads[static_cast<long long>(specialRoads[i][2]) * col + specialRoads[i][3]] = 
+            {static_cast<long long>(specialRoads[i][0]) * col + specialRoads[i][1], specialRoads[i][4]};
+        }
+    }
+    int ans = INT_MAX;
+    q.push({start[0], start[1], 0});
+    while (q.size()) {
+        auto t = q.front();
+        q.pop();
+        r = get<0>(t);
+        c = get<1>(t);
+        point = get<2>(t);
+        pos = static_cast<long long>(r) * col + c;
+        costData[pos] = point;
+        // printf ("pos = %ld\n", pos);
+        if (r == target[0] && c == target[1]) {
+            ans = min(point, ans);
+            // break;
+            continue;
+        }
+        if (trueRoads.count(pos) == 1) {
+            cout <<"aa\n";
+            if (costData.count(trueRoads[pos][0]) == 0) {
+                costData[trueRoads[pos][0]] = point + trueRoads[pos][1];
+                printf ("1: %d\n", costData[pos]);
+                // q.push({trueRoads[pos][0] / col, trueRoads[pos][0] % col, costData[pos]});
+                q.push({trueRoads[pos][0] / col, trueRoads[pos][0] % col, costData[trueRoads[pos][0]]});
+            } else {
+                printf ("2: %d\n", costData[pos]);
+                if (costData[trueRoads[pos][0]] > point + trueRoads[pos][1]) {
+                    costData[trueRoads[pos][0]] = point + trueRoads[pos][1];
+                    
+                    // q.push({trueRoads[pos][0] / col, trueRoads[pos][0] % col, costData[pos]});
+                    q.push({trueRoads[pos][0] / col, trueRoads[pos][0] % col, costData[trueRoads[pos][0]]});
+                }
+            }
+            r = trueRoads[pos][1] / col;
+            c = trueRoads[pos][1] % col;
+            for (i = 0; i < 4; i++) {
+                nr = r + directions[i][0];
+                nc = c + directions[i][1];
+                point = costData[trueRoads[pos][0]];
+                if (nr < start[0] || nr > target[0] || nc < start[1] || nc > target[1]) {
+                    continue;
+                }
+                pos = static_cast<long long>(nr) * col + nc;
+                if (costData.count(pos) == 1) {
+                    if (point + 1 >= costData[pos]) {
+                        continue;
+                    }
+                }
+                //costData[pos] = point + 1;
+                q.push({nr, nc, point + 1});
+            }
+        }
+        
+        for (i = 0; i < 4; i++) {
+            nr = r + directions[i][0];
+            nc = c + directions[i][1];
+            if (nr < start[0] || nr > target[0] || nc < start[1] || nc > target[1]) {
+                continue;
+            }
+            pos = static_cast<long long>(nr) * col + nc;
+            if (costData.count(pos) == 1) {
+                if (point + 1 >= costData[pos]) {
+                    continue;
+                }
+            }
+            //costData[pos] = point + 1;
+            q.push({nr, nc, point + 1});
+        }
+    }
+    return ans;
+}
+
+
+int minimumCost(vector<int>& start, vector<int>& target, vector<vector<int>>& specialRoads)
+{
+}
+
+// LC2659
+long long countOperationsToEmptyArray(vector<int>& nums) // 有问题
+{
+    int i;
+    int n = nums.size();
+    int curIdx;
+    long long ans = 0;
+    pair<int, int> p;
+    priority_queue<pair<int, int>, vector<pair<int, int>, greater<>>> pq;
+
+    for (i = 0; i < n; i++) {
+        pq.push({nums[i], i});
+    }
+    curIdx = 0;
+    while (pq.size()) {
+        p = pq.top();
+        pq.pop();
+
+        if (p.second > curIdx) {
+            ans += static_cast<long long>(p.second - curIdx);
+        }
+    }
+    return ans;
+}
+
+
+// LCP78
+int rampartDefensiveLine(vector<vector<int>>& rampart)
+{
+    vector<int> diff;
+    int i;
+    int n = rampart.size();
+    int curLeft;
+    int left, right, mid;
+    bool tooLarge = false;
+
+    left = 1;
+    right = 0;
+    for (i = 1; i < n; i++) {
+        diff.emplace_back(rampart[i][0] - rampart[i - 1][1]);
+        right = max(right, rampart[i][0] + rampart[i - 1][1]);
+    }
+    n = diff.size();
+    if (n == 2) {
+        return diff[0] + diff[1];
+    }
+    int t = 0;
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        curLeft = diff[0];
+        tooLarge = false;
+        for (i = 1; i < n; i++) {
+            if (curLeft >= mid) {
+                curLeft = diff[i];
+                continue;
+            }
+            curLeft = curLeft + diff[i] - mid;
+            if (curLeft < 0) {
+                right = mid - 1;
+                tooLarge = true;
+                break;
+            }
+        }
+        if (tooLarge) {
+            continue;
+        }
+        left = mid + 1;
+    }
+    return right;
+}
+
+
+
+// LCP80
+string CalcEvolutionaryRoute(unordered_map<int, unordered_set<int>>& edges, int cur, unordered_map<int, string>& nodeRoute)
+{
+    if (edges.count(cur) == 0) {
+        return "";
+    }
+    vector<string> routes;
+    string route, ans;
+    for (auto it : edges[cur]) {
+        route.clear();
+        if (nodeRoute.count(it) == 0) {
+            route += '0';
+            route += CalcEvolutionaryRoute(edges, it, nodeRoute);
+            route += '1';
+            nodeRoute[it] = route;
+        }
+        // printf ("%d: %s\n", cur, nodeRoute[it].c_str());
+        routes.emplace_back(nodeRoute[it]);
+    }
+    sort(routes.begin(), routes.end());
+    for (auto r : routes) {
+        ans += r;
+    }
+    return ans;
+}
+string evolutionaryRecord(vector<int>& parents)
+{
+    int i;
+    int n = parents.size();
+    int root;
+    unordered_map<int, unordered_set<int>> edges;
+    unordered_map<int, string> nodeRoute;
+    string ans;
+    // 建图
+    for (i = 0; i < n; i++) {
+        if (parents[i] != -1) {
+            edges[parents[i]].emplace(i);
+        } else {
+            root = i;
+        }
+    }
+    ans = CalcEvolutionaryRoute(edges, root, nodeRoute);
+
+    int len = ans.size();
+    int idx = len;
+    for (i = len - 1; i >= 0; i--) {
+        if (ans[i] == '0') {
+            idx = i;
+            break;
+        }
+    }
+    ans = ans.substr(0, idx + 1);
+    return ans;
+}

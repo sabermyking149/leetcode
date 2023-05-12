@@ -25,6 +25,8 @@
         "numeric": "cpp",
         "ostream": "cpp",
         "numbers": "cpp",
-        "*.tcc": "cpp"
+        "*.tcc": "cpp",
+        "array": "cpp",
+        "istream": "cpp"
     }
 }
