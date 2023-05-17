@@ -5533,7 +5533,7 @@ void DFSGetMaxCoincided(vector<vector<double>>& forceField, int curIdx, vector<v
         }
     }
 }
-int fieldOfGreatestBlessing(vector<vector<int>>& forceField)
+int fieldOfGreatestBlessing1(vector<vector<int>>& forceField)
 {
     int i, j, k, l;
     int m, cnt, ans;
@@ -5902,34 +5902,27 @@ int findMaxFish(vector<vector<int>>& grid)
 
 
 // LC2662
-int minimumCost1(vector<int>& start, vector<int>& target, vector<vector<int>>& specialRoads)
+int minimumCost(vector<int>& start, vector<int>& target, vector<vector<int>>& specialRoads) // 超时
 {
     int i, j;
     int m = specialRoads.size();
-    int n = 5;
-    // vector<vector<int>> trueRoads;
-    int row = target[0];
-    int col = target[1];
     int r, c, nr, nc;
-    long long pos;
-    int cost, point;
+    int cost, point, npoint;
     int directions[4][2] = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
-    unordered_map<long long, vector<long long>> trueRoads; // 二维坐标转一维
-    unordered_map<long long, long long> costData;
+    //int directions[4][2] = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
+    map<pair<int, int>, vector<tuple<int, int, int>>> trueRoads;
+    map<pair<int, int>, long long> costData;
     queue<tuple<int, int, long long>> q;
 
     for (i = 0; i < m; i++) {
         cost = abs(specialRoads[i][0] - specialRoads[i][2]) +
                 abs(specialRoads[i][1] - specialRoads[i][3]);
         if (cost > specialRoads[i][4]) {
-            // trueRoads.emplace_back(specialRoads[i]);
-            trueRoads[static_cast<long long>(specialRoads[i][0]) * col + specialRoads[i][1]] = 
-            {static_cast<long long>(specialRoads[i][2]) * col + specialRoads[i][3], specialRoads[i][4]};
+            trueRoads[{specialRoads[i][0], specialRoads[i][1]}].push_back(
+            {specialRoads[i][2], specialRoads[i][3], specialRoads[i][4]});
 
-            
-            // cout << static_cast<long long>(specialRoads[i][0]) * col + specialRoads[i][1] << endl;
-            trueRoads[static_cast<long long>(specialRoads[i][2]) * col + specialRoads[i][3]] = 
-            {static_cast<long long>(specialRoads[i][0]) * col + specialRoads[i][1], specialRoads[i][4]};
+            //trueRoads[{specialRoads[i][2], specialRoads[i][3]}].push_back(
+            //{specialRoads[i][0], specialRoads[i][1], specialRoads[i][4]});
         }
     }
     int ans = INT_MAX;
@@ -5940,72 +5933,52 @@ int minimumCost1(vector<int>& start, vector<int>& target, vector<vector<int>>& s
         r = get<0>(t);
         c = get<1>(t);
         point = get<2>(t);
-        pos = static_cast<long long>(r) * col + c;
-        costData[pos] = point;
-        // printf ("pos = %ld\n", pos);
-        if (r == target[0] && c == target[1]) {
-            ans = min(point, ans);
-            // break;
+        //printf ("0: %d %d %d\n", r, c, point);
+        if (costData.count({r, c}) == 1 && costData[{r, c}] <= point) {
             continue;
         }
-        if (trueRoads.count(pos) == 1) {
-            cout <<"aa\n";
-            if (costData.count(trueRoads[pos][0]) == 0) {
-                costData[trueRoads[pos][0]] = point + trueRoads[pos][1];
-                printf ("1: %d\n", costData[pos]);
-                // q.push({trueRoads[pos][0] / col, trueRoads[pos][0] % col, costData[pos]});
-                q.push({trueRoads[pos][0] / col, trueRoads[pos][0] % col, costData[trueRoads[pos][0]]});
-            } else {
-                printf ("2: %d\n", costData[pos]);
-                if (costData[trueRoads[pos][0]] > point + trueRoads[pos][1]) {
-                    costData[trueRoads[pos][0]] = point + trueRoads[pos][1];
-                    
-                    // q.push({trueRoads[pos][0] / col, trueRoads[pos][0] % col, costData[pos]});
-                    q.push({trueRoads[pos][0] / col, trueRoads[pos][0] % col, costData[trueRoads[pos][0]]});
-                }
-            }
-            r = trueRoads[pos][1] / col;
-            c = trueRoads[pos][1] % col;
-            for (i = 0; i < 4; i++) {
-                nr = r + directions[i][0];
-                nc = c + directions[i][1];
-                point = costData[trueRoads[pos][0]];
-                if (nr < start[0] || nr > target[0] || nc < start[1] || nc > target[1]) {
-                    continue;
-                }
-                pos = static_cast<long long>(nr) * col + nc;
-                if (costData.count(pos) == 1) {
-                    if (point + 1 >= costData[pos]) {
-                        continue;
-                    }
-                }
-                //costData[pos] = point + 1;
-                q.push({nr, nc, point + 1});
-            }
+        if (r == target[0] && c == target[1]) {
+            ans = min(point, ans);
+            continue;
         }
         
+        if (r == 1 && c == 2 && point == 1) {
+            int ndfd = 34;
+        }
+        costData[{r, c}] = point;
+        if (trueRoads.count({r, c}) == 1) {
+            for (auto it : trueRoads[{r, c}]) {
+                pair<int, int> p = {get<0>(it), get<1>(it)};
+                npoint = point + get<2>(it);
+                if (costData.count(p) == 0) {
+                    //printf ("1: %d %d %d\n", r, c, point);
+                    q.push({p.first, p.second, npoint});
+                    //printf ("1.1: %d %d %d\n", p.first, p.second, npoint);
+                } else {
+                    if (costData[p] > npoint) {
+                        // costData[p] = npoint;
+                        q.push({p.first, p.second, npoint});
+                        //printf ("2: %d %d %d\n", p.first, p.second, npoint);
+                    }
+                }
+            }
+        }
         for (i = 0; i < 4; i++) {
             nr = r + directions[i][0];
             nc = c + directions[i][1];
             if (nr < start[0] || nr > target[0] || nc < start[1] || nc > target[1]) {
                 continue;
             }
-            pos = static_cast<long long>(nr) * col + nc;
-            if (costData.count(pos) == 1) {
-                if (point + 1 >= costData[pos]) {
+            if (costData.count({nr, nc}) == 1) {
+                if (point + 1 >= costData[{nr, nc}]) {
                     continue;
                 }
             }
-            //costData[pos] = point + 1;
+            //printf ("3: %d %d %d\n", nr, nc, point + 1);
             q.push({nr, nc, point + 1});
         }
     }
     return ans;
-}
-
-
-int minimumCost(vector<int>& start, vector<int>& target, vector<vector<int>>& specialRoads)
-{
 }
 
 // LC2659
@@ -6016,7 +5989,7 @@ long long countOperationsToEmptyArray(vector<int>& nums) // 有问题
     int curIdx;
     long long ans = 0;
     pair<int, int> p;
-    priority_queue<pair<int, int>, vector<pair<int, int>, greater<>>> pq;
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
 
     for (i = 0; i < n; i++) {
         pq.push({nums[i], i});
@@ -6134,4 +6107,103 @@ string evolutionaryRecord(vector<int>& parents)
     }
     ans = ans.substr(0, idx + 1);
     return ans;
+}
+
+
+// LC2061
+int numberOfCleanRooms(vector<vector<int>>& room)
+{
+    int m = room.size();
+    int n = room[0].size();
+    int nx, ny;
+    int ans;
+    int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+    vector<int> cur;
+    set<vector<int>> visited;
+
+    cur = {0, 0, 0};
+    visited.insert({0, 0, 0});
+    while (1) {
+        room[cur[0]][cur[1]] = 2;
+        nx = cur[0] + directions[cur[2]][0];
+        ny = cur[1] + directions[cur[2]][1];
+
+        if (nx < 0 || nx >= m || ny < 0 || ny >= n || room[nx][ny] == 1) {
+            cur[2] = (cur[2] + 1) % 4;
+        } else {
+            cur = {nx, ny, cur[2]};
+        }
+        if (visited.count(cur) == 1) {
+            break;
+        }
+        visited.insert(cur);
+    }
+    ans = 0;
+    for (auto r : room) {
+        for (auto c : r) {
+            if (c == 2) {
+                ans++;
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LC2049
+int DFSCountNodeSubNode(int cur, unordered_map<int, vector<int>>& edges, unordered_map<int, pair<int, int>>& nodeCnt)
+{
+    if (edges.count(cur) == 0) {
+        return 1;
+    }
+    int t;
+    if (nodeCnt.count(cur) == 0) {
+        t = DFSCountNodeSubNode(edges[cur][0], edges, nodeCnt);
+        nodeCnt[cur].first = t;
+        if (edges[cur].size() == 2) {
+            t = DFSCountNodeSubNode(edges[cur][1], edges, nodeCnt);
+            nodeCnt[cur].second = t;
+        } else {
+            nodeCnt[cur].second = 0;
+        }
+    }
+    return nodeCnt[cur].first + nodeCnt[cur].second + 1;
+}
+int countHighestScoreNodes(vector<int>& parents)
+{
+    int i;
+    int n = parents.size();
+    int leftNodes, rightNodes, parentNodes;
+    int root;
+    map<long long, int, greater<>> multiply;
+    unordered_map<int, vector<int>> edges; // node - {letf, right}
+    unordered_map<int, pair<int, int>> nodeCnt; // node - {leftNodeCnt, rightNodeCnt}
+    for (i = 0; i < n; i++) {
+        if (parents[i] == -1) {
+            root = i;
+        } else {
+            edges[parents[i]].push_back(i);
+        }
+    }
+    DFSCountNodeSubNode(root, edges, nodeCnt);
+    /* for (auto it : nodeCnt) {
+        printf ("%d : %d %d\n", it.first, it.second.first, it.second.second);
+    } */
+    for (i = 0; i < n; i++) {
+        if (i == root) {
+            leftNodes = nodeCnt[i].first;
+            rightNodes = nodeCnt[i].second == 0 ? 1 : nodeCnt[i].second;
+            multiply[static_cast<long long>(leftNodes) * rightNodes]++;
+            continue;
+        }
+        if (edges.count(i) == 0) { // 叶子节点
+            multiply[n - 1]++;
+            continue;
+        }
+        parentNodes = n - nodeCnt[i].first - nodeCnt[i].second - 1;
+        leftNodes = nodeCnt[i].first;
+        rightNodes = nodeCnt[i].second == 0 ? 1 : nodeCnt[i].second;
+        multiply[static_cast<long long>(leftNodes) * rightNodes * parentNodes]++;
+    }
+    return multiply.begin()->second;
 }

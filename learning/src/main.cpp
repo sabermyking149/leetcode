@@ -12,6 +12,7 @@
 #include <cassert>
 #include <string>
 #include <numeric>
+#include <memory>
 
 #include "pub.h"
 #include "leetcode.h"
@@ -445,6 +446,97 @@ int MySum(int n)
 	n != 0 && (n += MySum(n - 1));
 	return n;
 }
+
+
+
+void MyQuickSort(vector<int>& arr, int left, int right)
+{
+	if (left >= right) {
+		return;
+	}
+
+	int i;
+	int n = arr.size();
+	int key, size;
+	int a, b;
+
+	size = right - left + 1;
+	vector<int> t(size, 0);
+
+	key = arr[left];
+	a = 0;
+	b = size - 1;
+	for (i = left; i <= right; i++) {
+		if (arr[i] < key) {
+			t[a] = arr[i];
+			a++;
+		} else if (arr[i] > key) {
+			t[b] = arr[i];
+			b--;
+		}
+	}
+	for (i = a; i <= b; i++) {
+		t[i] = key;
+	}
+	for (i = 0; i < size; i++) {
+		arr[i + left] = t[i];
+	}
+
+	MyQuickSort(arr, left, left + a - 1);
+	MyQuickSort(arr, left + a + 1, right);
+}
+
+void Merge(vector<int>& arr, vector<int>& t, int left, int mid, int right)
+{
+	int i, j;
+	int idx;
+
+	i = left;
+	j = mid + 1;
+	idx = 0;
+	while (i <= mid && j <= right) {
+		if (arr[i] < arr[j]) {
+			t[idx] = arr[i];
+			i++;
+		} else {
+			t[idx] = arr[j];
+			j++;
+		}
+		idx++;
+	}
+	while (i <= mid) {
+		t[idx] = arr[i];
+		i++;
+		idx++;
+	}
+	while (j <= right) {
+		t[idx] = arr[j];
+		j++;
+		idx++;
+	}
+	for (i = left; i <= right; i++) {
+		arr[i] = t[i - left];
+	}
+}
+void Divide(vector<int>& arr, vector<int>& t, int left, int right)
+{
+	int mid;
+	if (left < right) {
+		mid = (right - left) / 2 + left;
+		Divide(arr, t, left, mid);
+		Divide(arr, t, mid + 1, right);
+
+		Merge(arr, t, left, mid, right);
+	}
+}
+void MyMergeSort(vector<int>& arr, int left, int right)
+{
+	int n = arr.size();
+	vector<int> t(n, 0);
+
+	Divide(arr, t, left, right);
+}
+
 Parent par;
 int main0(int argc, char *argv[])
 {
@@ -627,8 +719,25 @@ int main0(int argc, char *argv[])
 	return 0;
 }
 
-
+auto complex(std::make_unique<Complex>(2.1, 4.2));
 int main(int argc, char *argv[])
 {
+	unique_ptr<Complex> complex1;
+	complex1 = move(complex);
+	cout << complex1->aConst << endl;
+	Complex::Show(complex1);
+
+	Complex c1(1, 3);
+	Complex c2 = c1;
+	cout << c2.aConst << endl;
+
+	c1 = c2;
+	cout << c1.aConst << endl;
+
+	vector<int> arr = {5, 3, 7, 6, 4, 1, 0, 2, 9, 10, 8, 5, 5};
+	// MyQuickSort(arr, 0, 12);
+	MyMergeSort(arr, 0, 12);
+	for (auto a : arr) cout << a << " ";
+	cout << endl;
 	return 0;
 }

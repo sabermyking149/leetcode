@@ -76,8 +76,9 @@ private:
 
 class Complex {
 public:
-    Complex(double r, double i) : real(r), imaginary(i) {}
-    Complex(const Complex &c)
+    const int aConst;
+    Complex(double r, double i) : real(r), imaginary(i), aConst(5) {}
+    Complex(const Complex &c) : aConst(4)
     {
         cout << "拷贝构造函数\n";
         real = c.real;
@@ -105,6 +106,10 @@ public:
     static void Show(Complex &c)
     {
         cout << to_string(c.real) + ' ' + (c.imaginary < 0 ? '-' : '+') + ' ' + to_string(fabs(c.imaginary)) + 'i' << endl;
+    }
+    static void Show(unique_ptr<Complex> &c)
+    {
+        cout << to_string(c->real) + ' ' + (c->imaginary < 0 ? '-' : '+') + ' ' + to_string(fabs(c->imaginary)) + 'i' << endl;
     }
     double GetReal() const
     {
