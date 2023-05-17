@@ -6207,3 +6207,119 @@ int countHighestScoreNodes(vector<int>& parents)
     }
     return multiply.begin()->second;
 }
+
+
+// LC2036
+long long maximumAlternatingSubarraySum(vector<int>& nums)
+{
+    int i;
+    int n = nums.size();
+    vector<vector<long long>> dp(n, vector<long long>(2, 0)); // dp[i][0] 以i结尾且nums[i] 为正
+    long long ans;
+
+    dp[0][0] = nums[0];
+    dp[0][1] = -0x3f3f3f3f;
+    ans = nums[0];
+
+    for (i = 1; i < n; i++) {
+        dp[i][0] = dp[i - 1][1] > 0 ? dp[i - 1][1] + nums[i] : nums[i];
+        dp[i][1] = dp[i - 1][0] - nums[i];
+        ans = max(ans, dp[i][0]);
+        ans = max(ans, dp[i][1]);
+    }
+    return ans;
+}
+
+
+// LC1218
+int longestSubsequence(vector<int>& arr, int difference)
+{
+    int i;
+    int n = arr.size();
+    unordered_map<int, int> dp; // dp[arr[i]] - 以arr[i]结尾的最大长度
+    int ans ;
+    unordered_map<int, vector<int>> arrCnt;
+   
+    dp[arr[0]] = 1;
+    for (i = 1; i < n; i++) {
+        if (dp.count(arr[i] - difference) == 1) {
+            dp[arr[i]] = dp[arr[i] - difference] + 1;
+        } else {
+            dp[arr[i]] = 1;
+        }
+    }
+    ans = 0;
+    for (auto it : dp) {
+        ans = max(ans, it.second);
+    }
+    return ans;
+}
+
+
+// LC1073
+vector<int> addNegabinary(vector<int>& arr1, vector<int>& arr2)
+{
+    int i;
+    int idx;
+    int m = arr1.size();
+    int n = arr2.size();
+    bool f = false;
+    vector<int> t(1002, 0);
+
+    reverse(arr1.begin(), arr1.end());
+    reverse(arr2.begin(), arr2.end());
+    idx = 0;
+    while (idx < m && idx < n) {
+        t[idx] = t[idx] + arr1[idx] + arr2[idx];
+        if (t[idx] == 2) {
+            t[idx] = 0;
+            t[idx + 1] = -1;
+        } else if (t[idx] == -1) {
+            t[idx] = 1;
+            t[idx + 1] = 1;
+        }
+        idx++;
+    }
+    while (idx < m) {
+        t[idx] = t[idx] + arr1[idx];
+        if (t[idx] == 2) {
+            t[idx] = 0;
+            t[idx + 1] = -1;
+        } else if (t[idx] == -1) {
+            t[idx] = 1;
+            t[idx + 1] = 1;
+        }
+        idx++;
+    }
+    while (idx < n) {
+        t[idx] = t[idx] + arr2[idx];
+        if (t[idx] == 2) {
+            t[idx] = 0;
+            t[idx + 1] = -1;
+        } else if (t[idx] == -1) {
+            t[idx] = 1;
+            t[idx + 1] = 1;
+        } else if (t[idx] == 3) {
+            t[idx] = 1;
+            t[idx + 1] = -1;
+        }
+        idx++;
+    }
+    if (t[idx] == -1) {
+         t[idx] = 1;
+        t[idx + 1] = 1;
+    }
+    vector<int> ans;
+    for (i = t.size() - 1; i >= 0; i--) {
+        if (f == false && t[i] == 1) {
+            f = true;
+        }
+        if (f) {
+            ans.emplace_back(t[i]);
+        }
+    }
+    if (f == false) {
+        return {0};
+    }
+    return ans;
+}
