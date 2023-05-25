@@ -6323,3 +6323,265 @@ vector<int> addNegabinary(vector<int>& arr1, vector<int>& arr2)
     }
     return ans;
 }
+
+
+// LC1049
+int lastStoneWeightII(vector<int>& stones)
+{
+    int i, j;
+    int sum;
+    int n = stones.size();
+
+    sum = 0;
+    for (auto s : stones) {
+        sum += s;
+    }
+    vector<vector<int>> dp(n + 1, vector<int>(sum / 2 + 1, 0)); // dp[i][j] 前i个石子之和不超过j的最大石子之和
+    for (i = 1; i <= n; i++) {
+        for (j = 1; j <= sum / 2; j++) {
+            if (stones[i - 1] > j) {
+                dp[i][j] = dp[i - 1][j];
+            } else {
+                dp[i][j] = max(dp[i - 1][j], dp[i - 1][j - stones[i - 1]] + stones[i  - 1]);
+            }
+        }
+    }
+    return sum - dp[n][sum / 2] * 2;
+}
+
+
+// LC2434
+string robotWithString(string s)
+{
+    int i;
+    int n = s.size();
+    string ans;
+    char t;
+    stack<char> st;
+    vector<char> f(n);  // f[i] 表示从i  -  n - 1最小字符
+
+    f[n - 1] = s[n  - 1];
+    for (i = n - 2; i >= 0; i--) {
+        f[i] = min(f[i + 1], s[i]);
+    }
+    for (i = 0; i < n; i++) {
+        if (st.empty()) {
+            st.push(s[i]);
+            continue;
+        }
+        t = st.top();
+        while (t <= f[i]) {
+            ans += t;
+            st.pop();
+            if (st.empty()) {
+                break;
+            }
+            t = st.top();
+        }
+        st.push(s[i]);
+    }
+    while (!st.empty()) {
+        ans += st.top();
+        st.pop();
+    }
+    return ans;
+}
+
+
+// LC1377
+void DFSFindNode(unordered_map<int, unordered_set<int>>& e, int cur, int from, int target, 
+    int cnt, int& step, bool& find, bool& IsLeaf, vector<int>& r, vector<int>& route)
+{
+    if (find) {
+        return;
+    }
+    if (cur == target) {
+        step = cnt;
+        find = true;
+        if (e[cur].size() == 1 && *e[cur].begin() == from) {
+            IsLeaf = true;
+        }
+        // for (auto it : route) cout << it << " ";
+        route = r;
+        return;
+    }
+    for (auto it : e[cur]) {
+        if (it != from) {
+            r.emplace_back(it);
+            DFSFindNode(e, it, cur, target, cnt + 1, step, find, IsLeaf, r, route);
+            r.pop_back();
+        }
+    }
+}
+double frogPosition(int n, vector<vector<int>>& edges, int t, int target)
+{
+    if (n == 1) {
+        return 1.0;
+    }
+
+    int i;
+    int ans;
+    int step, ways;
+    bool IsLeaf, find;
+    vector<int> r, route;
+    unordered_map<int, unordered_set<int>> e;
+    for (auto edge : edges) {
+        e[edge[0]].emplace(edge[1]);
+        e[edge[1]].emplace(edge[0]);
+    }
+    step = 0;
+    ways = 1;
+    IsLeaf = false;
+    find = false;
+    r.emplace_back(1);
+    DFSFindNode(e, 1, -1, target, 0, step, find, IsLeaf, r, route);
+    if (step > t) {
+        return 0.0;
+    }
+    if (!IsLeaf && step < t) {
+        return 0.0;
+    }
+    ways *= e[1].size();
+    for (i = 1; i < route.size(); i++) {
+        ways *= e[route[i]].size() - 1;
+    }
+    return 1.0 / ways;
+}
+
+
+// LC640
+string solveEquation(string equation) // 垃圾题
+{
+    int i, k;
+    int n;
+    int idx, m, p;
+    int constNum, xNum;
+    bool findEqual;
+    char sign;
+    string t;
+
+    if (equation[0] == '-') {
+        equation = "0" + equation;
+    }
+    idx = equation.find('=');
+    if (equation[idx + 1] == '-') {
+        equation = equation.substr(0, idx + 1) + "0" + equation.substr(idx + 1);
+    }
+    idx = 0;
+    constNum = xNum = 0;
+    findEqual = false;
+    sign = '+';
+    n = equation.size();
+    for (i = 0; i < n; i++) {
+        if (equation[i] == '+' || equation[i] == '-') {
+            t = equation.substr(idx, i - idx);
+            m = t.size();
+            if (t[m - 1] == 'x') {
+                p = atoi(equation.substr(idx, i - idx).c_str());
+                p = p == 0 ? 1 : p;
+                if (t[0] == '0') {
+                    p = 0;
+                }
+                for (k = 0; k < m - 1; k++) {
+                    if (equation[k] != '0') {
+                        break;
+                    }
+                }
+                if (k == m) {
+
+                }
+                if (sign == '-') {
+                    if (findEqual) {
+                        xNum += p;
+                    } else {
+                        xNum -= p;
+                    }
+                } else {
+                    if (findEqual) {
+                        xNum -= p;
+                    } else {
+                        xNum += p;
+                    }
+                }
+            } else {
+                p = atoi(equation.substr(idx, i - idx).c_str());
+                if (sign == '-') {
+                    if (findEqual) {
+                        constNum += p;
+                    } else {
+                        constNum -= p;
+                    }
+                } else {
+                    if (findEqual) {
+                        constNum -= p;
+                    } else {
+                        constNum += p;
+                    }
+                }
+            }
+            sign = equation[i];
+            idx = i + 1;
+        } else if (equation[i] == '=') {
+            findEqual = true;
+            t = equation.substr(idx, i - idx);
+            m = t.size();
+            if (t[m - 1] == 'x') {
+                p = atoi(equation.substr(idx, i - idx).c_str());
+                p = p == 0 ? 1 : p;
+                if (t[0] == '0') {
+                    p = 0;
+                }
+                if (sign == '-') {
+                    xNum -= p;
+                } else {
+                    xNum += p;
+                }
+            } else {
+                p = atoi(equation.substr(idx, i - idx).c_str());
+                if (sign == '-') {
+                    constNum -= p;
+                } else {
+                    constNum += p;
+                }
+            }
+            // sign = equation[i + 1] == '-' ? '-' : '+';
+            sign = '+';
+            idx = i + 1;
+        }
+    }
+    
+    t = equation.substr(idx, n - idx);
+    m = t.size();
+    if (t[m - 1] == 'x') {
+        p = atoi(equation.substr(idx, i - idx).c_str());
+        p = p == 0 ? 1 : p;
+        if (t[0] == '0') {
+            p = 0;
+        }
+        if (sign == '-') {
+            xNum += p;
+        } else {
+            xNum -= p;
+        }
+    } else {
+        p = atoi(equation.substr(idx, i - idx).c_str());
+        if (sign == '-') {
+            constNum += p;
+        } else {
+            constNum -= p;
+        }
+    }
+
+    if (xNum == 0) {
+        if (constNum != 0) {
+            return "No solution";
+        } else {
+            return "Infinite solutions";
+        }
+    }
+
+    int x = constNum * - 1 / xNum;
+    string ans = "x=" + to_string(x);
+    // cout << ans << endl;
+    return ans;
+}
