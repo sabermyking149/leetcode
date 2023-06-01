@@ -6585,3 +6585,128 @@ string solveEquation(string equation) // 垃圾题
     // cout << ans << endl;
     return ans;
 }
+
+
+// LC2052
+int minimumCost(string sentence, int k)
+{
+    vector<string> words = MySplit(sentence, ' ');
+    int i, j;
+    int t, ans;
+    int n = words.size();
+    vector<int> dp(n + 1, 0); // dp[i] - 以第i个单词作为行尾的最小cost
+    vector<int> wordLen;
+
+    for (auto w : words) {
+        wordLen.emplace_back(w.size());
+    }
+    dp[1] = (k - wordLen[0]) * (k - wordLen[0]);
+    for (i = 2; i <= n; i++) {
+        dp[i] = (k - wordLen[i - 1]) * (k - wordLen[i - 1]) + dp[i - 1];
+        t = wordLen[i - 1];
+        for (j = i - 1; j >= 1; j--) {
+            t += 1 + wordLen[j - 1];
+            if (t <= k) {
+                dp[i] = min(dp[i], (k - t) * (k - t) + dp[j - 1]);
+            }
+        }
+    }
+    for (auto d : dp) cout << d << " "; cout << endl;
+    t = wordLen[n - 1];
+    ans = dp[n - 1];
+    for (i = n - 2; i >= 0; i--) {
+        t += 1 + wordLen[i];
+        if (t <= k) {
+            ans = min(ans, dp[i]);
+        } else {
+            break;
+        }
+    }
+    return ans;
+}
+
+
+
+// 面试题 04.09. 二叉搜索树序列
+vector<vector<int>> BSTSequences(TreeNode* root)
+{
+    if (root == nullptr) {
+        return {{}};
+    }
+
+    int i, j;
+    int n;
+    int nodeNum = TreeNodesNum(root);
+    vector<vector<int>> ans;
+    vector<int> serial(nodeNum);
+    pair<vector<TreeNode *>, unordered_set<TreeNode *>> t; // 已加入点 - 访问点
+    queue<pair<vector<TreeNode *>, unordered_set<TreeNode *>>> q;
+
+    q.push({{root}, {root}});
+    while (q.size()) {
+        n = q.size();
+        for (i = 0; i < n; i++) {
+            t = q.front();
+            q.pop();
+            auto v = t.first;
+            auto s = t.second;
+            if (v.size() == nodeNum) {
+                for (j = 0; j < v.size(); j++) {
+                    serial[j] = v[j]->val;
+                }
+                ans.emplace_back(serial);
+                continue;
+            }
+            for (j = 0; j < v.size(); j++) {
+                if (v[j]->left != nullptr && s.count(v[j]->left) == 0) {
+                    v.emplace_back(v[j]->left);
+                    s.emplace(v[j]->left);
+                    q.push({v, s});
+                    v.pop_back();
+                    s.erase(v[j]->left);
+                }
+                if (v[j]->right != nullptr && s.count(v[j]->right) == 0) {
+                    v.emplace_back(v[j]->right);
+                    s.emplace(v[j]->right);
+                    q.push({v, s});
+                    v.pop_back();
+                    s.erase(v[j]->right);
+                }
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LC135
+int candy(vector<int>& ratings)
+{
+    int i;
+    int n = ratings.size();
+    int ans;
+
+    if (n == 1) {
+        return 1;
+    }
+    vector<int> t1(n, 1), t2(n, 1);
+    for (i = 1; i < n; i++) {
+        if (ratings[i] > ratings[i - 1]) {
+            t1[i] = t1[i - 1] + 1;
+        }
+    }
+    // for (auto n : t1) cout << n << " "; cout << endl;
+
+    for (i = n - 2; i >= 0; i--) {
+        if (ratings[i] > ratings[i + 1]) {
+            t2[i] = t2[i + 1] + 1;
+        }
+    }
+    // for (auto n : t2) cout << n << " "; cout << endl;
+
+    ans = 0;
+    for (i = 0; i < n; i++) {
+        ans += max(t1[i], t2[i]);
+    }
+    return ans;
+}
