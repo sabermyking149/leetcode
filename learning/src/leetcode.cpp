@@ -6868,3 +6868,46 @@ int tilingRectangle(int n, int m)
     Tiling(visited, 0, 0, small, 0, 0, ans);
     return ans;
 }
+
+
+// LC132
+int minCut(string s)
+{
+    // dp[i] 表示i结尾的字符串分割为回文子串的最小切割次数
+    // dp[0] = 0; 
+    int i, j;
+    int n = s.size();
+    vector<vector<bool>> IsPalindrome(n, vector<bool>(n, false)); // IsPalindrome[i][j] 是否是回文串
+    vector<int> dp(n, 0x3f3f3f3f);
+
+    for (j = 1; j < n; j++) {
+        for (i = j; i >= 0; i--) {
+            if (i == j) {
+                IsPalindrome[i][j] = true;
+                continue;
+            }
+            if (s[i] == s[j]) {
+                if (i + 1 == j) {
+                    IsPalindrome[i][j] = true;
+                } else {
+                    IsPalindrome[i][j] = IsPalindrome[i + 1][j - 1];
+                }
+            } else {
+                IsPalindrome[i][j] = false;
+            }
+        }
+    }
+    dp[0] = 0;
+    for (j = 1; j < n; j++) {
+        for (i = j; i >= 0; i--) {
+            if (IsPalindrome[i][j]) {
+                if (i != 0) {
+                    dp[j] = min(dp[j], dp[i - 1] + 1);
+                } else {
+                    dp[j] = 0;
+                }
+            }
+        }
+    }
+    return dp[n - 1];
+}
