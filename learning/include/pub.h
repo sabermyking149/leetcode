@@ -46,12 +46,4 @@ public:
     static void CreateWordTrie(Trie<char> *root, string& word);
 };
 
-
-int TreeNodesNum(TreeNode *root)
-{
-    if (root == nullptr) {
-        return 0;
-    }
-    return 1 + TreeNodesNum(root->left) + TreeNodesNum(root->right);
-}
 #endif

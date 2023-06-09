@@ -23,6 +23,15 @@ using namespace std;
     }
     return gcd(b, a % b);
 } */
+
+int TreeNodesNum(TreeNode *root)
+{
+    if (root == nullptr) {
+        return 0;
+    }
+    return 1 + TreeNodesNum(root->left) + TreeNodesNum(root->right);
+}
+
 void initVisited(vector<int>& visited, int val)
 {
     for (unsigned int i = 0; i < visited.size(); i++) {
@@ -6708,5 +6717,154 @@ int candy(vector<int>& ratings)
     for (i = 0; i < n; i++) {
         ans += max(t1[i], t2[i]);
     }
+    return ans;
+}
+
+
+// LC722
+vector<string> removeComments(vector<string>& source)
+{
+    int i, j, k;
+    int n = source.size();
+    int pos1, pos2, pos3;
+    int startIdx;
+    vector<string> t = source;
+    vector<string> vs;
+    // 先处理块注释
+    for (i = 0; i < n; i++) {
+        pos1 = t[i].find("/*");
+        if (pos1 != string::npos) {
+            pos2 = t[i].find("//");
+            if (pos2 != string::npos) {
+                if (pos2 < pos1) {
+                    t[i] = t[i].substr(0, pos2);
+                    continue;
+                }
+            }
+            startIdx = 0;
+            for (j = i; j < n; j++) {
+                pos3 = t[j].find("*/", startIdx);
+                if (pos3 != string::npos) {
+                    if (j == i) {
+                        if (pos3 < pos1 + 2) {
+                            startIdx = pos1 + 2;
+                            j--;
+                            continue;
+                        }
+                        if (pos1 + 1 != pos3) {
+                            t[i] = t[i].substr(0, pos1) + t[i].substr(pos3 + 2);
+                            i--;
+                            break;
+                        }
+                    } else {
+                        t[i] = t[i].substr(0, pos1);
+                        t[j] = t[j].substr(pos3 + 2);
+                        t[i] += t[j];
+                        for (k = i + 1; k <= j; k++) {
+                            t[k] = "";
+                        }
+                        i = j - 1;
+                        break;
+                    }
+                } else {
+                    startIdx = 0;
+                }
+            }
+        }
+    }
+    for (auto line : t) {
+        if (line.size() > 0) {
+            vs.emplace_back(line);
+        }
+    }
+    for (auto v : vs) cout << v << endl;
+
+    t = vs;
+    // 处理行注释
+    n = t.size();
+    for (i = 0; i < n; i++) {
+        pos2 = t[i].find("//");
+        if (pos2 != string::npos) {
+            t[i] = t[i].substr(0, pos2);
+        }
+    }
+    vs.clear();
+    for (auto line : t) {
+        if (line.size() > 0) {
+            vs.emplace_back(line);
+        }
+    }
+    return vs;
+}
+
+
+// LC1240
+void SetRectangle(vector<vector<bool>>& visited, int row, int col, int size, bool val)
+{
+    int i, j;
+    for (i = row; i < row + size; i++) {
+        for (j = col; j < col + size; j++) {
+            visited[i][j] = val;
+        }
+    }
+}
+bool CanTile(vector<vector<bool>>& visited, int row, int col, int size)
+{
+    int i, j, k;
+    int n = visited.size();
+    int m = visited[0].size();
+
+    if (row + size > n || col + size > m) {
+        return false;
+    }
+    for (i = row; i < row + size; i++) {
+        for (j = col; j < col + size; j++) {
+            if (visited[i][j]) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+void Tiling(vector<vector<bool>>& visited, int row, int col, int edgeSize, int cnt, int cntAera, int& ans)
+{
+    int k;
+    int n = visited.size();
+    int m = visited[0].size();
+
+    if (cntAera == m * n) {
+        ans = min(ans, cnt);
+        return;
+    }
+    if (cnt >= ans || row == n) {
+        return;
+    }
+    if (col == m) {
+        Tiling(visited, row + 1, 0, k, cnt, cntAera, ans);
+        return;
+    }
+    if (visited[row][col]) {
+        Tiling(visited, row, col + 1, k, cnt, cntAera, ans);
+        return;
+    }
+    for (k = edgeSize; k >= 1; k--) {
+        if (CanTile(visited, row, col, k)) {
+            SetRectangle(visited, row, col, k, true);
+            Tiling(visited, row, col + k, edgeSize, cnt + 1, cntAera + k * k, ans);
+            SetRectangle(visited, row, col, k, false);
+        }
+    }
+}
+int tilingRectangle(int n, int m)
+{
+    int small = min(n, m);
+
+    if (small == 1) {
+        return n * m;
+    }
+
+    int ans = INT_MAX;
+    vector<vector<bool>> visited(n, vector<bool>(m, false));
+    Tiling(visited, 0, 0, small, 0, 0, ans);
     return ans;
 }
