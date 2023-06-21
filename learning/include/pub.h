@@ -46,4 +46,19 @@ public:
     static void CreateWordTrie(Trie<char> *root, string& word);
 };
 
+class FileSystem {
+public:
+    FileSystem()
+    {
+        root = new Trie<string>("/");
+    }
+
+    vector<string> ls(string path);
+    void mkdir(string path);
+    void addContentToFile(string filePath, string content);
+    string readContentFromFile(string filePath);
+private:
+    unordered_map<string, string> fileContent; // path - content
+    Trie<string> *root = nullptr;
+};
 #endif

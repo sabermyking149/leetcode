@@ -7014,3 +7014,80 @@ int minimumDistance(int n, vector<vector<int>>& edges, int s, vector<int>& marke
     }
     return ans == 0x3f3f3f3f ? -1 : ans;
 }
+
+
+// LC588
+vector<string> FileSystem::ls(string path)
+{
+    int i, j;
+    int n;
+    int m;
+    vector<string> ans;
+    Trie<string> *node = FileSystem::root;
+
+    if (path == "/") {
+        for (i = 0; i < node->children.size(); i++) {
+            ans.emplace_back(node->children[i]->val);
+        }
+        sort (ans.begin(), ans.end());
+        return ans;
+    }
+    vector<string> dirs = MySplit(path, '/');
+    n = dirs.size();
+    if (FileSystem::fileContent.count(path) == 1) {
+        return {dirs[n - 1]};
+    }
+    for (i = 1; i < n; i++) { // 去掉第一个'/'
+        m = node->children.size();
+        for (j = 0; j < m; j++) {
+            if (node->children[j]->val == dirs[i]) {
+                node = node->children[j];
+                break;
+            }
+        }
+    }
+    for (i = 0; i < node->children.size(); i++) {
+        ans.emplace_back(node->children[i]->val);
+    }
+    sort (ans.begin(), ans.end());
+    return ans;
+}
+
+void FileSystem::mkdir(string path)
+{
+    int i, j;
+    Trie<string> *node = FileSystem::root;
+    vector<string> dirs = MySplit(path, '/');
+    int n = dirs.size();
+    int m;
+
+    for (i = 1; i < n; i++) { // 去掉第一个'/'
+        m = node->children.size();
+        for (j = 0; j < m; j++) {
+            if (node->children[j]->val == dirs[i]) {
+                node = node->children[j];
+                break;
+            }
+        }
+        if (j == m) {
+            Trie<string> *dir = new Trie<string>(dirs[i]);
+            node->children.emplace_back(dir);
+            node = dir;
+        }
+    }
+}
+
+void FileSystem::addContentToFile(string filePath, string content)
+{
+    if (FileSystem::fileContent.count(filePath) == 1) {
+        FileSystem::fileContent[filePath] += content;
+        return;
+    }
+    FileSystem::mkdir(filePath);
+    FileSystem::fileContent[filePath] = content;
+}
+
+string FileSystem::readContentFromFile(string filePath)
+{
+    return FileSystem::fileContent[filePath];
+}
