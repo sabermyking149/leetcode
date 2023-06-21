@@ -6911,3 +6911,106 @@ int minCut(string s)
     }
     return dp[n - 1];
 }
+
+
+// LC2731
+int sumDistance(vector<int>& nums, string s, int d)
+{
+    int i;
+    int n = s.size();
+    int mod = 1000000007;
+    vector<long long> prefixSum(n, 0);
+
+    for (i = 0; i < n; i++) {
+        nums[i] = static_cast<long long>(nums[i]) + (s[i] == 'R' ? d : -d);
+    }
+    sort (nums.begin(), nums.end());
+
+    prefixSum[0] = nums[0];
+    for (i = 1; i < n; i++) {
+        prefixSum[i] = nums[i] + prefixSum[i - 1];
+    }
+    long long ans = 0;
+    for (i = 0; i < n - 1; i++) {
+        ans = (ans + ((prefixSum[n - 1] - prefixSum[i] - static_cast<long long>(n - i - 1) * nums[i] + mod) % mod)) % mod;
+    }
+    return ans;
+}
+
+
+// LC2735
+long long minCost(vector<int>& nums, int x)
+{
+    int i, k;
+    int n = nums.size();
+    int t;
+    vector<int> idx;
+    unordered_map<int, int> val;
+    long long sum, s1;
+    long long ans = LONG_MAX;
+
+    sum = 0;
+    // sum 不旋转的cost
+    for (i = 0; i < n; i++) {
+        idx.emplace_back(i);
+        val[i] = nums[i];
+        sum += nums[i];
+    }
+    ans = min(sum, ans);
+    k = 0;
+    s1 = 0;
+    while (k < n) {
+        s1 += x;
+        // 旋转idx
+        t = idx[0];
+        for (i = 1; i < n; i++) {
+            idx[i - 1] = idx[i];
+        }
+        idx[n - 1] = t;
+
+        sum = 0;
+        for (i = 0; i < n; i++) {
+            if (val[idx[i]] > nums[i]) {
+                val[idx[i]] = nums[i];
+            }
+            sum += val[idx[i]];
+        }
+        ans = min(ans, sum + s1);
+        k++;
+    }
+    return ans;
+}
+
+
+// LC2737
+int minimumDistance(int n, vector<vector<int>>& edges, int s, vector<int>& marked)
+{
+    int ans;
+    vector<int> dist(n, 0x3f3f3f3f);
+    unordered_map<int, set<pair<int, int>>> e;
+    queue<pair<int, int>> q;
+
+    for (auto edge : edges) {
+        e[edge[0]].insert({edge[1], edge[2]});
+    }
+    q.push({s, 0});
+    while (q.size()) {
+        auto p = q.front();
+        q.pop();
+        if (dist[p.first] < p.second) {
+            continue;
+        }
+        dist[p.first] = p.second;
+        for (auto edge : e[p.first]) {
+            if (edge.second + dist[p.first] < dist[edge.first]) {
+                dist[edge.first] = edge.second + dist[p.first];
+                q.push({edge.first, dist[edge.first]});
+            }
+        }
+    }
+    ans = 0x3f3f3f3f;
+    for (auto m : marked) {
+        ans = min(ans, dist[m]);
+    }
+    return ans == 0x3f3f3f3f ? -1 : ans;
+}
