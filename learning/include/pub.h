@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <unordered_map>
 
 using namespace std;
 
@@ -60,5 +61,17 @@ public:
 private:
     unordered_map<string, string> fileContent; // path - content
     Trie<string> *root = nullptr;
+};
+
+
+// 自定义哈希仿函数
+template <typename T1, typename T2>
+class MyHash {
+public:
+    size_t operator() (const pair<T1, T2>& a) const
+    {
+        // return reinterpret_cast<size_t>(a.first);
+        return hash<T1>()(a.first) ^ hash<T2>()(a.second);
+    }
 };
 #endif

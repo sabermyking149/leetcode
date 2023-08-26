@@ -13,11 +13,15 @@
 #include <string>
 #include <numeric>
 #include <memory>
+#include <thread>
+#include <unistd.h>
 
 #include "pub.h"
 #include "leetcode.h"
 #include "classOper.h"
 #include "purec.h"
+
+
 
 using namespace std;
 
@@ -719,6 +723,10 @@ int main0(int argc, char *argv[])
 	return 0;
 }
 
+void PrintString(string& msg)
+{
+	cout << msg << endl;
+}
 auto complex(std::make_unique<Complex>(2.1, 4.2));
 int main(int argc, char *argv[])
 {
@@ -734,10 +742,23 @@ int main(int argc, char *argv[])
 	c1 = c2;
 	cout << c1.aConst << endl;
 
+	auto ptr = new int(8);
+	auto ptrs = new int[8];
+	cout << *ptr << endl;
+	cout << *ptrs << endl;
+
+	auto deletor = [] (Complex *pComlex) { delete pComlex; cout << "smart pointer destruct\n"; };
+	unique_ptr<Complex, decltype(deletor)> aComplex(new Complex(5, -1.5), deletor);
+	cout << aComplex->GetImaginary() << endl;
 	vector<int> arr = {5, 3, 7, 6, 4, 1, 0, 2, 9, 10, 8, 5, 5};
 	// MyQuickSort(arr, 0, 12);
 	MyMergeSort(arr, 0, 12);
 	for (auto a : arr) cout << a << " ";
 	cout << endl;
+
+	string msg = "hello world";
+	//thread th1(PrintString, msg);
+	//th1.detach();
+	sleep(1);
 	return 0;
 }

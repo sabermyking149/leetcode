@@ -7091,3 +7091,319 @@ string FileSystem::readContentFromFile(string filePath)
 {
     return FileSystem::fileContent[filePath];
 }
+
+
+// LC1039
+// dp[i][j] - 从顶点i到顶点j构成的多边形最小乘积之和
+// dp[i][i + 1] = 0, 所求dp[i][n - 1]
+int minScoreTriangulation(vector<int>& values)
+{
+    int i, j, k;
+    int n = values.size();
+    vector<vector<int>> dp(n, vector<int>(n, INT_MAX));
+
+    for (i = n - 1; i >= 0; i--) {
+        for (j = i + 1; j < n; j++) {
+            if (j == i + 1) {
+                dp[i][j] = 0;
+            } else if (j == i + 2) {
+                dp[i][j] = values[i] * values[i + 1] * values[j];
+            } else {
+                for (k = i + 1; k < j; k++) {
+                    if (k == i + 1) {
+                        dp[i][j] = min(dp[i][j], values[i] * values[j] * values[k] + dp[k][j]);
+                    } else if (k == j - 1) {
+                        dp[i][j] = min(dp[i][j], values[i] * values[j] * values[k] + dp[i][k]);
+                    } else {
+                        dp[i][j] = min(dp[i][j], values[i] * values[j] * values[k] + dp[i][k] + dp[k][j]);
+                    }
+                }
+            }
+        }
+    }
+    return dp[0][n - 1];
+}
+
+
+// LC2762
+long long continuousSubarrays(vector<int>& nums)
+{
+    int i;
+    int n = nums.size();
+    int left;
+    int small, big;
+    long long ans = 0;
+    multiset<int> ms;
+
+    left = 0;
+    for (i = 0; i < n; i++) {
+        ms.insert(nums[i]);
+        small = *ms.begin();
+        big = *ms.rbegin();
+
+        while (big - small > 2) {
+            ms.erase(ms.find(nums[left])); // C++17新特性可用ms.extract(nums[left]);
+            left++;
+            small = *ms.begin();
+            big = *ms.rbegin();
+        }
+        ans += i - left + 1;
+    }
+    return ans;
+}
+
+
+// LC42
+int trap(vector<int>& height)
+{
+    int i;
+    int cnt, ans;
+    int n = height.size();
+    vector<int> h;
+    stack<pair<int, int>> st;
+    bool start;
+
+    start = false;
+    for (i = 0; i < n; i++) {
+        if (height[i] == 0) {
+            continue;
+        } else {
+            h.insert(h.end(), height.begin() + i, height.end());
+            break;
+        }
+    }
+    n = h.size();
+    ans = 0;
+    for (i = 0; i < n; i++) {
+        if (st.empty()) {
+            st.push({h[i], i});
+            continue;
+        }
+        auto t = st.top();
+        cnt = 0;
+        while (h[i] >= t.first) {
+            st.pop();
+            if (st.empty()) {
+                break;
+            }
+            cnt++;
+            t = st.top();
+        }
+        ans += cnt;
+        st.push({h[i], i});
+    }
+    return ans;
+}
+
+
+// LC2812
+int maximumSafenessFactor(vector<vector<int>>& grid)
+{
+    int i, j;
+    int k;
+    int m = grid.size();
+    int n = grid[0].size();
+    vector<vector<int>> safety(m, vector<int>(n, -1));
+    if (grid[0][0] == 1 || grid[m - 1][n - 1] == 1) {
+        return 0;
+    }
+    
+    unordered_set<pair<int, int>, MyHash<int, int>> thieves;
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            if (grid[i][j] == 1) {
+                thieves.emplace(make_pair(i, j));
+            }
+        }
+    }
+    queue<pair<int, int>> q;
+    for (auto t : thieves) {
+        q.push(t);
+    }
+    vector<vector<int>> directions = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
+    int nr, nc;
+    int curSafety = 0;
+    while (q.size()) {
+        k = q.size();
+        for (i = 0; i < k; i++) {
+            auto p = q.front();
+            q.pop();
+            if (p.first == 5 && p.second == 0) {
+                    auto t = 12;
+            }
+            if (safety[p.first][p.second] == - 1 || safety[p.first][p.second] > curSafety) {
+                safety[p.first][p.second] = curSafety;
+            } else {
+                continue;
+            }
+
+            for (j = 0; j < 4; j++) {
+                nr = p.first + directions[j][0];
+                nc = p.second + directions[j][1];
+                if (nr == 5 && nc == 0) {
+                    auto t = 12;
+                }
+                if (nr < 0 || nr >= m || nc < 0 || nc >= n || thieves.count({nr, nc}) == 1 || 
+                    (safety[nr][nc] != -1 && safety[nr][nc] <= curSafety)) {
+                    continue;
+                }
+                q.push({nr, nc});
+            }
+        }
+        curSafety++;
+    }
+    /* for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            cout << safety[{i, j}] << " ";
+        }
+        cout << endl;
+    } */
+
+    bool canAccess;
+    int left, right, mid;
+
+    left = 0;
+    right = m + n;
+    vector<vector<int>> visited(m, vector<int>(n, -1));
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        canAccess = false;
+        q.push({0, 0});
+        while (q.size()) {
+            k = q.size();
+            for (i = 0; i < k; i++) {
+                auto p = q.front();
+                q.pop();
+
+                if (safety[p.first][p.second] < mid || visited[p.first][p.second] == mid) {
+                    continue;
+                }
+                visited[p.first][p.second] = mid;
+                if (p == make_pair(m - 1, n - 1)) {
+                    canAccess = true;
+                    ClearQueue(q);
+                    break;
+                }
+                for (j = 0; j < 4; j++) {
+                    nr = p.first + directions[j][0];
+                    nc = p.second + directions[j][1];
+
+                    if (nr < 0 || nr >= m || nc < 0 || nc >= n || thieves.count({nr, nc}) == 1
+                        || visited[nr][nc] == mid) {
+                        continue;
+                    }
+                    q.push({nr, nc});
+                }
+            }
+        }
+        if (canAccess) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    return right < 0 ? 0 : right;
+}
+
+
+// LC2431
+int maxTastiness(vector<int>& price, vector<int>& tastiness, int maxAmount, int maxCoupons)
+{
+    int i, j, k;
+    int n = price.size();
+    int ans;
+    // dp[i][j][k] 0 - i水果用j金额使用k次优惠券得到的最大甜度
+    vector<vector<vector<int>>> dp(n, vector<vector<int>>(maxAmount + 1, vector<int>(maxCoupons + 1, 0)));
+
+    // 买0号水果两种情况
+    for (j = price[0]; j <= maxAmount; j++) {
+        dp[0][j][0] = tastiness[0];
+    }
+    for (k = 1; k <= maxCoupons; k++) {
+        for (j = price[0] / 2; j <= maxAmount; j++) {
+            dp[0][j][k] = tastiness[0];
+        }
+    }
+    for (i = 1; i < n; i++) {
+        for (j = 0; j <= maxAmount; j++) {
+            for (k = 0; k <= maxCoupons; k++) {
+                dp[i][j][k] = dp[i - 1][j][k]; // 不买
+                if (j - price[i] >= 0) { // 不用优惠券
+                    dp[i][j][k] = max(dp[i][j][k], dp[i - 1][j - price[i]][k] + tastiness[i]);
+                }
+                if (j - price[i] / 2 >= 0 && k > 0) { // 使用优惠券
+                    dp[i][j][k] = max(dp[i][j][k], dp[i - 1][j - price[i] / 2][k - 1] + tastiness[i]);
+                }
+            }
+        }
+    }
+    return dp[n - 1][maxAmount][maxCoupons];
+}
+
+
+class Probability {
+public:
+    double a = 0;
+    double b = 0;
+    unordered_map<int, int> leftNum, rightNum;
+    double f(double t)
+    {
+        double ans = 1.0;
+        while (t > 0) {
+            ans *= t;
+            t--;
+        }
+        return ans;
+    }
+    void DFS(vector<int>& balls, int idx, int leftCnt, int leftLen, int rightCnt, int rightLen, double tol)
+    {
+        int i;
+        double l, r;
+        if (idx == balls.size()) {
+            l = tol;
+            for (auto it : leftNum) {
+                l /= f(it.second);
+            }
+            r = tol;
+            for (auto it : rightNum) {
+                r /= f(it.second);
+            }
+            if (leftNum.size() == rightNum.size()) {
+                a += l * r;
+            }
+            b += l * r;
+
+            // cout << left << " " << right << " " << t << endl; 
+            // cout << l << " " << r << endl;
+            return;
+        }
+        for (i = 0; i <= balls[idx]; i++) {
+            if (leftCnt + i <= leftLen && rightCnt + balls[idx] - i <= rightLen) {
+                if (i) {
+                    leftNum[idx] += i;
+                }
+                if (balls[idx] - i) {
+                    rightNum[idx] += balls[idx] - i;
+                }
+                DFS(balls, idx + 1, leftCnt + i, leftLen, rightCnt + balls[idx] - i, rightLen, tol);
+                leftNum[idx] == i ? leftNum.erase(idx) : leftNum[idx] -= i;
+                rightNum[idx] == balls[idx] - i ? rightNum.erase(idx) : rightNum[idx] -= (balls[idx] - i);
+            }
+        }
+    }
+    double getProbability(vector<int>& balls)
+    {
+        int i;
+        int sum;
+
+        sum  = 0;
+        for (i = 0; i < balls.size(); i++) {
+            sum += balls[i];
+        }
+
+        int len = sum / 2;
+        DFS(balls, 0, 0, len, 0, len, f(len));
+        cout << a << " " << b << endl;
+        return a / b;
+    }
+};
