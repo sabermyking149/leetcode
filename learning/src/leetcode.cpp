@@ -7408,7 +7408,7 @@ public:
     }
 };
 
-
+// LC2861
 int maxNumberOfAlloys(int n, int k, int budget, vector<vector<int>>& composition, vector<int>& stock, vector<int>& cost)
 {
     int i, j;
@@ -7438,7 +7438,7 @@ int maxNumberOfAlloys(int n, int k, int budget, vector<vector<int>>& composition
 }
 
 
-
+// LC2866
 void Erase(map<int, int, greater<>>& m, int t)
 {
     for (auto it = m.begin(); it != m.end();) {
