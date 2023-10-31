@@ -7407,3 +7407,118 @@ public:
         return a / b;
     }
 };
+
+
+int maxNumberOfAlloys(int n, int k, int budget, vector<vector<int>>& composition, vector<int>& stock, vector<int>& cost)
+{
+    int i, j;
+    int left, right, mid;
+    int ans = 0;
+    long long val;
+    for (i = 0; i < k; i++) {
+        left = 0;
+        right = 2 * 10e8;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            val = 0;
+            for (j = 0; j < n; j++) {
+                if (composition[i][j] * static_cast<long long>(mid) > stock[j]) {
+                    val += static_cast<long long>(cost[j]) * (composition[i][j] * static_cast<long long>(mid) - stock[j]);
+                }
+            }
+            if (val > budget) {
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        ans = max(ans, right);
+    }
+    return ans;
+}
+
+
+
+void Erase(map<int, int, greater<>>& m, int t)
+{
+    for (auto it = m.begin(); it != m.end();) {
+        if (it->first > t) {
+            m.erase(it++);
+        } else {
+            break;
+        }
+    }
+}
+long long maximumSumOfHeights(vector<int>& maxHeights)
+{
+    int i;
+    int curMin, curMax;
+    int n = maxHeights.size();
+    vector<long long> prefix(n, 0), suffix(n, 0);
+    map<int, int, greater<>> m;
+    prefix[0] = maxHeights[0];
+    curMin = curMax = maxHeights[0];
+    m[maxHeights[0]] = 0;
+    for (i = 1; i < n; i++) {
+        if (maxHeights[i] >= curMax) {
+            prefix[i] = prefix[i - 1] + maxHeights[i];
+            m[maxHeights[i]] = i;
+            if (m.count(maxHeights[i]) == 0) {
+                m[maxHeights[i]] = i;
+            }
+            curMax = maxHeights[i];
+        } else {
+            if (maxHeights[i] <= curMin) {
+                prefix[i] = static_cast<long long>(i + 1) * maxHeights[i];
+                curMin = maxHeights[i];
+                curMax = maxHeights[i];
+                m.clear();
+            } else {
+                auto it = m.lower_bound(maxHeights[i]);
+                curMax = maxHeights[i];
+                prefix[i] = prefix[it->second] + static_cast<long long>(i - (it->second + 1) + 1) * maxHeights[i];
+                Erase(m, curMax);
+            }
+        }
+        m[maxHeights[i]] = i;
+    }
+    m.clear();
+    suffix[n - 1] = maxHeights[n - 1];
+    m[maxHeights[n - 1]] = n - 1;
+    curMin = curMax = maxHeights[n - 1];
+    for (i = n - 2; i >= 0; i--) {
+        if (maxHeights[i] >= curMax) {
+            suffix[i] = suffix[i + 1] + maxHeights[i];
+            if (m.count(maxHeights[i]) == 0) {
+                m[maxHeights[i]] = i;
+            }
+            curMax = maxHeights[i];
+        } else {
+            if (maxHeights[i] <= curMin) {
+                suffix[i] = static_cast<long long>(n - i) * maxHeights[i];
+                curMin = maxHeights[i];
+                curMax = maxHeights[i];
+                m.clear();
+            } else {
+                auto it = m.lower_bound(maxHeights[i]);
+                curMax = maxHeights[i];
+                suffix[i] = suffix[it->second] + static_cast<long long>(it->second - i) * maxHeights[i];
+                Erase(m, curMax);
+            }
+        }
+        m[maxHeights[i]] = i;
+    }
+    long long ans = 0;
+    for (i = 0; i < n; i++) {
+        if (i == 0) {
+            ans = max(ans, suffix[i]);
+        } else if (i == n - 1) {
+            ans = max(ans, prefix[i]);
+        } else {
+            ans = max(ans, prefix[i] + suffix[i] - maxHeights[i]);
+        }
+    }
+    // for (auto a : prefix) cout << a << " "; cout << endl;
+    // for (auto a : suffix) cout << a << " "; cout << endl;
+    return ans;
+}
