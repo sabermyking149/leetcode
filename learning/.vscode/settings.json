@@ -28,6 +28,7 @@
         "*.tcc": "cpp",
         "array": "cpp",
         "istream": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "functional": "cpp"
     }
 }

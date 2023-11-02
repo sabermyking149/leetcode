@@ -11,6 +11,7 @@
 #include <queue>
 #include <cmath>
 #include <cstring>
+#include <functional>
 
 #include "pub.h"
 
@@ -7520,5 +7521,130 @@ long long maximumSumOfHeights(vector<int>& maxHeights)
     }
     // for (auto a : prefix) cout << a << " "; cout << endl;
     // for (auto a : suffix) cout << a << " "; cout << endl;
+    return ans;
+}
+
+
+// LC8
+int myAtoi(string s)
+{
+    // 前导空格
+    auto lambda1 = [](string &s) {
+        int cnt = 0;
+        for (auto ch : s) {
+            if (ch != ' ') {
+                break;
+            } else {
+                cnt++;
+            }
+        }
+        s = s.substr(cnt);
+    };
+    function<void(string &)> Trim = lambda1;
+    Trim(s);
+
+    // 前导0
+    auto lambda2 = [](string &s) {
+        int cnt = 0;
+        for (auto ch : s) {
+            if (ch != '0') {
+                break;
+            } else {
+                cnt++;
+            }
+        }
+        s = s.substr(cnt);
+        if (cnt == 0) {
+            return false;
+        }
+        return true;
+    };
+    function<bool(string &)> Trim0 = lambda2;
+    bool operTrim0 = Trim0(s);
+
+    if (s.empty() || s[0] == ' ' || isalpha(s[0])) {
+        return 0;
+    }
+
+    bool isNegetive = false;
+    int startIdx = 0;
+    int i;
+    if (s[0] == '-') {
+        if (operTrim0) {
+            return 0;
+        }
+        isNegetive = true;
+        startIdx++;
+    } else if (s[0] == '+') {
+        if (operTrim0) {
+            return 0;
+        }
+        startIdx++;
+    }
+    string t;
+    for (i = startIdx; i < s.size(); i++) {
+        if (isdigit(s[i])) {
+            t += s[i];
+        } else {
+            break;
+        }
+    }
+    if (t.empty()) {
+        return 0;
+    }
+    long long ans = 0;
+    for (i = 0; i < t.size(); i++) {
+        ans = t[i] - '0' + ans * 10;
+        if (isNegetive && ans * -1 < INT_MIN) {
+            return INT_MIN;
+        }
+        if (!isNegetive && ans > INT_MAX) {
+            return INT_MAX;
+        }
+    }
+    if (isNegetive) {
+        ans *= -1;
+    }
+    return ans;
+}
+
+
+// LC156
+TreeNode* upsideDownBinaryTree(TreeNode* root)
+{
+    if (root == nullptr) {
+        return nullptr;
+    }
+    stack<pair<TreeNode *, TreeNode *>> st;
+    // 递归lambda捕获列表要加上自身引用
+    function<void(TreeNode *node, TreeNode *parent)> f = [&st, &f](TreeNode *node, TreeNode *parent) {
+        if (node == nullptr) {
+            return;
+        }
+        st.push({node, parent});
+        f(node->left, node);
+    };
+
+    f(root, nullptr);
+
+    bool flag = true;
+    TreeNode *ans = nullptr;
+    while (!st.empty()) {
+        auto p = st.top();
+        st.pop();
+        
+        if (flag) {
+            flag = false;
+            ans = p.first;
+        }
+        p.first->right = p.second;
+        if (p.second != nullptr) {
+            if (p.second->right != nullptr) {      
+                p.first->left = p.second->right;
+            }
+            p.second->left = nullptr;
+            p.second->right = nullptr;
+        }
+    }
     return ans;
 }
