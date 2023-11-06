@@ -7673,3 +7673,131 @@ int calculateMinimumHP(vector<vector<int>>& dungeon)
     }
     return dp[0][0];
 }
+
+
+// LC410
+// 动态规划
+int splitArray(vector<int>& nums, int k)
+{
+    int i, j, p;
+    int n = nums.size();
+    // dp[i][k] - 以第i位结束分为k段的最大子数组和的最小值
+    vector<vector<int>> dp(n, vector<int>(k + 1, INT_MAX));
+    vector<int> prefixSum(n, 0);
+
+    prefixSum[0] = nums[0];
+    dp[0][1] = nums[0];
+    for (i = 1; i < n; i++) {
+        prefixSum[i] = prefixSum[i - 1] + nums[i];
+        dp[i][1] = prefixSum[i];
+    }
+    for (i = 1; i < n; i++) {
+        for (j = 2; j <= k; j++) {
+            if (j > i + 1) {
+                break;
+            }
+            for (p = 0; p < i; p++) {
+                if (j - 1 > p + 1) {
+                    continue;
+                }
+                dp[i][j] = min(dp[i][j], max(dp[p][j - 1], prefixSum[i] - prefixSum[p]));
+            }
+        }
+    }
+    return dp[n - 1][k];
+}
+
+// 二分
+int splitArray_1(vector<int>& nums, int k)
+{
+    int i;
+    int left, right, mid;
+    int cnt, idx;
+    int n = nums.size();
+    vector<int> prefixSum(n, 0);
+
+    prefixSum[0] = nums[0];
+    left = nums[0];
+    for (i = 1; i < n; i++) {
+        prefixSum[i] = prefixSum[i - 1] + nums[i];
+        left = max(left, nums[i]);
+    }
+    right = prefixSum[n - 1];
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        cnt = 0;
+        idx = 0;
+        for (i = 0; i < n; i++) {
+            if (cnt == 0) {
+                if (prefixSum[i] > mid) {
+                    i--;
+                    idx = i;
+                    cnt++;
+                }
+            } else {
+                if (prefixSum[i] - prefixSum[idx] > mid) {
+                    i--;
+                    idx = i;
+                    cnt++;
+                }
+            }
+        }
+        if (cnt >= k) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    return left;
+}
+
+
+// LC1094
+bool carPooling(vector<vector<int>>& trips, int capacity)
+{
+    int i, k;
+    int n = trips.size();
+
+    sort (trips.begin(), trips.end(), [](vector<int>& a, vector<int>& b) {
+        if (a[1] != b[1]) {
+            return a[1] < b[1];
+        }
+        return a[2] < b[2]; });
+    for (k = 0; k <= 1000; k++) {
+        for (i = 0; i < n; i++) {
+            if (trips[i][2] == k) {
+                capacity += trips[i][0];
+            }
+            if (trips[i][1] == k) {
+                capacity -= trips[i][0];
+                if (capacity < 0) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+bool carPooling_1(vector<vector<int>>& trips, int capacity)
+{
+    int i;
+    int n = trips.size();
+    vector<int> diff(1001, 0);
+    // diff[n] = a[n] - a[n - 1];
+    for (i = 0; i < n; i++) {
+        diff[trips[i][1]] += trips[i][0];
+        diff[trips[i][2]] -= trips[i][0];
+    }
+    vector<int> num(1000, 0);
+    num[0] = diff[0];
+    if (num[0] > capacity) {
+        return false;
+    }
+    for (i = 1; i < 1000; i++) {
+        num[i] = diff[i] + num[i - 1];
+        if (num[i] > capacity) {
+            return false;
+        }
+    }
+    return true;
+}
