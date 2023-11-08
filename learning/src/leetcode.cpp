@@ -7801,3 +7801,63 @@ bool carPooling_1(vector<vector<int>>& trips, int capacity)
     }
     return true;
 }
+
+
+// LC1488
+vector<int> avoidFlood(vector<int>& rains)
+{
+    int i;
+    int n = rains.size();
+    unordered_map<int, int> lake; // 第n个湖泊下雨的日期
+    set<int> st; // 可抽水的日期
+    vector<int> ans(n, 1);
+    for (i = 0; i < n; i++) {
+        if (rains[i] == 0) {
+            st.emplace(i);
+        } else {
+            ans[i] = -1;
+            if (lake.count(rains[i]) == 0) {
+                lake[rains[i]] = i;
+            } else {
+                auto it = st.lower_bound(lake[rains[i]]);
+                if (it == st.end()) {
+                    ans.clear();
+                    return ans;
+                }
+                ans[*it] = rains[i];
+                st.erase(*it);
+                lake[rains[i]] = i;
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LC188
+// dp[i][0 - 1][1 - k] 第i天持有股票已交易k次的最大价值
+int maxProfit(int k, vector<int>& prices)
+{
+    int i, p;
+    int n = prices.size();
+    vector<vector<vector<int>>> dp(n, vector<vector<int>>(2, vector<int>(k + 1, -0x3f3f3f3f)));
+
+    dp[0][1][1] = -prices[0];
+    dp[0][0][0] = 0;
+    for (i = 1; i < n; i++) {
+        dp[i][0][0] = 0;
+        for (p = 1; p <= k; p++) {
+            dp[i][0][p] = max(dp[i - 1][0][p], dp[i - 1][1][p] + prices[i]);
+            dp[i][1][p] = max(dp[i - 1][1][p], dp[i - 1][0][p - 1] - prices[i]);
+        }
+    }
+    int ans = 0;
+    for (i = 0; i < n; i++) {
+        for (p = 1; p <= k; p++) {
+            // printf ("dp[%d][0][%d] = %d\n", i, p, dp[i][0][p]);
+            // printf ("dp[%d][1][%d] = %d\n", i, p, dp[i][1][p]);
+            ans = max(ans, dp[i][0][p]);
+        }
+    }
+    return ans;
+}
