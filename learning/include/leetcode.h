@@ -16,4 +16,5 @@ int minOperations(int n);
 int maxNumOfMarkedIndices(vector<int>& nums);
 int flipChess(vector<string>& chessboard);
 bool isRobotBounded(string instructions);
+double MySqrt(double num);
 #endif

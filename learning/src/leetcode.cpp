@@ -7778,6 +7778,7 @@ bool carPooling(vector<vector<int>>& trips, int capacity)
     }
     return true;
 }
+// 差分数组
 bool carPooling_1(vector<vector<int>>& trips, int capacity)
 {
     int i;
@@ -7857,6 +7858,63 @@ int maxProfit(int k, vector<int>& prices)
             // printf ("dp[%d][0][%d] = %d\n", i, p, dp[i][0][p]);
             // printf ("dp[%d][1][%d] = %d\n", i, p, dp[i][1][p]);
             ans = max(ans, dp[i][0][p]);
+        }
+    }
+    return ans;
+}
+
+
+double MySqrt(double num)
+{
+    double left, right, mid;
+
+    if (num < 0) {
+        return INFINITY;
+    }
+    left = 0.0;
+    right = num + 1; // 防止出现num < 1的情况
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+
+        auto t = mid * mid;
+        if (num - t >= 10e-5) {
+            left = mid + 10e-4;
+        } else {
+            right = mid - 10e-4;
+        }
+    }
+    return right;
+}
+
+
+// LC517
+int findMinMoves(vector<int>& machines)
+{
+    int i;
+    int n = machines.size();
+    int sum = 0;
+
+    for (auto m : machines) {
+        sum += m;
+    }
+    if (sum % n != 0) {
+        return -1;
+    }
+    int ans = 0;
+    int avg = sum / n;
+    vector<int> need = machines;
+    for (i = 0; i < n; i++) {
+        need[i] -= avg;
+        ans = max(ans, need[i]);
+    }
+    for (i = 0; i < n; i++) {
+        ans = max(ans, abs(need[i]));
+        if (i < n - 1) {
+            if (need[i] <= 0) {
+                need[i + 1] -= abs(need[i]);
+            } else {
+                need[i + 1] += need[i];
+            }
         }
     }
     return ans;

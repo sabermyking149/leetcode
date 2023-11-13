@@ -728,6 +728,7 @@ void PrintString(string& msg)
 	cout << msg << endl;
 }
 auto complex(std::make_unique<Complex>(2.1, 4.2));
+#if 0
 int main(int argc, char *argv[])
 {
 	unique_ptr<Complex> complex1;
@@ -761,4 +762,22 @@ int main(int argc, char *argv[])
 	//th1.detach();
 	sleep(1);
 	return 0;
+}
+#endif
+
+void pointer()
+{
+	char *password = "e1234";
+	printf ("%p\n", password);
+}
+int main(int argc, char *argv[])
+{
+	cout << MySqrt(5.0) << endl;
+	cout << MySqrt(0.64) << endl;
+
+	int *p = (int *)malloc(4);
+	*p = 201;
+	pointer();
+	cout << (void *)pointer << endl;
+	cout << (void *)pointer << endl;
 }
