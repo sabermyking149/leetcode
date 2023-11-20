@@ -7954,3 +7954,162 @@ int numDistinct(string s, string t)
     }
     return dp[m][n];
 }
+
+
+// LC1363
+string largestMultipleOfThree(vector<int>& digits)
+{
+    int sum = 0;
+    string ans;
+    vector<int> remainder1;
+    vector<int> remainder2;
+    map<int, int, greater<>> data;
+    for (auto d : digits) {
+        sum += d;
+        data[d]++;
+        if (d % 3 == 1) {
+            remainder1.emplace_back(d);
+        } else if (d % 3 == 2) {
+            remainder2.emplace_back(d);
+        }
+    }
+    sort (remainder1.begin(), remainder1.end());
+    sort (remainder2.begin(), remainder2.end());
+
+    auto func = [&data]() {
+        int i;
+        string ans;
+        for (auto it : data) {
+            for (i = 0; i < it.second; i++) {
+                ans += it.first + '0';
+            }
+        }
+        return ans;
+    };
+
+    if (sum % 3 == 0) {
+        ans = func();
+    } else if (sum % 3 == 1) { // 去掉一个余1或两个余2
+        if (remainder1.size() > 0) {
+            auto num = remainder1[0];
+            if (data[num] == 1) {
+                data.erase(num);
+            } else {
+                data[num]--;
+            }
+            ans = func();
+        } else if (remainder2.size() > 1) {
+            auto num = remainder2[0];
+            auto num1 = remainder2[1];
+            if (data[num] == 1) {
+                data.erase(num);
+            } else {
+                data[num]--;
+            }
+
+            if (data[num1] == 1) {
+                data.erase(num1);
+            } else {
+                data[num1]--;
+            }
+            ans = func();
+        }
+    } else { // 去掉一个余2或两个余1
+        if (remainder2.size() > 0) {
+            auto num = remainder2[0];
+            if (data[num] == 1) {
+                data.erase(num);
+            } else {
+                data[num]--;
+            }
+            ans = func();
+        } else if (remainder1.size() > 1) {
+            auto num = remainder1[0];
+            auto num1 = remainder1[1];
+            if (data[num] == 1) {
+                data.erase(num);
+            } else {
+                data[num]--;
+            }
+
+            if (data[num1] == 1) {
+                data.erase(num1);
+            } else {
+                data[num1]--;
+            }
+            ans = func();
+        }
+    }
+    if (ans[0] == '0') {
+        return "0";
+    }
+    return ans;
+}
+
+
+// LC1458
+int maxDotProduct(vector<int>& nums1, vector<int>& nums2)
+{
+    // dp[i][j] - 以nums1前i位 nums2前j位 最大子序列点积
+    int i, j;
+    int m = nums1.size();
+    int n = nums2.size();
+    vector<vector<int>> dp(m + 1, vector<int>(n + 1, -0x3f3f3f3f));
+
+    dp[0][0] = 0;
+    for (i = 1; i <= m; i++) {
+        for (j = 1; j <= n; j++) {
+            // 4种情况
+            dp[i][j] = max({dp[i][j], nums1[i - 1] * nums2[j - 1] + dp[i - 1][j - 1],
+                        nums1[i - 1] * nums2[j - 1],
+                        dp[i - 1][j],
+                        dp[i][j - 1]});
+        }
+    }
+    return dp[m][n];
+}
+
+
+// LC1298
+int maxCandies(vector<int>& status, vector<int>& candies, vector<vector<int>>& keys, 
+    vector<vector<int>>& containedBoxes, vector<int>& initialBoxes)
+{
+    int i, k;
+    int box;
+    int ans = 0;
+    unordered_set<int> cantOpen;
+    queue<int> q;
+
+    for (auto init : initialBoxes) {
+        q.push(init);
+    }
+    while (q.size()) {
+        int size = q.size();
+        for (i = 0; i < size; i++) {
+            box = q.front();
+            q.pop();
+            if (status[box] == 1) {
+                ans += candies[box];
+            } else {
+                q.push(box);
+                if (cantOpen.count(box) == 1) {
+                    goto maxCandiesEND;
+                }
+                cantOpen.emplace(box);
+                continue;
+            }
+            if (keys[box].size() > 0) {
+                for (k = 0; k < keys[box].size(); k++) {
+                    status[keys[box][k]] = 1;
+                }
+            }
+            if (containedBoxes[box].size() > 0) {
+                for (k = 0; k < containedBoxes[box].size(); k++) {
+                    q.push(containedBoxes[box][k]);
+                }
+            }
+        }
+    }
+maxCandiesEND:
+    return ans;
+}
