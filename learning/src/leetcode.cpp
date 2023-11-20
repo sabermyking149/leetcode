@@ -7919,3 +7919,38 @@ int findMinMoves(vector<int>& machines)
     }
     return ans;
 }
+
+
+// LC115
+int numDistinct(string s, string t)
+{
+    int i, j;
+    int m = s.size();
+    int n = t.size();
+    int mod = 1000000007;
+    if (m < n) {
+        return 0;
+    }
+    // dp[i][j] - s的前i位包含t前j位的子序列个数
+    vector<vector<long long>> dp(m + 1, vector<long long>(n + 1, 0));
+    for (i = 0; i < m; i++) {
+        if (s[i] == t[0]) {
+            dp[i + 1][1] = dp[i][1] + 1;
+        } else {
+            dp[i + 1][1] = dp[i][1];
+        }
+    }
+    for (i = 0; i < m; i++) {
+        for (j = 1; j < n; j++) {
+            if (i < j) {
+                break;
+            }
+            if (s[i] == t[j]) {
+                dp[i + 1][j + 1] = (dp[i][j + 1] + dp[i][j]) % mod;
+            } else {
+                dp[i + 1][j + 1] = dp[i][j + 1];
+            }
+        }
+    }
+    return dp[m][n];
+}
