@@ -8113,3 +8113,93 @@ int maxCandies(vector<int>& status, vector<int>& candies, vector<vector<int>>& k
 maxCandiesEND:
     return ans;
 }
+
+
+// LC1269
+int numWays(int steps, int arrLen)
+{
+    // dp[i][x] - 第i步停留在下标x的方案数, 所求dp[steps][0];
+    int i, j;
+    int mod = 1000000007;
+    vector<vector<long long>> dp(steps + 1, vector<long long>(steps + 2, 0));
+    dp[1][0] = 1; // 不动
+    if (arrLen > 1) {
+        dp[1][1] = 1; // 向右走一步
+    }
+    for (i = 2; i <= steps; i++) {
+        for (j = 0; j < arrLen; j++) {
+            if (i < j) {
+                break;
+            }
+            if (j == 0) {
+                dp[i][j] = (dp[i - 1][j] + dp[i - 1][j + 1]) % mod;
+            } else if (j > 0 && j < arrLen - 1) {
+                dp[i][j] = (dp[i - 1][j - 1] + dp[i - 1][j] + dp[i - 1][j + 1]) % mod;
+            } else {
+                dp[i][j] = (dp[i - 1][j - 1] + dp[i - 1][j]) % mod;
+            }
+        }
+    }
+    return dp[steps][0];
+}
+
+
+// LC2332
+int latestTimeCatchTheBus(vector<int>& buses, vector<int>& passengers, int capacity)
+{
+    int i;
+    int left, right, mid;
+    int k;
+    int bus = buses.size();
+    int n = passengers.size();
+    unordered_set<int> arriveTime;
+
+    sort(buses.begin(), buses.end());
+    sort(passengers.begin(), passengers.end());
+
+    for (auto passenger : passengers) {
+        arriveTime.emplace(passenger);
+    }
+
+    left = passengers[0];
+    right = buses[bus - 1];
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        auto busCnt = 0;
+        k = 0;
+        for (i = 0; i < n; i++) {
+            if (passengers[i] <= mid) {
+                if (passengers[i] <= buses[busCnt]) {
+                    k++;
+                    if (k == capacity) {
+                        busCnt++;
+                        k = 0;
+                        if (busCnt == bus) {
+                            right = mid - 1;
+                            break;
+                        }
+                    }
+                } else {
+                    busCnt++;
+                    if (busCnt == bus) {
+                        right = mid - 1;
+                        break;
+                    }
+                    k = 0;
+                    i--;
+                    continue;
+                }
+            } else {
+                left = mid + 1;
+            }
+        }
+        if (busCnt < bus) {
+            left = mid + 1;
+        }
+    }
+    int ans = right;
+    while (arriveTime.count(ans) == 1) {
+        ans--;
+    }
+    return ans;
+}
