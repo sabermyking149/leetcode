@@ -8336,3 +8336,90 @@ int waysToSplit(vector<int>& nums)
     }
     return ans;
 }
+
+
+// LC2398
+int maximumRobots(vector<int>& chargeTimes, vector<int>& runningCosts, long long budget)
+{
+    int i;
+    int n = chargeTimes.size();
+    int left, right, mid;
+    int curTopCharge;
+    long long curSum, curCost;
+    priority_queue<pair<int, int>, vector<pair<int, int>>> pq;
+
+    left = 1;
+    right = n;
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        curSum = 0;
+        for (i = 0; i < mid; i++) {
+            pq.push({chargeTimes[i], i});
+            curSum += runningCosts[i];
+        }
+        while (1) {
+            auto t = pq.top();
+            if (t.second >= mid) {
+                pq.pop();
+            } else {
+                curTopCharge = t.first;
+                break;
+            }
+        }
+        curCost = curTopCharge + curSum * mid;
+        if (curCost <= budget) {
+            left = mid + 1;
+            continue;
+        }
+        for (i = mid; i < n; i++) {
+            curSum = curSum - runningCosts[i - mid] + runningCosts[i];
+            pq.push({chargeTimes[i], i});
+            while (1) {
+                auto t = pq.top();
+                if (t.second <= i - mid || t.second > i) {
+                    pq.pop();
+                } else {
+                    curTopCharge = t.first;
+                    break;
+                }
+            }
+            curCost = curTopCharge + curSum * mid;
+            if (curCost <= budget) {
+                break;
+            }
+        }
+        if (i == n) {
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    return right;
+}
+
+
+// LC1424
+vector<int> findDiagonalOrder(vector<vector<int>>& nums)
+{
+    int i, j;
+    vector<int> ans;
+    auto CMP = [](const pair<int, int>& a, const pair<int, int>& b) {
+        if (a.first + a.second != b.first + b.second) {
+            return a.first + a.second > b.first + b.second;
+        }
+        return a.first < b.first;
+    };
+    priority_queue<pair<int, int>, vector<pair<int, int>>, decltype(CMP)> pq(CMP);
+
+    for (i = 0; i < nums.size(); i++) {
+        for (j = 0; j < nums[i].size(); j++) {
+            pq.push({i, j});
+        }
+    }
+    while (!pq.empty()) {
+        auto p = pq.top();
+        pq.pop();
+        ans.emplace_back(nums[p.first][p.second]);
+    }
+    return ans;
+}
