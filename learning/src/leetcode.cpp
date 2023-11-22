@@ -8203,3 +8203,136 @@ int latestTimeCatchTheBus(vector<int>& buses, vector<int>& passengers, int capac
     }
     return ans;
 }
+
+
+// LC939
+int minAreaRect(vector<vector<int>>& points)
+{
+    int i, j;
+    int size = points.size();
+    int area = INT_MAX;
+    int r = 40000;
+    unordered_set<int> dots;
+
+    for (auto p : points) {
+        dots.emplace(p[0] * r + p[1]);
+    }
+    for (i = 0; i < size - 1; i++) {
+        for (j = i + 1; j < size; j++) {
+            if ((points[i][0] != points[j][0] && points[i][1] != points[j][1]) &&
+                (dots.count(points[i][0] * r + points[j][1]) && dots.count(points[j][0] * r + points[i][1]))) {
+                area = min(area, abs(points[i][0] - points[j][0]) * abs(points[i][1] - points[j][1]));
+            }
+        }
+    }
+    return area == INT_MAX ? 0 : area;
+}
+
+
+// LC593
+bool validSquare(vector<int>& p1, vector<int>& p2, vector<int>& p3, vector<int>& p4)
+{
+    vector<vector<int>> points;
+    points.emplace_back(p1);
+    points.emplace_back(p2);
+    points.emplace_back(p3);
+    points.emplace_back(p4);
+    double k1, k2;
+
+    vector<vector<int>> tries = {{0, 1, 2, 3}, {0, 2, 1, 3}, {0, 3, 1, 2}};
+    for (auto tr : tries) {
+        auto len1 = (points[tr[0]][0] - points[tr[1]][0]) * (points[tr[0]][0] - points[tr[1]][0]) +
+                    (points[tr[0]][1] - points[tr[1]][1]) * (points[tr[0]][1] - points[tr[1]][1]);
+        auto len2 = (points[tr[2]][0] - points[tr[3]][0]) * (points[tr[2]][0] - points[tr[3]][0]) +
+                    (points[tr[2]][1] - points[tr[3]][1]) * (points[tr[2]][1] - points[tr[3]][1]);
+        // 对角线相等
+        if (len1 != len2) {
+            continue;
+        }
+        // 中心点一致
+        if ((points[tr[0]][0] + points[tr[1]][0] != points[tr[2]][0] + points[tr[3]][0]) || 
+            (points[tr[0]][1] + points[tr[1]][1] != points[tr[2]][1] + points[tr[3]][1])) {
+            continue;
+        }
+        // 对角线垂直
+        if (points[tr[0]][0] == points[tr[1]][0]) {
+            k1 = INT_MAX;
+        } else {
+            k1 = (points[tr[0]][1] - points[tr[1]][1]) * 1.0 / (points[tr[0]][0] - points[tr[1]][0]);
+        }
+        if (points[tr[2]][0] == points[tr[3]][0]) {
+            k2 = INT_MAX;
+        } else {
+            k2 = (points[tr[2]][1] - points[tr[3]][1]) * 1.0 / (points[tr[2]][0] - points[tr[3]][0]);
+        }
+        if ((k1 == 0 && k2 == INT_MAX) || (k1 == INT_MAX && k2 == 0) || (k1 * k2 + 1 < 10e-7)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+// LC1712
+int waysToSplit(vector<int>& nums)
+{
+    int i;
+    int n = nums.size();
+    int mod = 1000000007;
+    int left, right, mid;
+    int idx1, idx2;
+    int leftSum, midSum, rightSum;
+    long long ans;
+    vector<int> prefixSum(n, 0);
+
+    prefixSum[0] = nums[0];
+    for (i = 1; i < n; i++) {
+        prefixSum[i] = nums[i] + prefixSum[i - 1];
+    }
+    ans = 0;
+    for (i = 0; i < n - 2; i++) {
+        // 找到中间子数组大于左边子数组最小结束下标
+        leftSum = prefixSum[i];
+        left = i + 1;
+        right = n - 2;
+        // 所求为left
+        while (left <= right)
+        {
+            mid = (right - left) / 2 + left;
+            midSum = prefixSum[mid] - leftSum;
+            if (midSum >= leftSum) {
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        midSum = prefixSum[left] - leftSum;
+        rightSum = prefixSum[n - 1] - midSum - leftSum;
+        if (rightSum < midSum) {
+            continue; // 不能用break
+        }
+        idx1 = left;
+
+        // 找到中间子数组大于左边子数组最大结束下标
+        // leftSum = prefixSum[i];
+        left = idx1;
+        right = n - 2;
+        // 所求为right
+        while (left <= right)
+        {
+            mid = (right - left) / 2 + left;
+            midSum = prefixSum[mid] - leftSum;
+            rightSum = prefixSum[n - 1] - midSum - leftSum;
+            if (midSum <= rightSum) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        idx2 = right;
+        ans = (ans + idx2 - idx1 + 1) % mod;
+        printf ("i = %d, idx1 = %d, idx2 = %d\n", i, idx1, idx2);
+        printf ("%d %d %d\n", prefixSum[i], prefixSum[idx1] - prefixSum[i], prefixSum[n - 1] - prefixSum[idx1]);
+    }
+    return ans;
+}
