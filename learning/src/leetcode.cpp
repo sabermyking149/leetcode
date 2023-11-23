@@ -8423,3 +8423,97 @@ vector<int> findDiagonalOrder(vector<vector<int>>& nums)
     }
     return ans;
 }
+
+
+// LC1191
+int kConcatenationMaxSum(vector<int>& arr, int k)
+{
+    int mod = 1000000007;
+    int i;
+    int n = arr.size();
+    long long curMax, suffixMax;
+    vector<long long> prefix(n , 0), suffix(n, 0);
+
+    prefix[0] = arr[0];
+    for (i = 1; i < n; i++) {
+        prefix[i] = prefix[i - 1] + arr[i];
+    }
+    suffix[n - 1] = arr[n - 1];
+    suffixMax = arr[n - 1];
+    for (i = n - 2; i >= 0; i--) {
+        suffix[i] = suffix[i + 1] + arr[i];
+        suffixMax = max(suffixMax, suffix[i]);
+    }
+    vector<long long> dp(n, 0);
+    dp[0] = arr[0];
+    curMax = arr[0];
+    for (i = 1; i < n; i++) {
+        dp[i] = dp[i - 1] > 0 ? dp[i - 1] + arr[i] : arr[i];
+        curMax = max(curMax, dp[i]);
+    }
+    if (k == 1) {
+        return curMax < 0 ? 0 : curMax % mod;
+    }
+    auto t = LONG_LONG_MIN;
+    for (i = 0; i < n; i++) {
+        if (prefix[n - 1] < 0) {
+            t = max({prefix[i] + suffixMax, dp[i], t});
+        } else {
+            t = max({prefix[i] + suffixMax + (k - 2) * prefix[n - 1], dp[i], t});
+        }
+    }
+    return t < 0 ? 0 : t % mod;
+}
+
+
+// LC1510
+bool winnerSquareGame(int n)
+{
+    // dp[n][0] - 剩余n个石子,alice行动是否必胜
+    int i, k;
+    vector<vector<bool>> dp(n + 1, vector<bool>(2, false));
+
+    dp[0][0] = false;
+    dp[0][1] = true;
+    for (i = 1; i <= n; i++) {
+        for (k = 1; k <= 320; k++) {
+            if (i - k * k >= 0) {
+                dp[i][0] = dp[i][0] | dp[i - k * k][1];
+                if (dp[i][0]) {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+        dp[i][1] = !dp[i][0];
+    }
+    return dp[n][0];
+}
+
+
+// LC1312
+int minInsertions(string s)
+{
+    int i, j;
+    int n = s.size();
+    // dp[i][j] - 下标i到j的子字符串变成回文串的最小插入字符数
+    vector<vector<int>> dp(n, vector<int>(n, 0));
+
+    for (j = 0; j < n; j++) {
+        for (i = j; i >= 0; i--) {
+            if (i == j) {
+                dp[i][j] = 0;
+            } else if (i + 1 == j) {
+                dp[i][j] = (s[i] == s[j] ? 0 : 1);
+            } else {
+                if (s[i] == s[j]) {
+                    dp[i][j] = dp[i + 1][j - 1];
+                } else {
+                    dp[i][j] = min(dp[i + 1][j], dp[i][j - 1]) + 1;
+                }
+            }
+        }
+    }
+    return dp[0][n - 1];
+}
