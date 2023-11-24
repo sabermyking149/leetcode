@@ -8612,3 +8612,149 @@ int numberOfArrays(string s, int k)
     }
     return dp[n];
 }
+
+
+// LC1301
+// BFS超时
+vector<int> pathsWithMaxScore_1(vector<string>& board)
+{
+    int i, j;
+    int n = board.size();
+    int size;
+    int mod = 1000000007;
+    int directions[3][2] = {{-1, 0}, {0, -1}, {-1, -1}};
+    int points;
+    long long ways;
+    vector<vector<vector<int>>> boardData(n, vector<vector<int>>(n, vector<int>(2, 0)));
+    queue<tuple<int, int, int>> q;
+
+    board[0][0] = '0';
+    board[n - 1][n - 1] = '0';
+    q.push({n * n - 1, 0, 1});
+    while (q.size()) {
+        size = q.size();
+        for (i = 0; i < size; i++) {
+            auto tp = q.front();
+            q.pop();
+
+            auto x = get<0>(tp) / n;
+            auto y = get<0>(tp) % n;
+            points = get<1>(tp);
+            ways = get<2>(tp);
+            if (points > boardData[x][y][0]) {
+                boardData[x][y][0] = points;
+                boardData[x][y][1] = ways;
+            } else if (points == boardData[x][y][0]) {
+                boardData[x][y][1] = (boardData[x][y][1] + ways) % mod;
+            } else {
+                continue;
+            }
+            for (j = 0; j < 3; j++) {
+                auto nx = x + directions[j][0];
+                auto ny = y + directions[j][1];
+
+                if (nx < 0 || ny < 0 || board[nx][ny] == 'X') {
+                    continue;
+                }
+                q.push({nx * n + ny, board[nx][ny] - '0' + points, ways});
+            }
+        }
+    }
+    return boardData[0][0];
+}
+
+// dp
+vector<int> pathsWithMaxScore(vector<string>& board)
+{
+    int i, j;
+    int n = board.size();
+    int mod = 1000000007;
+    vector<vector<vector<int>>> boardData(n, vector<vector<int>>(n, vector<int>(2, 0)));
+    
+    // 判断连通性
+    bool access = false;
+    auto b = board;
+    function<void (vector<string>& board, int pos, bool& access)> CanAccess = [&CanAccess](vector<string>& board, int pos, bool& access) {
+        if (access) {
+            return;
+        }
+        int i;
+        int n = board.size();
+        int directions[3][2] = {{-1, 0}, {0, -1}, {-1, -1}};
+        int row = pos / n;
+        int col = pos % n;
+
+        if (row == 0 && col == 0) {
+            access = true;
+            return;
+        }
+        board[row][col] = 'X';
+        for (i = 0; i < 3; i++) {
+            auto nr = row + directions[i][0];
+            auto nc = col + directions[i][1];
+            if (nr < 0 || nc < 0 || board[nr][nc] == 'X') {
+                continue;
+            }
+            CanAccess(board, nr * n + nc, access);
+        }
+    };
+    CanAccess(b, n * n - 1, access);
+    if (!access) {
+        return {0, 0};
+    }
+
+    // 预处理
+    board[0][0] = '0';
+    boardData[n - 1][n - 1] = {0, 1};
+    for (i = n - 2; i >= 0; i--) {
+        if (board[i][n - 1] != 'X') {
+            boardData[i][n - 1] = {board[i][n - 1] - '0' + boardData[i + 1][n - 1][0], 1};
+        } else {
+            break;
+        }
+    }
+    for (j = n - 2; j >= 0; j--) {
+        if (board[n - 1][j] != 'X') {
+            boardData[n - 1][j] = {board[n - 1][j] - '0' + boardData[n - 1][j + 1][0], 1};
+        } else {
+            break;
+        }
+    }
+    int maxPoint;
+    vector<vector<int>> waysData;
+    for (i = n - 2; i >= 0; i--) {
+        for (j = n - 2; j >= 0; j--) {
+            if (board[i][j] == 'X') {
+                continue;
+            }
+            waysData.clear();
+            if (board[i + 1][j] != 'X' && boardData[i + 1][j][1] > 0) {
+                waysData.emplace_back(boardData[i + 1][j]);
+            }
+            if (board[i][j + 1] != 'X' && boardData[i][j + 1][1] > 0) {
+                waysData.emplace_back(boardData[i][j + 1]);
+            }
+            if (board[i + 1][j + 1] != 'X' && boardData[i + 1][j + 1][1] > 0) {
+                waysData.emplace_back(boardData[i + 1][j + 1]);
+            }
+            // 类似
+            // 5X
+            // XX
+            if (waysData.empty()) {
+                continue;
+            }
+            boardData[i][j][0] = board[i][j] - '0';
+            maxPoint = 0;
+            for (auto w : waysData) {
+                maxPoint = max(maxPoint, w[0]);
+            }
+            boardData[i][j][0] += maxPoint;
+            for (auto w : waysData) {
+                if (w[0] == maxPoint) {
+                    boardData[i][j][1] = (static_cast<long long>(boardData[i][j][1]) + w[1]) % mod;
+                }
+            }
+        }
+    }
+    return boardData[0][0];
+}
