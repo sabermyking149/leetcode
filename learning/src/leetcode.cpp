@@ -8517,3 +8517,98 @@ int minInsertions(string s)
     }
     return dp[0][n - 1];
 }
+
+
+// LC1102
+int maximumMinimumPath(vector<vector<int>>& grid)
+{
+    int i, j;
+    int m = grid.size();
+    int n = grid[0].size();
+    int left, right, mid;
+
+    right = left = grid[0][0];
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            left = min(left, grid[i][j]);
+            right = max(right, grid[i][j]);
+        }
+    }
+    bool access = false;
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        access = false;
+        auto t = grid;
+        function<void (vector<vector<int>>& grid, int row, int col, bool& access)> DFS = 
+            [&mid, &DFS](vector<vector<int>>& grid, int row, int col, bool& access) {
+            int i;
+            int m = grid.size();
+            int n = grid[0].size();
+            int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+            if (access) {
+                return;
+            }
+            if (grid[row][col] < mid) {
+                return;
+            }
+            if (row == m - 1 && col == n - 1) {
+                access = true;
+                return;
+            }
+            grid[row][col] = -1;
+            for (i = 0; i < 4; i++) {
+                auto nr = row + directions[i][0];
+                auto nc = col + directions[i][1];
+                if (nr < 0 || nr >= m || nc < 0 || nc >= n || grid[nr][nc] == -1 || grid[nr][nc] < mid) {
+                    continue;
+                }
+                DFS(grid, nr, nc, access);
+            }
+        };
+        DFS(t, 0, 0, access);
+        if (access) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    return right;
+}
+
+
+// LC1416
+int numberOfArrays(string s, int k)
+{
+    int i, j;
+    int n = s.size();
+    int mod = 1000000007;
+    long long t;
+    vector<long long> dp(n + 1, 0);
+
+    if (s[0] - '0' > k) {
+        return 0;
+    }
+
+    dp[0] = 1;
+    dp[1] = 1;
+    for (i = 2; i <= n; i++) {
+        if (s[i - 1] != '0') {
+            dp[i] = dp[i - 1];
+        }
+        j = i - 2;
+        while (j >= 0) {
+            if (i - j > 10) {
+                break;
+            }
+            if (s[j] != '0') {
+                t = atol(s.substr(j, i - j).c_str());
+                if (t > k) {
+                    break;
+                }
+                dp[i] = (dp[i] + dp[j]) % mod;
+            }
+            j--;
+        }
+    }
+    return dp[n];
+}
