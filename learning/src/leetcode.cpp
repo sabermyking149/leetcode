@@ -8758,3 +8758,97 @@ vector<int> pathsWithMaxScore(vector<string>& board)
     }
     return boardData[0][0];
 }
+
+
+// LC1326
+int minTaps(int n, vector<int>& ranges)
+{
+    int i, j;
+    int left, right, prevLeft, prevRight;
+    int cnt;
+    vector<vector<int>> r;
+    for (i = 0; i <= n; i++) {
+        if (ranges[i] == 0) {
+            continue;
+        }
+        r.push_back({max(0, i - ranges[i]), min(n, i + ranges[i])});
+    }
+    if (r.empty()) {
+        return -1;
+    }
+    sort(r.begin(), r.end());
+
+    if (r[0][0] != 0) {
+        return -1;
+    }
+    cnt = 1;
+    if (r[0][1] == n) {
+        return cnt;
+    }
+    left = r[0][0];
+    right = r[0][1];
+    prevRight = -1;
+    for (i = 1; i < r.size(); i++) {
+        if (r[i][0] == left) {
+            right = r[i][1];
+        } else if (r[i][0] > right) {
+            return -1;
+        } else if (r[i][1] > right) {
+            if (r[i][0] > prevRight) {
+                prevRight = right;
+                prevLeft = left;
+                right = r[i][1];
+                left = r[i][0];
+                cnt++;
+            } else {
+                right = r[i][1];
+            }
+        }
+        if (r[i][1] == n) {
+            break;
+        }
+    }
+    return right < n ? - 1 : cnt;
+}
+
+
+// LC907
+int sumSubarrayMins(vector<int>& arr)
+{
+
+}
+
+
+// LC828
+int uniqueLetterString(string s)
+{
+    int i;
+    int n = s.size();
+    vector<vector<int>> alphaIdx(26, vector<int>(2, -1)); // 上一个字符出现位置
+    vector<int> f(n, 0); // f[i] - 以s[i]结尾的子字符串的唯一字符的个数
+    vector<int> dp(n, 0); // dp[i] - 到s[i]为止所有子字符串唯一字符的个数
+
+    f[0] = 1;
+    dp[0] = 1;
+    alphaIdx[s[i] - 'A'][0] = 0;
+    for (i = 1; i < n; i++) {
+        if (alphaIdx[s[i] - 'A'][0] == -1) {
+            f[i] = f[i - 1] + i + 1;
+            alphaIdx[s[i] - 'A'][0] = i;
+        } else {
+            if (alphaIdx[s[i] - 'A'][1] == -1) {
+                f[i] = f[i - 1] + i + 1 - 2 * (alphaIdx[s[i] - 'A'][0] + 1);
+                alphaIdx[s[i] - 'A'][1] = alphaIdx[s[i] - 'A'][0];
+                alphaIdx[s[i] - 'A'][0] = i;
+            } else {
+                auto len1 = alphaIdx[s[i] - 'A'][0] + 1;
+                auto len2 = alphaIdx[s[i] - 'A'][1] + 1;
+                f[i] = f[i - 1] + i + 1 - 2 * (len1 - len2) - len2;
+                alphaIdx[s[i] - 'A'][1] = alphaIdx[s[i] - 'A'][0];
+                alphaIdx[s[i] - 'A'][0] = i;
+            }
+        }
+        dp[i] = dp[i - 1] + f[i];
+    }
+    return dp[n - 1];
+}
