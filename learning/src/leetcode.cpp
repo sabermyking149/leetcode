@@ -8818,6 +8818,42 @@ int sumSubarrayMins(vector<int>& arr)
 
 }
 
+// LC755
+vector<int> pourWater(vector<int>& heights, int volume, int k)
+{
+    int i;
+    int width = heights.size();
+    int curHeight, curIdx;
+    while (volume) {
+        curHeight = heights[k] + 1;
+        curIdx = k;
+        for (i = k - 1; i >= 0; i--) {
+            if (heights[i] + 1 < curHeight) {
+                curHeight = heights[i] + 1;
+                curIdx = i;
+            } else if (heights[i] >= curHeight) {
+                break;
+            }
+        }
+        if (curHeight == heights[k] + 1) {
+            curIdx = k;
+        }
+        if (curIdx == k) {
+            for (i = k + 1; i < width; i++) {
+                if (heights[i] + 1 < curHeight) {
+                    curHeight = heights[i] + 1;
+                    curIdx = i;
+                } else if (heights[i] >= curHeight) {
+                    break;
+                }
+            }
+        }
+        heights[curIdx] = curHeight;
+        volume--;
+    }
+    return heights;
+}
+
 
 // LC828
 int uniqueLetterString(string s)
@@ -8851,4 +8887,52 @@ int uniqueLetterString(string s)
         dp[i] = dp[i - 1] + f[i];
     }
     return dp[n - 1];
+}
+
+
+// LC1411
+int numOfWays(int n)
+{
+    int i;
+    int mod = 1000000007;
+    // 对于每一行, 可以有12种方式, 其中2色6种, 3色6种;
+    // 2色可衍生出5种配对, 3色2种, 2色3种; 3色可衍生4种, 各2种
+    // dp[i][0] - 第i层以双色结尾的方案数
+    vector<vector<long long>> dp(n, vector<long long>(2, 0));
+
+    dp[0][0] = 6;
+    dp[0][1] = 6;
+
+    for (i = 1; i < n; i++) {
+        dp[i][0] = (dp[i - 1][0] * 3 + dp[i - 1][1] * 2) % mod;
+        dp[i][1] = (dp[i - 1][0] * 2 + dp[i - 1][1] * 2) % mod;
+    }
+    return (dp[n - 1][0] + dp[n - 1][1]) % mod;
+}
+
+
+// LC790
+int numTilings(int n)
+{
+    int i;
+    int mod = 1000000007;
+    vector<long long> dp(n + 1, 0);
+
+    if (n == 1) {
+        return 1;
+    } else if (n == 2) {
+        return 2;
+    }
+    // 长为n的地板可分为n-i和i两部分, 其中i具有唯一性, 比如i=2的情况只能是上下两横向,两竖向则与i=1重复计数了
+    // f[n] = f[n - 1] + f[n - 2] + 2 * f[n - 3] + 2 * f[n - 4] + ... + 2 * f[0]
+    // f[0] = 1;
+    dp[0] = 1;
+    dp[1] = 1;
+    dp[2] = 2;
+    long long prefixSum = dp[0];
+    for (i = 3; i <= n; i++) {
+        dp[i] = (dp[i - 1] + dp[i - 2] + prefixSum * 2) % mod;
+        prefixSum = (prefixSum + dp[i - 2]) % mod;
+    }
+    return dp[n];
 }
