@@ -8936,3 +8936,205 @@ int numTilings(int n)
     }
     return dp[n];
 }
+
+
+// LC1406
+string stoneGameIII(vector<int>& stoneValue)
+{
+    int i;
+    int a, b, c;
+    int n = stoneValue.size();
+    // dp[i] - alice从第i处的石堆开始, 能获得的最大和
+    vector<int> dp(n, INT_MIN);
+    // 后缀和, 方便计算
+    vector<int> suffixSum(n, 0);
+    suffixSum[n - 1] = stoneValue[n - 1];
+    for (i = n - 2; i >= 0; i--) {
+        suffixSum[i] = suffixSum[i + 1] + stoneValue[i];
+    }
+
+    dp[n - 1] = stoneValue[n - 1];
+    for (i = n - 2; i >= 0; i--) {
+        a = INT_MIN;
+        if (i + 1 < n) {
+            a = suffixSum[i] - dp[i + 1];
+        }
+        b = INT_MIN;
+        if (i + 2 < n) {
+            b = suffixSum[i] - dp[i + 2];
+        }
+        c = INT_MIN;
+        if (i + 3 < n) {
+            c = suffixSum[i] - dp[i + 3];
+        }
+        dp[i] = max({dp[i], a, b, c});
+        if (i + 3 >= n) { // 直接取完
+            dp[i] = max(dp[i], suffixSum[i]);
+        } 
+    }
+    int alice = dp[0];
+    int bob = suffixSum[0] - alice;
+
+    if (alice > bob) {
+        return "Alice";
+    } else if (alice < bob) {
+        return "Bob";
+    }
+    return "Tie";
+}
+
+
+// LC1686
+int stoneGameVI(vector<int>& aliceValues, vector<int>& bobValues)
+{
+    auto CMP = [](const pair<int, int>& a, const pair<int, int>& b) {
+        return a.first + a.second < b.first + b.second;
+    };
+    priority_queue<pair<int, int>, vector<pair<int, int>>, decltype(CMP)> pq(CMP);
+
+    int i;
+    int n = aliceValues.size();
+    for (i = 0; i < n; i++) {
+        pq.push({aliceValues[i], bobValues[i]});
+    }
+    int cnt;
+    int alice, bob;
+
+    cnt = alice = bob = 0;
+    while (!pq.empty()) {
+        auto p = pq.top();
+        pq.pop();
+        if (cnt % 2 == 0) {
+            alice += p.first;
+        } else {
+            bob += p.second;
+        }
+        cnt++;
+    }
+    if (alice > bob) {
+        return 1;
+    } else if (alice < bob) {
+        return -1;
+    }
+    return 0;
+}
+
+
+// LC1690
+int stoneGameVII(vector<int>& stones)
+{
+    int i, j;
+    int head, tail;
+    int n = stones.size();
+    vector<vector<int>> dpMax(n, vector<int>(n, 0)); // dpMax[i][j] alice先手在区间[i,j]得到的最大分差
+
+    vector<int> prefixSum(n, 0);
+    prefixSum[0] = stones[0];
+    for (i = 1; i < n; i++) {
+        prefixSum[i] = prefixSum[i - 1] + stones[i];
+    }
+    for (j = 0; j < n; j++) {
+        for (i = j; i >= 0; i--) {
+            if (i == j) {
+                dpMax[i][j] = 0;
+                continue;
+            } else if (i + 1 == j) {
+                dpMax[i][j] = max(stones[i], stones[j]);
+                continue;
+            }
+            if (i == 0) {
+                head = prefixSum[j - 1]; // i -> j - 1
+            } else {
+                head = prefixSum[j - 1] - prefixSum[i - 1];
+            }
+            tail = prefixSum[j] - prefixSum[i]; // i + 1 -> j
+            dpMax[i][j] = max(head - dpMax[i][j - 1], tail - dpMax[i + 1][j]); // 此处减去dpMax为bob的最佳策略
+        }
+    }
+    return dpMax[0][n - 1];
+}
+
+
+// LC1562
+// 从后往前二分
+int findLatestStep(vector<int>& arr, int m)
+{
+    int i;
+    int n = arr.size();
+    set<int> blankInc;
+    set<int, greater<>> blankDec;
+    if (m == n) {
+        return n;
+    }
+    for (i = 0; i < n; i++) {
+        arr[i]--;
+    }
+    blankInc.emplace(arr[n - 1]);
+    blankDec.emplace(arr[n - 1]);
+    if (arr[n - 1] == m || n - 1 - arr[n - 1] == m) {
+        return n - 1;
+    }
+    int len;
+    for (i = n - 2; i >= 0; i--) {
+        // 找最近的左右端点
+        // 右端点
+        auto it = blankInc.lower_bound(arr[i]);
+        if (it == blankInc.end()) {
+            len = n - 1 - arr[i];
+        } else {
+            len = *it - 1 - arr[i];
+        }
+        if (len == m) {
+            return i;
+        }
+        // 左端点
+        it = blankDec.lower_bound(arr[i]);
+        if (it == blankDec.end()) {
+            len = arr[i];
+        } else {
+            len = arr[i] - 1 - *it;
+        }
+        if (len == m) {
+            return i;
+        }
+        blankInc.emplace(arr[i]);
+        blankDec.emplace(arr[i]);
+    }
+    return -1;
+}
+
+
+// LC1621
+int numberOfSets(int n, int k)
+{
+    int mod = 1000000007;
+    vector<vector<long long>> dp(n + 1, vector<long long>(k + 1, 0));
+
+    // dp[n][1] = (n - 1) + (n - 2) + ... + 1 = n(n - 1) / 2 (n >= 2)
+    // dp[n][k] = dp[n - 1][k - 1] + dp[n - 2][k - 1] + ... + dp[k][k - 1] + (dp[n - 2][k - 1] + ... + dp[k][k - 1]) + ...   (k > 1)
+    int i, j;
+    int t, c;
+    for (i = 2; i <= n; i++) {
+        for (j = 1; j <= k; j++) {
+            if (j == 1) {
+                dp[i][j] = (i - 1) * i / 2 % mod;
+                continue;
+            } else if (i == j + 1) {
+                dp[i][j] = 1;
+                continue;
+            }
+            if (j >= i) {
+                break;
+            }
+            // dp[i][j] = (dp[i][j] + dp[i - 1][j - 1]) % mod;
+            t = i;
+            c = 1;
+            while (t > 2) {
+                dp[i][j] = (dp[i][j] +  c * dp[t - 1][j - 1]) % mod;
+                t--;
+                c++;
+            }
+        }
+    }
+    return dp[n][k];
+}
