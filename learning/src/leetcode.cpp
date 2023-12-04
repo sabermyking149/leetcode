@@ -9104,36 +9104,157 @@ int findLatestStep(vector<int>& arr, int m)
 }
 
 
+// LC774
+double minmaxGasDist(vector<int>& stations, int k)
+{
+    int i;
+    int n = stations.size();
+    long long curPos, cnt, t;
+    long long left, right, mid;
+    vector<long long> st(n);
+
+    for (i = 0; i < n; i++) {
+        st[i] = stations[i] * 1e5;
+    }
+
+    left = 1;
+    right = 1e8 * 1e5;
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        curPos = st[0];
+        t = k;
+        for (i = 1; i < n; i++) {
+            if (st[i] - curPos > mid) {
+                if ((st[i] - curPos) % mid == 0) {
+                    cnt = (st[i] - curPos) / mid - 1;
+                } else {
+                    cnt = (st[i] - curPos) / mid;
+                }
+                curPos = st[i];
+                t -= cnt;
+                if (t < 0) {
+                    left = mid + 1;
+                    break;
+                }
+            } else {
+                curPos = st[i];
+            }
+        }
+        if (i == n) {
+            right = mid - 1;
+        }
+    }
+    return left / 1e5;
+}
+
+
+// LC776
+// to do
+vector<TreeNode*> splitBST(TreeNode* root, int target)
+{
+    TreeNode *divideNode = nullptr;
+    vector<tuple<TreeNode *, TreeNode *, char>> nodes;
+    function<void(TreeNode *, TreeNode *, char)> Inorder = [&Inorder, &nodes](TreeNode *node, TreeNode *parent, char dir) {
+        if (node == nullptr) {
+            return;
+        }
+        Inorder(node->left, node, 'L');
+        nodes.emplace_back(make_tuple(node, parent, dir));
+        Inorder(node->right, node, 'R');
+    };
+    Inorder(root, nullptr, 'L');
+    int i;
+    int n = nodes.size();
+    for (i = 0; i < n; i++) {
+        if (get<0>(nodes[i])->val == target) {
+        
+        } else if (get<0>(nodes[i])->val > target) {
+
+        }
+    }
+    return {root, divideNode};
+}
+
+
+// LC801
+int minSwap(vector<int>& nums1, vector<int>& nums2)
+{
+    int i;
+    int n = nums1.size();
+    int a1, a2, b1, b2;
+    vector<vector<int>> dp(n, vector<int>(2, 0x3f3f3f3f));
+
+    // dp[n][0] - 第n位不交换使序列严格递增的最小交换次数
+    dp[0][0] = 0;
+    a1 = nums1[0];
+    b1 = nums2[0];
+    dp[0][1] = 1;
+    a2 = nums2[0];
+    b2 = nums1[0];
+
+    for (i = 1; i < n; i++) {
+        if (nums1[i] > a1 && nums2[i] > b1) {
+            dp[i][0] = dp[i - 1][0];
+        }
+        if (nums1[i] > a2 && nums2[i] > b2) {
+            dp[i][0] = min(dp[i - 1][1], dp[i][0]);
+        }
+
+        if (nums2[i] > a1 && nums1[i] > b1) {
+            dp[i][1] = dp[i - 1][0] + 1;
+        }
+        if (nums2[i] > a2 && nums1[i] > b2) {
+            dp[i][1] = min(dp[i - 1][1] + 1, dp[i][1]);
+        }
+        a1 = nums1[i];
+        b1 = nums2[i];
+        a2 = nums2[i];
+        b2 = nums1[i];
+    }
+    return min(dp[n - 1][0], dp[n - 1][1]);
+}
+
+
 // LC1621
 int numberOfSets(int n, int k)
 {
     int mod = 1000000007;
     vector<vector<long long>> dp(n + 1, vector<long long>(k + 1, 0));
+    vector<vector<long long>> sum(n + 1, vector<long long>(k + 1, 0));
 
     // dp[n][1] = (n - 1) + (n - 2) + ... + 1 = n(n - 1) / 2 (n >= 2)
     // dp[n][k] = dp[n - 1][k - 1] + dp[n - 2][k - 1] + ... + dp[k][k - 1] + (dp[n - 2][k - 1] + ... + dp[k][k - 1]) + ...   (k > 1)
+    // 例如
+    // dp[5][2] = (dp[4][1] + dp[3][1] + dp[2][1]) + (dp[3][1] + dp[2][1]) + (dp[2][1]) = 15
+    // dp[4][2] = (dp[3][1] + dp[2][1]) + (dp[2][1]) = 5
+    // dp[5][2] = dp[4][2] + sum(dp[5 - 1][2 - 1], dp[5 - 2][2 - 1], dp[5 - 3][2 - 1])
+    // 再例如 dp[6][3] = (dp[5][2] + dp[4][2] + dp[3][2]) + (dp[4][2] + dp[3][2]) + (dp[3][2]) = dp[5][3] +
+    // sum(dp[5][2], dp[4][2], dp[3][2])
     int i, j;
-    int t, c;
     for (i = 2; i <= n; i++) {
         for (j = 1; j <= k; j++) {
             if (j == 1) {
                 dp[i][j] = (i - 1) * i / 2 % mod;
+                if (i == 2) {
+                    sum[i][j] = dp[i][j];
+                } else {
+                    sum[i][j] = (sum[i - 1][j] + dp[i][j]) % mod;
+                }
                 continue;
             } else if (i == j + 1) {
                 dp[i][j] = 1;
+                if (i == 2) {
+                    sum[i][j] = dp[i][j];
+                } else {
+                    sum[i][j] = (sum[i - 1][j] + dp[i][j]) % mod;
+                }
                 continue;
             }
             if (j >= i) {
                 break;
             }
-            // dp[i][j] = (dp[i][j] + dp[i - 1][j - 1]) % mod;
-            t = i;
-            c = 1;
-            while (t > 2) {
-                dp[i][j] = (dp[i][j] +  c * dp[t - 1][j - 1]) % mod;
-                t--;
-                c++;
-            }
+           dp[i][j] = (sum[i - 1][j - 1] + dp[i - 1][j]) % mod;
+           sum[i][j] = (sum[i - 1][j] + dp[i][j]) % mod;
         }
     }
     return dp[n][k];
