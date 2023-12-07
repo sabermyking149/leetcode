@@ -9259,3 +9259,118 @@ int numberOfSets(int n, int k)
     }
     return dp[n][k];
 }
+
+
+// LC2477
+long long minimumFuelCost(vector<vector<int>>& roads, int seats)
+{
+    if (roads.empty()) {
+        return 0;
+    }
+    int i;
+    int size = roads.size();
+    int parent;
+    unordered_map<int, unordered_set<int>> edges;
+    unordered_map<int, int> nodeData; // 节点 - 人数
+    for (i = 0; i <= size; i++) {
+        nodeData[i] = 1;
+    }
+    for (auto r : roads) {
+        edges[r[0]].emplace(r[1]);
+        edges[r[1]].emplace(r[0]);
+    }
+    queue<pair<int, int>> q;
+    for (auto it : edges) {
+        // 叶子节点
+        if (it.second.size() == 1) {
+            q.push({it.first, -1});
+        }
+    }
+
+    while (q.size()) {
+        auto p = q.front();
+        q.pop();
+        if (p.first == 0) {
+            continue;
+        }
+        parent = *edges[p.first].begin();
+        edges[parent].erase(p.first);
+        nodeData[parent] += nodeData[p.first];
+        if (edges[parent].size() == 1) {
+            q.push({parent, p.first});
+        }
+    }
+    long long ans = 0;
+    for (auto it : nodeData) {
+        // printf ("%d %d\n", it.first, it.second);
+        if (it.first == 0 || it.first == -1) {
+            continue;
+        }
+        if (it.second % seats == 0) {
+            ans += it.second / seats;
+        } else {
+            ans += it.second / seats + 1;
+        }
+    }
+    return ans;
+}
+
+
+// LC2955
+vector<int> sameEndSubstringCount(string s, vector<vector<int>>& queries)
+{
+    // unordered_map<char, vector<int>> idx; 超时
+    vector<vector<int>> idx(26);
+    int i;
+    int n = s.size();
+    int left, right, mid;
+    int leftBound, rightBound, sum;
+    vector<int> ans;
+    for (i = 0; i < n; i++) {
+        idx[s[i] - 'a'].emplace_back(i);
+    }
+
+    for (auto q : queries) {
+        sum = 0;
+        for (auto ch = 'a'; ch <= 'z'; ch++) {
+            if (idx[ch - 'a'].size() == 0) {
+                continue;
+            }
+            // 第一个大于等于q[0]的idx[ch], left
+            left = 0;
+            right = idx[ch - 'a'].size() - 1;
+            while (left <= right) {
+                mid = (right - left) / 2 + left;
+                if (idx[ch - 'a'][mid] < q[0]) {
+                    left = mid + 1;
+                } else {
+                    right = mid - 1;
+                }
+            }
+            if (left >= idx[ch - 'a'].size()) {
+                continue;
+            }
+            leftBound = left;
+
+            // 第一个小于等于q[1]的idx[ch], right
+            left = 0;
+            right = idx[ch - 'a'].size() - 1;
+            while (left <= right) {
+                mid = (right - left) / 2 + left;
+                if (idx[ch - 'a'][mid] > q[1]) {
+                    right = mid - 1;
+                } else {
+                    left = mid + 1;
+                }
+            }
+            if (right < 0) {
+                continue;
+            }
+            rightBound = right;
+            auto t = (rightBound - leftBound + 1) * (rightBound - leftBound + 2) / 2;
+            sum += t;
+        }
+        ans.emplace_back(sum);
+    }
+    return ans;
+}
