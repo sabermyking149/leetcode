@@ -965,53 +965,6 @@ int numMatchingSubseq(string s, vector<string>& words)
 }
 
 
-long long minimumFuelCost(vector<vector<int>>& roads, int seats)
-{
-    unordered_map<int, vector<int>> routes;
-    unordered_map<int, int> dist;
-    unordered_set<int> city;
-    unordered_set<int> visited;
-    queue<int> q;
-    int i, j;
-    int n = roads.size();
-    int m, t;
-
-    if (n == 0) {
-        return 0;
-    }
-    for (auto r : roads) {
-        routes[r[0]].emplace_back(r[1]);
-        routes[r[1]].emplace_back(r[0]);
-        city.emplace(r[0]);
-        city.emplace(r[1]);
-    }
-
-    q.push(0);
-    while (q.size()) {
-        m = q.size();
-        for (i = 0; i < m; i++) {
-            t = q.front();
-            q.pop();
-            cout << t << endl;
-            if (visited.find(t) != visited.end()) {
-                continue;
-            }
-            visited.emplace(t);
-            for (j = 0; j < routes[t].size(); j++) {
-                //if (visited.find(routes[i][j]) == visited.end()) {
-                    q.push(routes[i][j]);
-                    dist[routes[i][j]]++;
-                //}
-            }
-        }
-    }
-    for (auto it : dist) {
-        printf ("%d : %d\n", it.first, it.second);
-    }
-    return 0;
-}
-
-
 // LC802
 vector<int> eventualSafeNodes(vector<vector<int>>& graph)
 {
@@ -9371,6 +9324,122 @@ vector<int> sameEndSubstringCount(string s, vector<vector<int>>& queries)
             sum += t;
         }
         ans.emplace_back(sum);
+    }
+    return ans;
+}
+
+
+// LC2267
+bool hasValidPath(vector<vector<char>>& grid)
+{
+    int m = grid.size();
+    int n = grid[0].size();
+    unordered_map<int, unordered_set<int>> route;
+    if (grid[0][0] == ')' || grid[m - 1][n - 1] == '(') {
+        return false;
+    }
+    if ((m + n - 1) % 2 == 1) { // 左右括号数量要匹配
+        return false;
+    }
+    function<void (vector<vector<char>>&, int, int, int, int, bool&)> DFS =
+    [&DFS, &route](vector<vector<char>>& grid, int row, int col, int cnt1, int cnt2, bool& find) {
+        if (find) {
+            return;
+        }
+
+        int k;
+        int m = grid.size();
+        int n = grid[0].size();
+        int directions[2][2] = {{0, 1}, {1, 0}};
+
+        if (row == m - 1 && col == n - 1 && cnt1 == cnt2) {
+            find = true;
+            return;
+        }
+        if (route.count(row * n + col) && route[row * n + col].count(cnt1 - cnt2)) {
+            return;
+        }
+        route[row * n + col].emplace(cnt1 - cnt2);
+        auto t = m - 1 - row + n - 1 - col;
+        if (cnt1 < cnt2 || cnt1 * 2 > m + n || (cnt1 == cnt2 && t % 2 != 0) || (cnt1 > cnt2 && t < cnt1 - cnt2)) {
+            return;
+        }
+
+        for (k = 0; k < 2; k++) {
+            auto nr = row + directions[k][0];
+            auto nc = col + directions[k][1];
+            if (nr < m && nc < n) {
+                if (grid[nr][nc] == '(') {
+                    DFS(grid, nr, nc, cnt1 + 1, cnt2, find);
+                } else {
+                    DFS(grid, nr, nc, cnt1, cnt2 + 1, find);
+                }
+            }
+        }
+    };
+    bool find = false;
+    DFS(grid, 0, 0, 1, 0, find);
+    return find;
+}
+
+
+// LC2763
+int sumImbalanceNumbers(vector<int>& nums)
+{
+    int i, j;
+    int n = nums.size();
+    int ans, cnt, curMaxVal, curMinVal;
+    map<int, int> dataLess;
+    map<int, int, greater<>> dataGreater;
+
+    ans = 0;
+    for (i = 0; i < n; i++) {
+        dataLess.clear();
+        dataGreater.clear();
+        cnt = 0;
+        for (j = i; j < n; j++) {
+            if (j == i) {
+                dataLess[nums[j]]++;
+                dataGreater[nums[j]]++;
+                continue;
+            }
+            if (dataLess.count(nums[j])) {
+                dataLess[nums[j]]++;
+                dataGreater[nums[j]]++;
+                ans += cnt;
+                continue;
+            }
+            if (nums[j] < dataLess.begin()->first) { // 最小值
+                curMinVal = dataLess.begin()->first;
+                if (curMinVal - nums[j] > 1) {
+                    cnt++;
+                }
+            } else if (nums[j] > dataGreater.begin()->first) { // 最大值
+                curMaxVal = dataGreater.begin()->first;
+                if (nums[j] - curMaxVal > 1) {
+                    cnt++;
+                }
+            } else {
+                auto rightIter = dataLess.upper_bound(nums[j]);
+                auto leftIter = dataGreater.upper_bound(nums[j]);
+                if (nums[j] - leftIter->first > 1) {
+                    if (rightIter->first - nums[j] > 1) {
+                        cnt++;
+                    } else {
+                        // cnt不变
+                    }
+                } else {
+                    if (rightIter->first - nums[j] > 1) {
+                        // cnt不变
+                    } else {
+                        cnt--;
+                    }
+                }
+            }
+            dataLess[nums[j]]++;
+            dataGreater[nums[j]]++;
+            ans += cnt;
+        }
     }
     return ans;
 }
