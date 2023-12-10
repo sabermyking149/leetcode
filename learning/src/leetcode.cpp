@@ -9443,3 +9443,125 @@ int sumImbalanceNumbers(vector<int>& nums)
     }
     return ans;
 }
+
+
+// LC2008
+long long maxTaxiEarnings(int n, vector<vector<int>>& rides)
+{
+    int i, j;
+    vector<long long> dp(n + 1, 0);
+
+    sort(rides.begin(), rides.end(), [](vector<int>& a, vector<int>& b) {
+        if (a[1] != b[1]) {
+            return a[1] < b[1];
+        }
+        return a[0] < b[0];
+    });
+    j = 0;
+    for (i = 2; i <= n; i++) {
+        if (j == rides.size() || i < rides[j][1]) {
+            dp[i] = max(dp[i], dp[i - 1]);
+        } else {
+            dp[i] = max(dp[i], dp[rides[j][0]] + rides[j][1] - rides[j][0] + rides[j][2]);
+            i--;
+            j++;
+        }
+    }
+    return dp[n];
+}
+
+
+// LC1671
+int minimumMountainRemovals(vector<int>& nums)
+{
+    int i, j;
+    int n = nums.size();
+    vector<int> dpUp(n, 1), dpDown(n, 1);
+
+    for (i = 1; i < n; i++) {
+        for (j = i - 1; j >= 0; j--) {
+            if (nums[i] > nums[j]) {
+                dpUp[i] = max(dpUp[i], dpUp[j] + 1);
+            }
+        }
+    }
+    for (i = n - 2; i >= 0; i--) {
+        for (j = i + 1; j < n; j++) {
+            if (nums[i] > nums[j]) {
+                dpDown[i] = max(dpDown[i], dpDown[j] + 1);
+            }
+        }
+    }
+    int ans = INT_MAX;
+    for (i = 1; i < n - 1; i++) {
+        if (dpUp[i] != 1 && dpDown[i] != 1) {
+            ans = min(ans, n - (dpUp[i] + dpDown[i] - 1));
+        }
+    }
+    return ans;
+}
+
+
+// LC2959
+int numberOfSets(int n, int maxDistance, vector<vector<int>>& roads)
+{
+    // 一共有 2^n 种情况
+    int i, j, k;
+    int tmp, idx;
+    int ans = 0;
+    vector<int> status(n);
+    vector<int> dist(n);
+    vector<vector<pair<int, int>>> edgeWithWeight(n);
+    queue<pair<int, int>> q;
+    pair<int, int> t;
+    for (k = 0; k < pow(2, n); k++) {
+        tmp = k;
+        idx = 0;
+        while (tmp) {
+            status[idx] = tmp % 2;
+            tmp /= 2;
+            idx++;
+        }
+        for (i = 0; i < n; i++) {
+            edgeWithWeight[i].clear();
+        }
+        for (auto r : roads) {
+            if (status[r[0]] && status[r[1]]) { // 当前情况存在路径
+                edgeWithWeight[r[0]].push_back({r[1], r[2]});
+                edgeWithWeight[r[1]].push_back({r[0], r[2]});
+            }
+        }
+        for (i = 0; i < n; i++) {
+            if (status[i] == 0) {
+                continue;
+            }
+            dist.assign(n, INT_MAX);
+            q.push({i, 0});
+            while (q.size()) {
+                t = q.front();
+                q.pop();
+
+                if (dist[t.first] < t.second) {
+                    continue;
+                }
+                dist[t.first] = t.second;
+                auto size = edgeWithWeight[t.first].size();
+                for (auto e : edgeWithWeight[t.first]) {
+                    if (e.second + t.second < dist[e.first]) {
+                        dist[e.first] = e.second + t.second;
+                        q.push({e.first, dist[e.first]});
+                    }
+                }
+            }
+            for (j = 0; j < n; j++) {
+                if (j != i && status[j] && dist[j] > maxDistance) {
+                    goto numberOfSetsENDLOOP;
+                }
+            }
+        }
+        ans++;
+numberOfSetsENDLOOP:
+        ;
+    }
+    return ans;
+}
