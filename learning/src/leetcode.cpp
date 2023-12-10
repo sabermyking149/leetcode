@@ -9565,3 +9565,98 @@ numberOfSetsENDLOOP:
     }
     return ans;
 }
+
+
+// LC1631
+int minimumEffortPath(vector<vector<int>>& heights)
+{
+    int i, j;
+    int left, right, mid;
+    int m = heights.size();
+    int n = heights[0].size();
+    vector<vector<bool>> visited(heights.size(), vector<bool>(heights[0].size(), false));
+    bool reach = false;
+
+    left = right = 0;
+    for (auto height : heights) {
+        for (auto h : height) {
+            right = max(right, h);
+        }
+    }
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        function<void (int, int, vector<vector<bool>>&, bool&)> DFS = 
+            [&DFS, &heights, &mid](int row, int col, vector<vector<bool>>& visited, bool& reach) -> void {
+
+            int k;
+            int m = heights.size();
+            int n = heights[0].size();
+            int direction[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+            if (reach) {
+                return;
+            }
+            if (row == m - 1 && col == n - 1) {
+                reach = true;
+                return;
+            }
+            visited[row][col] = true;
+            for (k = 0; k < 4; k++) {
+                auto nr = row + direction[k][0];
+                auto nc = col + direction[k][1];
+
+                if (nr < 0 || nr >= m || nc < 0 || nc >= n || 
+                    visited[nr][nc] || abs(heights[row][col] - heights[nr][nc]) > mid) {
+                    continue;
+                }
+                DFS(nr, nc, visited, reach);
+            }
+        };
+        for (i = 0; i < m; i++) {
+            for (j = 0; j < n; j++) {
+                visited[i][j] = false;
+            }
+        }
+        reach = false;
+        DFS(0, 0, visited, reach);
+        if (reach) {
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    return left;
+}
+
+
+// LC1818
+int minAbsoluteSumDiff(vector<int>& nums1, vector<int>& nums2)
+{
+    int i;
+    int n = nums1.size();
+    long long sum;
+    set<int> less;
+    set<int, greater<>> greater;
+
+    sum = 0;
+    for (i = 0; i < n; i++) {
+        sum += abs(nums1[i] - nums2[i]);
+        less.emplace(nums1[i]);
+        greater.emplace(nums1[i]);
+    }
+    long long ans = sum;
+    for (i = 0; i < n; i++) {
+        sum -= abs(nums1[i] - nums2[i]);
+        auto it1 = less.lower_bound(nums2[i]);
+        if (it1 != less.end()) {
+            ans = min(ans, sum + abs(*it1 - nums2[i]));
+        }
+        auto it2 = greater.lower_bound(nums2[i]);
+        if (it2 != greater.end()) {
+            ans = min(ans, sum + abs(*it2 - nums2[i]));
+        }
+        // 还原
+        sum += abs(nums1[i] - nums2[i]);
+    }
+    return ans % 1000000007;
+}
