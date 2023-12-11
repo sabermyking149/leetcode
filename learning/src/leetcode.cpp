@@ -132,6 +132,7 @@ vector<TreeNode*> generateTrees(int n)
 }
 
 
+// LC1258
 vector<string> words;
 unordered_map<string, int> um;
 vector<string> ans;
@@ -233,6 +234,7 @@ vector<string> generateSentences(vector<vector<string>>& synonyms, string text)
     sort(ans.begin(), ans.end());
     return ans;
 }
+
 
 vector<string> trulyMostPopular(vector<string>& names, vector<string>& synonyms)
 {
@@ -8764,6 +8766,41 @@ int minTaps(int n, vector<int>& ranges)
     return right < n ? - 1 : cnt;
 }
 
+// LC1964
+// 求最长不降子序列, 二分法
+vector<int> longestObstacleCourseAtEachPosition(vector<int>& obstacles)
+{
+    int i;
+    int n = obstacles.size();
+    int m;
+    int left, right, mid;
+    vector<int> low;
+    vector<int> ans(n, 0);
+    low.emplace_back(obstacles[0]);
+    ans[0] = 1;
+    for (i = 1; i < n; i++) {
+        m = low.size();
+        if (obstacles[i] >= low[m - 1]) {
+            low.emplace_back(obstacles[i]);
+            ans[i] = low.size();
+            continue;
+        }
+        left = 0;
+        right = m - 1;
+        while (left <= right) { // 所求为left
+            mid = ((right - left) >> 1) + left;
+            if (low[mid] <= obstacles[i]) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        low[left] = obstacles[i];
+        ans[i] = left + 1;
+    }
+    return ans;
+}
+
 
 // LC907
 int sumSubarrayMins(vector<int>& arr)
@@ -9659,4 +9696,67 @@ int minAbsoluteSumDiff(vector<int>& nums1, vector<int>& nums2)
         sum += abs(nums1[i] - nums2[i]);
     }
     return ans % 1000000007;
+}
+
+
+// LC2002
+int maxProduct(string s)
+{
+    // 一共有 2^n - 1 种情况
+    int i, j, k;
+    int tmp, idx;
+    int n = s.size();
+    vector<int> status(n);
+    vector<int> idxes;
+    vector<pair<string, vector<int>>> palindromes;
+    string t;
+    for (k = 1; k < pow(2, n); k++) {
+        tmp = k;
+        idx = 0;
+        while (tmp) {
+            status[idx] = tmp % 2;
+            tmp /= 2;
+            idx++;
+        }
+        t.clear();
+        idxes.clear();
+        for (i = 0; i < n; i++) {
+            if (status[i]) {
+                t += s[i];
+                idxes.emplace_back(i);
+            }
+        }
+        if (IsPalindrome(t)) {
+            palindromes.push_back({t, idxes});
+        }
+    }
+
+    int p, q;
+    int ans;
+    bool findSameIndex = false;
+
+    ans = 0;
+    n = palindromes.size();
+    for (i = 0; i < n - 1; i++) {
+        for (j = i + 1; j < n; j++) {
+            p = 0;
+            q = 0;
+            findSameIndex = false;
+            while (p < palindromes[i].second.size() && q < palindromes[j].second.size()) {
+                if (palindromes[i].second[p] < palindromes[j].second[q]) {
+                    p++;
+                } else if (palindromes[i].second[p] > palindromes[j].second[q]) {
+                    q++;
+                } else {
+                    findSameIndex = true;
+                    break;
+                }
+            }
+            if (!findSameIndex) {
+                tmp = palindromes[i].first.size() * palindromes[j].first.size();
+                ans = max(ans, tmp);
+            }
+        }
+    }
+    return ans;
 }
