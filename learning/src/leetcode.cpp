@@ -8803,10 +8803,75 @@ vector<int> longestObstacleCourseAtEachPosition(vector<int>& obstacles)
 
 
 // LC907
+// 样例 [71,55,82,55] - 593
 int sumSubarrayMins(vector<int>& arr)
 {
+    // 分别找某一个数左右第一个小于它的值, 两个单调递增栈
+    int i, idx;
+    int n = arr.size();
+    unordered_map<int, pair<int, int>> idxBoundary; // 下标 - {左长度, 右长度}
+    stack<int> stRight, stLeft;
 
+    // 右边
+    for (i = 0; i < n; i++) {
+        if (stRight.empty()) {
+            stRight.push(i);
+            continue;
+        }
+        idx = stRight.top();
+        if (arr[idx] < arr[i]) {
+            stRight.push(i);
+        } else {
+            while (arr[idx] >= arr[i]) {
+                idxBoundary[idx].second = i - idx;
+                stRight.pop();
+                if (stRight.empty()) {
+                    break;
+                }
+                idx = stRight.top();
+            }
+            stRight.push(i);
+        }
+    }
+    while (!stRight.empty()) {
+        idx = stRight.top();
+        idxBoundary[idx].second = n - idx;
+        stRight.pop();
+    }
+
+    // 左边
+    for (i = n - 1; i >= 0; i--) {
+        if (stLeft.empty()) {
+            stLeft.push(i);
+            continue;
+        }
+        idx = stLeft.top();
+        if (arr[i] >= arr[idx]) { // 注意此处判断关系与上面不同,是为了避免有相同元素重复记录子数组
+            stLeft.push(i);
+        } else {
+            while (arr[i] < arr[idx]) {  // 这里也是
+                idxBoundary[idx].first = idx - i;
+                stLeft.pop();
+                if (stLeft.empty()) {
+                    break;
+                }
+                idx = stLeft.top();
+            }
+            stLeft.push(i);
+        }
+    }
+    while (!stLeft.empty()) {
+        idx = stLeft.top();
+        idxBoundary[idx].first = idx + 1;
+        stLeft.pop();
+    }
+    long long ans = 0;
+    for (auto it : idxBoundary) {
+        ans += static_cast<long long>(it.second.first) * it.second.second * arr[it.first];
+    }
+    return ans % 1000000007;
 }
+
 
 // LC755
 vector<int> pourWater(vector<int>& heights, int volume, int k)
@@ -9142,7 +9207,7 @@ double minmaxGasDist(vector<int>& stations, int k)
 // to do
 vector<TreeNode*> splitBST(TreeNode* root, int target)
 {
-    TreeNode *divideNode = nullptr;
+    /*TreeNode *divideNode = nullptr;
     vector<tuple<TreeNode *, TreeNode *, char>> nodes;
     function<void(TreeNode *, TreeNode *, char)> Inorder = [&Inorder, &nodes](TreeNode *node, TreeNode *parent, char dir) {
         if (node == nullptr) {
@@ -9162,7 +9227,13 @@ vector<TreeNode*> splitBST(TreeNode* root, int target)
 
         }
     }
-    return {root, divideNode};
+    return {root, divideNode};*/
+    if (root == nullptr) {
+        return {nullptr, nullptr};
+    }
+    if (root->val <= target) {
+        auto left = root->left;
+    }
 }
 
 
@@ -9759,4 +9830,51 @@ int maxProduct(string s)
         }
     }
     return ans;
+}
+
+
+// LC1898
+int maximumRemovals(string s, string p, vector<int>& removable)
+{
+    int i, j, k;
+    int left, right, mid;
+    string t, tt;
+    bool f = false;
+
+    left = 0;
+    right = removable.size();
+
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        t = s;
+        for (k = 0; k < mid; k++) {
+            t[removable[k]] = '0';
+        }
+        tt.clear();
+        for (auto ch : t) {
+            if (ch != '0') {
+                tt += ch;
+            }
+        }
+        f = false;
+        i = j = 0;
+        while (i < tt.size() && j < p.size()) {
+            if (tt[i] == p[j]) {
+                i++;
+                j++;
+                if (j == p.size()) {
+                    f = true;
+                    break;
+                }
+            } else {
+                i++;
+            }
+        }
+        if (f) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    return right;
 }
