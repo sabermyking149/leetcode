@@ -9878,3 +9878,56 @@ int maximumRemovals(string s, string p, vector<int>& removable)
     }
     return right;
 }
+
+
+// LC2454
+vector<int> secondGreaterElement(vector<int>& nums)
+{
+    // 比一个数大的下一个的下一个, 1 -> 3 -> 2, 则是2
+    // 单调递减栈
+    int i, idx;
+    int n = nums.size();
+    unordered_map<int, int> nextGreaterIdx; // 下标 - 下一个更大下标
+    set<int> s;
+    stack<int> stRight;
+
+    for (i = 0; i < n; i++) {
+        if (stRight.empty()) {
+            stRight.push(i);
+            continue;
+        }
+        idx = stRight.top();
+        if (nums[idx] >= nums[i]) {
+            stRight.push(i);
+        } else {
+            while (nums[idx] < nums[i]) {
+                if (nextGreaterIdx.count(idx) == 0) {
+                    s.emplace(idx);
+                    nextGreaterIdx[idx] = -1;
+                } else {
+                    nextGreaterIdx[idx] = i;
+                }
+                stRight.pop();
+                if (stRight.empty()) {
+                    break;
+                }
+                idx = stRight.top();
+            }
+            stRight.push(i);
+            for (auto it : s) {
+                stRight.push(it);
+            }
+            s.clear();
+        }
+    }
+
+    vector<int> ans(n);
+    for (i = 0; i < n; i++) {
+        if (nextGreaterIdx.count(i) && nextGreaterIdx[i] != -1) {
+            ans[i] = nums[nextGreaterIdx[i]];
+        } else {
+            ans[i] = -1;
+        }
+    }
+    return ans;
+}
