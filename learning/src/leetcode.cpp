@@ -9204,36 +9204,28 @@ double minmaxGasDist(vector<int>& stations, int k)
 
 
 // LC776
-// to do
+// 如果当前节点 root->val <= target, 那它及左子树都应该被划分到less树, 但root的右子树中也有可能存在小于等于target的节点,
+// 而这些节点可以通过 p = splitBST(root->right, target) 返回出来, 而由于是右子树分出来的, 子树p[0]中所有结点的值肯定也比root->val大,
+// 因此接在root的右边 root->right = p[0];
+// root->val > target时同理, root及其右子树直接划分出来到more, 递归左子树找漏掉的大值节点
 vector<TreeNode*> splitBST(TreeNode* root, int target)
 {
-    /*TreeNode *divideNode = nullptr;
-    vector<tuple<TreeNode *, TreeNode *, char>> nodes;
-    function<void(TreeNode *, TreeNode *, char)> Inorder = [&Inorder, &nodes](TreeNode *node, TreeNode *parent, char dir) {
-        if (node == nullptr) {
-            return;
-        }
-        Inorder(node->left, node, 'L');
-        nodes.emplace_back(make_tuple(node, parent, dir));
-        Inorder(node->right, node, 'R');
-    };
-    Inorder(root, nullptr, 'L');
-    int i;
-    int n = nodes.size();
-    for (i = 0; i < n; i++) {
-        if (get<0>(nodes[i])->val == target) {
-        
-        } else if (get<0>(nodes[i])->val > target) {
-
-        }
-    }
-    return {root, divideNode};*/
     if (root == nullptr) {
         return {nullptr, nullptr};
     }
+    TreeNode *less, *greater;
     if (root->val <= target) {
-        auto left = root->left;
+        less = root;
+        auto p = splitBST(root->right, target);
+        root->right = p[0];
+        greater = p[1];
+    } else {
+        greater = root;
+        auto p = splitBST(root->left, target);
+        root->left = p[1];
+        less = p[0];
     }
+    return {less, greater};
 }
 
 
