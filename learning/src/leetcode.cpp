@@ -9931,3 +9931,143 @@ vector<int> secondGreaterElement(vector<int>& nums)
     }
     return ans;
 }
+
+
+// LC1092
+string shortestCommonSupersequence(string str1, string str2)
+{
+    int i, j;
+    int m = str1.size();
+    int n = str2.size();
+    vector<vector<int>> dp(m + 1, vector<int>(n + 1, 0));
+
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            if (str1[i] == str2[j]) {
+                dp[i + 1][j + 1] = dp[i][j] + 1;
+            } else {
+                dp[i + 1][j + 1] = max(dp[i + 1][j], dp[i][j + 1]);
+            }
+        }
+    }
+    // 求最长子序列
+    string lcs;
+    function<void (int, int)> print_lcs = [&dp, &str1, &str2, &lcs, &print_lcs](int i, int j) {
+        if(i == 0 || j == 0) {
+            return;
+        }
+        //相等则添加
+        if (str1[i - 1] == str2[j - 1]) {
+            print_lcs(i - 1, j - 1);
+            lcs += str1[i - 1];
+        } else if(dp[i - 1][j] >= dp[i][j - 1]) {
+            print_lcs(i - 1, j);
+        } else {
+            print_lcs(i, j - 1);
+        }
+    };
+    print_lcs(m, n);
+
+    // cout << "lcs = " << lcs << endl;
+
+    int cur;
+    int size = lcs.size();
+    string ans;
+    vector<string> part1, part2;
+
+    j = 0;
+    cur = 0;
+    for (i = 0; i < m; i++) {
+        if (str1[i] == lcs[j]) {
+            part1.emplace_back(str1.substr(cur, i - cur));
+            cur = i + 1;
+            j++;
+            if (j == size) {
+                break;
+            }
+        }
+    }
+    if (cur != m) {
+        part1.emplace_back(str1.substr(cur));
+    }
+    j = 0;
+    cur = 0;
+    for (i = 0; i < n; i++) {
+        if (str2[i] == lcs[j]) {
+            part2.emplace_back(str2.substr(cur, i - cur));
+            cur = i + 1;
+            j++;
+            if (j == size) {
+                break;
+            }
+        }
+    }
+    if (cur != n) {
+        part2.emplace_back(str2.substr(cur));
+    }
+    for (i = 0; i < size; i++) {
+        ans += part1[i] + part2[i] + lcs[i];
+    }
+    if (i < part1.size()) {
+        ans += part1[part1.size() - 1];
+    }
+    if (i < part2.size()) {
+        ans += part2[part2.size() - 1];
+    }
+    return ans;
+}
+
+
+// LC1722
+int minimumHammingDistance(vector<int>& source, vector<int>& target, vector<vector<int>>& allowedSwaps)
+{
+    int i, k;
+    int n = source.size();
+    unordered_map<int, unordered_set<int>> edges;
+    unordered_map<int, int> sourceNum;
+    unordered_map<int, int> targetNum;
+    vector<bool> visited(n, false);
+    vector<int> idx;
+
+    for (auto as : allowedSwaps) {
+        edges[as[0]].emplace(as[1]);
+        edges[as[1]].emplace(as[0]);
+    }
+
+    function<void (int)> DFS = [&DFS, &visited, &edges, &idx](int cur) {
+        visited[cur] = true;
+        idx.emplace_back(cur);
+        for (auto it : edges[cur]) {
+            if (visited[it] == false) {
+                DFS(it);
+            }
+        }
+    };
+    int ans = 0;
+    for (i = 0; i < n; i++) {
+        if (visited[i] == false) {
+            idx.clear();
+            DFS(i);
+            sourceNum.clear();
+            targetNum.clear();
+            for (auto id : idx) {
+                sourceNum[source[id]]++;
+                targetNum[target[id]]++;
+            }
+            for (auto it : sourceNum) {
+                for (k = 0; k < it.second; k++) {
+                    if (targetNum.count(it.first)) {
+                        if (targetNum[it.first] == 1) {
+                            targetNum.erase(it.first);
+                        } else {
+                            targetNum[it.first]--;
+                        }
+                    } else {
+                        ans++;
+                    }
+                }
+            }
+        }
+    }
+    return ans;
+}
