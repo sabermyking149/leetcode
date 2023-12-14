@@ -10063,3 +10063,82 @@ int minimumHammingDistance(vector<int>& source, vector<int>& target, vector<vect
     }
     return ans;
 }
+
+
+// LC1937
+long long maxPoints(vector<vector<int>>& points)
+{
+    int i, j;
+    int m = points.size();
+    int n = points[0].size();
+    vector<vector<long long>> dp(m, vector<long long>(n, 0)); // dp[i][j] - 在points[i][j]能得到的最大分数
+
+    // dp[i][j] = max{f[i − 1][j′] − abs(j − j′)} + points[i][j] ->
+    // max{f[i − 1][j′] − j′} + points[i][j] + j (j < j') or  右边
+    // max{f[i − 1][j′] + j′} + points[i][j] - j (j >= j')  左边
+    // 用两个数组分别记录 f[i − 1][j′] - j′ 和 f[i − 1][j′] + j′的最大值
+    vector<vector<long long>> left(m, vector<long long>(n, 0));
+    vector<vector<long long>> right(m, vector<long long>(n, 0));
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            if (i == 0) {
+                dp[i][j] = points[i][j];
+                continue;
+            }
+            dp[i][j] = max(left[i - 1][j] + points[i][j] - j, right[i - 1][j] + points[i][j] + j);
+        }
+        left[i][0] = dp[i][0] + 0; 
+        for (j = 1; j < n; j++) {
+            left[i][j] = dp[i][j] + j > left[i][j - 1] ? dp[i][j] + j : left[i][j - 1];
+        }
+        right[i][n - 1] = dp[i][n - 1] - (n - 1);
+        for (j = n - 2; j >= 0; j--) {
+            right[i][j] = dp[i][j] - j > right[i][j + 1] ? dp[i][j] - j : right[i][j + 1];
+        }
+    }
+    return *max_element(dp[m - 1].begin(), dp[m - 1].end());
+}
+
+
+// LC871
+int minRefuelStops(int target, int startFuel, vector<vector<int>>& stations)
+{
+    int i;
+    int n;
+    int location, leftFuel;
+    int ans;
+    priority_queue<int, vector<int>> pq;
+
+    leftFuel = startFuel;
+    n = stations.size();
+    ans = 0;
+    location = 0;
+    for (i = 0; i < n; i++) {
+        if (stations[i][0] - location > leftFuel) {
+            while (stations[i][0] - location > leftFuel) {
+                if (pq.empty()) {
+                    return -1;
+                }
+                auto p = pq.top();
+                pq.pop();
+                ans++;
+                leftFuel += p;
+            }
+            
+        }
+        leftFuel -= stations[i][0] - location;
+        pq.push(stations[i][1]);
+        location = stations[i][0];
+    }
+
+    while (target - location > leftFuel) {
+        if (pq.empty()) {
+            return -1;
+        }
+        auto p = pq.top();
+        pq.pop();
+        leftFuel += p;
+        ans++;
+    }
+    return ans;
+}
