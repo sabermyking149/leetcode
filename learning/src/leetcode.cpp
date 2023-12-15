@@ -10142,3 +10142,72 @@ int minRefuelStops(int target, int startFuel, vector<vector<int>>& stations)
     }
     return ans;
 }
+
+
+// LC294
+unordered_map<string, bool> canWinStatus; // 字符串先手是否必胜 例如staus["++"] = true
+bool canWin(string s)
+{
+    int i;
+    int n = s.size();
+    if (canWinStatus.count(s)) {
+        return canWinStatus[s];
+    }
+
+    for (i = 0; i < n - 1; i++) {
+        if (s[i] == s[i + 1] && s[i] == '+') {
+            s[i] = '-';
+            s[i + 1] = '-';
+            if (canWin(s) == false) { // 翻转后的s仍可以获胜,说明后手会赢,反之先手赢
+                return true;
+            }
+            s[i] = '+';
+            s[i + 1] = '+';
+        }
+    }
+    canWinStatus[s] = false; // 循环完到此处说明s不能先手赢,否则在循环中就直接return了
+    return canWinStatus[s];
+}
+
+
+// LC1871
+// BFS超时
+bool canReach(string s, int minJump, int maxJump)
+{
+    int i;
+    int n = s.size();
+    vector<bool> visited(n, false);
+
+    if (s[n - 1] == '1') {
+        return false;
+    }
+    vector<int> idx;
+    for (i = 1; i < n; i++) {
+        if (s[i] == '0') {
+            idx.emplace_back(i);
+        }
+    }
+    vector<int> idx1 = idx;
+    reverse(idx1.begin(), idx1.end());
+    queue<int> q;
+    q.push(0);
+    while (!q.empty()) {
+        auto t = q.front();
+        q.pop();
+
+        visited[t] = true;
+        if (t == n - 1) {
+            return true;
+        }
+        auto left = lower_bound(idx.begin(), idx.end(), t + minJump);
+        auto right = lower_bound(idx1.begin(), idx1.end(), t + maxJump, greater<int>());
+        if (left != idx.end() && right != idx1.end()) {
+            for (i = left - idx.begin(); i <= right - idx1.begin(); i++) {
+                if (!visited[idx[i]]) {
+                    q.push(idx[i]);
+                }
+            }
+        }
+    }
+    return false;
+}
