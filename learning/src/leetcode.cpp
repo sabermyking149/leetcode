@@ -10170,6 +10170,86 @@ bool canWin(string s)
 }
 
 
+// LC464
+// 数字可以重复取的情况
+bool canIWin(int maxChoosableInteger, int desiredTotal)
+{
+    if (maxChoosableInteger >= desiredTotal) {
+        return true;
+    }
+
+    int i, j;
+    vector<int> dp(desiredTotal + 1, false); // dp[i] - 剩余i先手能否赢
+
+    for (i = 1; i <= maxChoosableInteger; i++) {
+        dp[i] = true;
+    }
+    for (i = maxChoosableInteger + 1; i <= desiredTotal; i++) {
+        for (j = 1; j <= maxChoosableInteger; j++) {
+            if (dp[i - j] == false) {
+                dp[i] = true;
+                break;
+            }
+        }
+        if (j == maxChoosableInteger + 1) {
+            dp[i] = false;
+        }
+    }
+    return dp[desiredTotal];
+}
+// 不可以重复取
+bool canIWin1(int maxChoosableInteger, int desiredTotal)
+{
+    if (maxChoosableInteger >= desiredTotal) {
+        return true;
+    }
+
+    int i, j;
+    vector<int> dp(desiredTotal + 1, false); // dp[i] - 剩余i先手能否赢
+
+    for (i = 1; i <= maxChoosableInteger; i++) {
+        dp[i] = true;
+    }
+    for (i = maxChoosableInteger + 1; i <= desiredTotal; i++) {
+        for (j = 1; j <= maxChoosableInteger; j++) {
+            if (dp[i - j] == false) {
+                dp[i] = true;
+                break;
+            }
+        }
+        if (j == maxChoosableInteger + 1) {
+            dp[i] = false;
+        }
+    }
+    return dp[desiredTotal];
+}
+
+
+// LC375
+int getMoneyAmount(int n)
+{
+    // dp[i][j] - 区间[i, j]猜到数字的最小花费
+    int i, j, k;
+    vector<vector<int>> dp(n + 1, vector<int>(n + 1, 0x3f3f3f3f));
+
+    for (j = 1; j <= n; j++) {
+        for (i = j; i >= 0; i--) {
+            if (i == j) {
+                dp[i][j] = 0;
+            } else if (i + 1 == j) {
+                dp[i][j] = min(i, j);
+            } else {
+                // 假设所猜数字是k
+                for (k = i + 1; k <= j - 1; k++) {
+                    dp[i][j] = min(dp[i][j], max(dp[k + 1][j], dp[i][k - 1]) + k);
+                }
+            }
+        }
+    }
+    return dp[1][n];
+}
+
+
 // LC1871
 // BFS超时
 bool canReach(string s, int minJump, int maxJump)
@@ -10210,4 +10290,121 @@ bool canReach(string s, int minJump, int maxJump)
         }
     }
     return false;
+}
+
+
+// LC2967
+void createPalindrome(string& num, int index, set<int>& resultLess, 
+    set<int, greater<>>& resultGreater)
+{
+    int i;
+    int n = num.size();
+
+    if (index > n / 2) {
+        resultLess.emplace(atoi(num.c_str()));
+        resultGreater.emplace(atoi(num.c_str()));
+        return;
+    }
+    for (i = 0; i <= 9; i++) {
+        if (index == 0 && i == 0 ) {
+            continue;
+        }
+
+        num[index] = i + '0';
+        num[n - 1 - index] = num[index];
+        createPalindrome(num, index + 1, resultLess, resultGreater);
+    }
+}
+long long minimumCost(vector<int>& nums)
+{
+    sort(nums.begin(), nums.end());
+
+    int i;
+    int k;
+    int n = nums.size();
+    int target;
+    long long ans = 0;
+
+    k = n / 2;
+    string t = to_string(nums[k]);
+    if (IsPalindrome(t)) {
+        for (i = 0; i < n; i++) {
+            ans += abs(nums[i] - nums[k]);
+        }
+        return ans;
+    }
+
+    set<int> resultLess;
+    set<int, greater<>> resultGreater;
+    string num = t;
+    createPalindrome(num, 0, resultLess, resultGreater);
+
+    // 第一个大于等于nums[k]的回文数
+    target = *resultLess.lower_bound(nums[k]);
+    for (i = 0; i < n; i++) {
+        ans += abs(nums[i] - target);
+    }
+
+    // 第一个小于等于nums[k]的回文数
+    long long tmp = 0;
+    auto it = resultGreater.lower_bound(nums[k]);
+    if (it == resultGreater.end()) {
+        target = nums[k] - 1;
+    } else {
+        target = *it;
+    }
+    for (i = 0; i < n; i++) {
+        tmp += abs(nums[i] - target);
+    }
+    return min(ans, tmp);
+}
+
+
+// LC2968
+int maxFrequencyScore(vector<int>& nums, long long k)
+{
+    sort(nums.begin(), nums.end());
+
+    int i;
+    int n = nums.size();
+    int left, right, mid;
+    long long median; // 中位数
+    long long need;
+    vector<long long> prefixSum(n);
+
+    prefixSum[0] = nums[0];
+    for (i = 1; i < n; i++) {
+        prefixSum[i] = prefixSum[i - 1] + nums[i];
+    }
+
+    left = 1;
+    right = nums.size();
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        need = 0;
+        // 滑动窗口
+        for (i = 0; i <= n - mid; i++) {
+            if (mid % 2 == 1) {
+                median = nums[(i + i + mid - 1) / 2];
+            } else {
+                median = (nums[(i + i + mid - 1) / 2] + nums[(i + i + mid - 1) / 2 + 1]) / 2;
+            }
+            if (i == 0) {
+                need = (mid  + 1) / 2 * median - prefixSum[(i + i + mid - 1) / 2] + 
+                    prefixSum[i + mid - 1] - prefixSum[(i + i + mid - 1) / 2] - mid / 2 * median;
+            } else {
+                need = (mid  + 1) / 2 * median - (prefixSum[(i + i + mid - 1) / 2]  - prefixSum[i - 1]) + 
+                    prefixSum[i + mid - 1] - prefixSum[(i + i + mid - 1) / 2] - mid / 2 * median;
+            }
+            // printf ("i = %d, median = %d, need = %d, mid = %d\n", i, median, need, mid);
+            if (need <= k) {
+                left = mid + 1;
+                break;
+            }
+        }
+        if (i == n - mid + 1) {
+            right = mid - 1;
+        }
+    }
+    return right;
 }
