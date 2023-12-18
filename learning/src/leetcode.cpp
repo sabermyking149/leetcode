@@ -10172,7 +10172,7 @@ bool canWin(string s)
 
 // LC464
 // 数字可以重复取的情况
-bool canIWin(int maxChoosableInteger, int desiredTotal)
+bool canIWin1(int maxChoosableInteger, int desiredTotal)
 {
     if (maxChoosableInteger >= desiredTotal) {
         return true;
@@ -10198,30 +10198,44 @@ bool canIWin(int maxChoosableInteger, int desiredTotal)
     return dp[desiredTotal];
 }
 // 不可以重复取
-bool canIWin1(int maxChoosableInteger, int desiredTotal)
+bool canIWin(int maxChoosableInteger, int desiredTotal)
 {
     if (maxChoosableInteger >= desiredTotal) {
         return true;
     }
 
-    int i, j;
-    vector<int> dp(desiredTotal + 1, false); // dp[i] - 剩余i先手能否赢
-
+    int i;
+    int sum = 0;
     for (i = 1; i <= maxChoosableInteger; i++) {
-        dp[i] = true;
+        sum += i;
     }
-    for (i = maxChoosableInteger + 1; i <= desiredTotal; i++) {
-        for (j = 1; j <= maxChoosableInteger; j++) {
-            if (dp[i - j] == false) {
-                dp[i] = true;
-                break;
+    if (sum < desiredTotal) {
+        return false;
+    }
+
+    unordered_map<int, bool> status; // 表示当前取数的状态
+    function<bool (int, int, int, int)> DFS = [&status, &DFS](int usedNum, int cur, int maxChoosableInteger, int desiredTotal) {
+        if (status.count(usedNum)) {
+            return status[usedNum];
+        }
+        int i;
+        for (i = maxChoosableInteger; i >= 1; i--) {
+            if ((usedNum & (1 << i)) == 0) {
+                if (cur + i >= desiredTotal) {
+                    status[usedNum] = true;
+                    return true;
+                }
+                if (DFS(usedNum + (1 << i), cur + i, maxChoosableInteger, desiredTotal) == false) {
+                    status[usedNum] = true;
+                    return true;
+                }
             }
         }
-        if (j == maxChoosableInteger + 1) {
-            dp[i] = false;
-        }
-    }
-    return dp[desiredTotal];
+        status[usedNum] = false;
+        return false;
+    };
+    int usedNum = 0;
+    return DFS(usedNum, 0, maxChoosableInteger, desiredTotal);
 }
 
 
@@ -10252,7 +10266,7 @@ int getMoneyAmount(int n)
 
 // LC1871
 // BFS超时
-bool canReach(string s, int minJump, int maxJump)
+bool canReach1(string s, int minJump, int maxJump)
 {
     int i;
     int n = s.size();
@@ -10290,6 +10304,50 @@ bool canReach(string s, int minJump, int maxJump)
         }
     }
     return false;
+}
+bool canReach(string s, int minJump, int maxJump)
+{
+    int i;
+    int n = s.size();
+
+    return false;
+}
+
+
+// LC2964
+int divisibleTripletCount(vector<int>& nums, int d)
+{
+    int i, j;
+    int a, b;
+    int ans;
+    int left, right, mid;
+    int n = nums.size();
+    unordered_map<int, vector<int>> um;
+
+    for (i = 0; i < n; i++) {
+        um[nums[i] % d].emplace_back(i);
+    }
+    ans = 0;
+    for (i = 0; i < n - 1; i++) {
+        for (j = i + 1; j < n; j++) {
+            a = (nums[i] + nums[j]) % d;
+            b = (d - a) % d;
+            vector<int> v = um[b];
+            left = 0;
+            right = v.size() - 1;
+            // 所求为left;
+            while (left <= right) {
+                mid = (right - left) / 2 + left;
+                if (v[mid] <= j) {
+                    left = mid + 1;
+                } else {
+                    right = mid - 1;
+                }
+            }
+            ans += v.size() - left;
+        }
+    }
+    return ans;
 }
 
 
