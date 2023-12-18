@@ -10309,8 +10309,49 @@ bool canReach(string s, int minJump, int maxJump)
 {
     int i;
     int n = s.size();
+    int left, right;
+    vector<int> prefixSum(n);
+    vector<bool> dp(n, false); // dp[i] - 第i位能否到达
 
-    return false;
+    if (s[n - 1] == '1') {
+        return false;
+    }
+
+    for (i = 0; i < minJump; i++) {
+        prefixSum[i] = 1;
+    }
+    // 同步更新前缀和
+    for (i = minJump; i < n; i++) {
+        if (s[i] == '0') {
+            left = i - maxJump;
+            right = i - minJump;
+            if (right == 0) {
+                dp[i] = true;
+                prefixSum[i] = prefixSum[i - 1] + 1;
+                continue;
+            }
+            if (left < 0) {
+                left = 0;
+            }
+            if (left == 0) {
+                if (prefixSum[right] > 0) {
+                    prefixSum[i] = prefixSum[i - 1] + 1;
+                    dp[i] = true;
+                }
+            } else {
+                if (prefixSum[right] - prefixSum[left - 1] > 0) {
+                    prefixSum[i] = prefixSum[i - 1] + 1;
+                    dp[i] = true;
+                }
+            }
+            if (dp[i] == false) {
+                prefixSum[i] = prefixSum[i - 1];
+            }
+        } else {
+            prefixSum[i] = prefixSum[i - 1];
+        }
+    }
+    return dp[n - 1];
 }
 
 
