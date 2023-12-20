@@ -10596,3 +10596,61 @@ int countOrders(int n)
     }
     return dp[n];
 }
+
+
+// LC1220
+int countVowelPermutation(int n)
+{
+    int mod = 1000000007;
+    int i;
+
+    vector<vector<long long>> dp(n, vector<long long>(5));
+    // dp[i][0] - 第i位以'a'结尾的序列数目
+
+    for (i = 0; i < 5; i++) {
+        dp[0][i] = 1;
+    }
+    for (i = 1; i < n; i++) {
+        // 每个元音 'a' 后面都只能跟着 'e'
+        // 每个元音 'e' 后面只能跟着 'a' 或者是 'i'
+        // 每个元音 'i' 后面 不能 再跟着另一个 'i'
+        // 每个元音 'o' 后面只能跟着 'i' 或者是 'u'
+        // 每个元音 'u' 后面只能跟着 'a'
+        dp[i][0] = (dp[i - 1][1] + dp[i - 1][2] + dp[i - 1][4]) % mod; // [e, i, u] a
+        dp[i][1] = (dp[i - 1][0] + dp[i - 1][2]) % mod; // [a, i] e
+        dp[i][2] = (dp[i - 1][1] + dp[i - 1][3]) % mod; // [e, o] i
+        dp[i][3] = dp[i - 1][2]; // [i] o
+        dp[i][4] = (dp[i - 1][2] + dp[i - 1][3]) % mod; // [i, o] u
+    }
+    long long ans = 0;
+    for (auto it : dp[n - 1]) {
+        ans = (ans + it) % mod;
+    }
+    return ans;
+}
+
+
+// LC1111
+vector<int> maxDepthAfterSplit(string seq)
+{
+    stack<pair<int, int>> st;
+    int i;
+    int n = seq.size();
+    vector<int> ans(n);
+    for (i = 0; i < n; i++) {
+        if (st.empty()) {
+            st.push({i, 0});
+            continue;
+        }
+        if (seq[i] == ')') {
+            auto p = st.top();
+            st.pop();
+            ans[p.first] = p.second;
+            ans[i] = p.second;
+        } else {
+            auto p = st.top();
+            st.push({i, 1 - p.second});
+        }
+    }
+    return ans;
+}
