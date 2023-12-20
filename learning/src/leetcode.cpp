@@ -10399,7 +10399,7 @@ void createPalindrome(string& num, int index, set<int>& resultLess,
     int i;
     int n = num.size();
 
-    if (index > n / 2) {
+    if ((n % 2 == 0 && index >= n / 2) || (n % 2 == 1 && index > n / 2)) {
         resultLess.emplace(atoi(num.c_str()));
         resultGreater.emplace(atoi(num.c_str()));
         return;
@@ -10506,4 +10506,93 @@ int maxFrequencyScore(vector<int>& nums, long long k)
         }
     }
     return right;
+}
+
+
+// LC2276
+// to do
+class CountIntervals {
+public:
+    set<vector<int>> s;
+    int cnt;
+    CountIntervals()
+    {
+        cnt = 0;
+    }
+    
+    void add(int left, int right)
+    {
+        if (s.empty()) {
+            s.insert({left, right});
+            cnt += right - left + 1;
+            return;
+        }
+        auto it = s.lower_bound({left, right});
+    }
+    
+    int count()
+    {
+        return cnt;
+    }
+};
+
+
+// LC458
+// N进制编码问题
+int poorPigs(int buckets, int minutesToDie, int minutesToTest)
+{
+    // 有n次实验机会, 就转换成n + 1进制
+    int N = minutesToTest / minutesToDie + 1;
+    int t;
+    int cnt = 0;
+
+    while (t) {
+        cnt++;
+        t /= N;
+    }
+    if (buckets == pow(2, cnt - 1)) {
+        cnt--;
+    }
+    return cnt;
+}
+
+
+// LC1901
+vector<int> findPeakGrid(vector<vector<int>>& mat)
+{
+    int m = mat.size();
+    int n = mat[0].size();
+    int left, right, mid;
+    int j;
+
+    left = 0;
+    right = m - 1;
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        j = max_element(mat[mid].begin(), mat[mid].end()) - mat[mid].begin();
+        if (mid > 0 && mat[mid -1][j] > mat[mid][j]) {
+            right = mid - 1;
+        } else if (mid < m - 1 && mat[mid + 1][j] > mat[mid][j]) {
+            left = mid + 1;
+        } else {
+            break;
+        }
+    }
+    return {mid, j};
+}
+
+
+// LC1359
+int countOrders(int n)
+{
+    // 一对一对pd的增加
+    int mod = 1000000007;
+    int i;
+    vector<long long> dp(n + 1);
+
+    dp[1] = 1;
+    for (i = 2; i <= n; i++) {
+        dp[i] = dp[i - 1] * ((2 * (i - 1) + 1) + 1) * (2 * i - 1) / 2 % mod;
+    }
+    return dp[n];
 }
