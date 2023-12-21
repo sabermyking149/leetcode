@@ -10654,3 +10654,137 @@ vector<int> maxDepthAfterSplit(string seq)
     }
     return ans;
 }
+
+
+// LC2311
+int longestSubsequence(string s, int k)
+{
+    int i, j;
+    int n = s.size();
+    long long ans;
+    long long t;
+    bool flag = false;
+    // dp[i] - 以s[i]结尾且表示不超过k的最长子序列
+    vector<long long> dp(n, 0);
+
+    dp[0] = 1;
+    ans = 1;
+    for (i = 1; i < n; i++) {
+        dp[i] = 1;
+        t = s[i] - '0';
+        flag = false;
+        for (j = i - 1; j >= 0; j--) {
+            if (s[j] == '0') {
+                dp[i]++;
+            } else {
+                if (flag) {
+                    continue;
+                }
+                if (i - j > 30) {
+                    flag = true;
+                    continue;
+                }
+                t += 1ll << (i - j);
+                if (t > k) {
+                    flag = true;
+                } else {
+                    dp[i]++;
+                }
+            }
+        }
+        ans = max(ans, dp[i]);
+    }
+    return ans;
+}
+
+
+// LC852
+int peakIndexInMountainArray(vector<int>& arr)
+{
+    // 山脉数组
+    int left, right, mid;
+    int n = arr.size();
+
+    left = 0;
+    right = n - 1;
+
+    while (left < right) {
+        mid = (right - left) / 2 + left;
+        if (mid < n - 1 && arr[mid] > arr[mid + 1]) {
+            right = mid;
+        } else {
+            left = mid + 1;
+        }
+    }
+    return left;
+}
+
+
+// LC2832
+vector<int> maximumLengthOfRanges(vector<int>& nums)
+{
+    int i;
+    int n = nums.size();
+    int top, topIdx;
+    vector<int> ans(n, 1);
+    stack<int> st;
+
+    // 右边界 - 单调递减栈
+    for (i = 0; i < n; i++) {
+        if (st.empty()) {
+            st.push(i);
+            continue;
+        }
+        topIdx = st.top();
+        top = nums[topIdx];
+        if (top >= nums[i]) {
+            st.push(i);
+            continue;
+        }
+        while (top < nums[i]) {
+            ans[topIdx] += i - topIdx - 1;
+            st.pop();
+            if (st.empty()) {
+                break;
+            }
+            topIdx = st.top();
+            top = nums[topIdx];
+        }
+        st.push(i);
+    }
+    while (!st.empty()) {
+        topIdx = st.top();
+        st.pop();
+        ans[topIdx] += n - 1 - topIdx;
+    }
+
+    // 左边界 - 单调递减栈
+    for (i = n - 1; i >= 0; i--) {
+        if (st.empty()) {
+            st.push(i);
+            continue;
+        }
+        topIdx = st.top();
+        top = nums[topIdx];
+        if (top >= nums[i]) {
+            st.push(i);
+            continue;
+        }
+        while (top < nums[i]) {
+            ans[topIdx] += topIdx - i - 1;
+            st.pop();
+            if (st.empty()) {
+                break;
+            }
+            topIdx = st.top();
+            top = nums[topIdx];
+        }
+        st.push(i);
+    }
+    while (!st.empty()) {
+        topIdx = st.top();
+        st.pop();
+        ans[topIdx] += topIdx;
+    }
+    return ans;
+}
