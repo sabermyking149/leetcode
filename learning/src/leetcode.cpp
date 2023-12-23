@@ -10788,3 +10788,212 @@ vector<int> maximumLengthOfRanges(vector<int>& nums)
     }
     return ans;
 }
+
+
+// LC1478
+int minDistance(vector<int>& houses, int k)
+{
+    int i, j, p;
+    int mid;
+    int n = houses.size();
+    vector<vector<long long>> dp(n + 1, vector<long long>(k + 1, INT_MAX));
+
+    // 预处理 - 任意两个下标点有一个邮箱的距离和
+    vector<vector<long long>> dist(n, vector<long long>(n, 0));
+    sort(houses.begin(), houses.end());
+    for (i = 0; i < n; i++) {
+        for (j = i; j < n; j++) {
+            if ((j - i) % 2 == 0) {
+                mid = houses[(i + j) / 2];
+            } else {
+                mid = (houses[(i + j) / 2] + houses[(i + j + 1) / 2]) / 2;
+            }
+            for (p = i; p <= j; p++) {
+                dist[i][j] += abs(houses[p] - mid);
+            }
+        }
+    }
+    for (j = 1; j <= k; j++) {
+        for (i = 1; i <= n; i++) {
+            if (j >= i) {
+                dp[i][j] = 0;
+                continue;
+            }
+            if (j == 1) {
+                dp[i][j] = dist[0][i - 1];
+            } else {
+                for (p = 1; p < i; p++) {
+                    dp[i][j] = min(dp[i][j], dp[p][j - 1] + dist[p][i - 1]);
+                }
+            }
+        }
+    }
+    return dp[n][k];
+}
+
+
+// LC1477
+int minSumOfLengths(vector<int>& arr, int target)
+{
+    int i;
+    int n = arr.size();
+    unordered_map<int, int> sum;
+    vector<int> prefixSum(n, 0);
+    vector<vector<int>> range;
+    vector<int> minRangeDiff;
+
+    prefixSum[0] = arr[0];
+    sum[arr[0]] = 0;
+    if (arr[0] == target) {
+        range.push_back({0, 0});
+    }
+    for (i = 1; i < n; i++) {
+        prefixSum[i] = arr[i] + prefixSum[i - 1];
+        sum[prefixSum[i]] = i;
+        if (prefixSum[i] == target) {
+            range.push_back({0, i});
+        }
+        if (sum.count(prefixSum[i] - target)) {
+            range.push_back({sum[prefixSum[i] - target] + 1, i});
+        }
+    }
+    if (range.size() < 2) {
+        return -1;
+    }
+
+    n = range.size();
+    minRangeDiff.resize(n);
+    minRangeDiff[0] = range[0][1] - range[0][0] + 1;
+    for (i = 1; i < n; i++) {
+        auto t = range[i][1] - range[i][0] + 1;
+        if (t < minRangeDiff[i - 1]) {
+            minRangeDiff[i] = t;
+        } else {
+            minRangeDiff[i] = minRangeDiff[i - 1];
+        }
+    }
+
+    int left, right, mid;
+    int ans = 0x3f3f3f3f;
+    for (i = 1; i < n; i++) {
+        left = 0;
+        right = i - 1;
+        // 所求为right
+        while (left <= right) {
+            mid = (right - left) /2 + left;
+            if (range[mid][1] < range[i][0]) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        if (right < 0) {
+            continue;
+        }
+        ans = min(ans, range[i][1] - range[i][0] + 1 + minRangeDiff[right]);
+    }
+    return ans == 0x3f3f3f3f ? -1 : ans;
+}
+
+
+// LC2970
+long long largestPerimeter(vector<int>& nums)
+{
+    int i;
+    int n = nums.size();
+    int left, right, mid;
+
+    sort(nums.begin(), nums.end());
+
+    long long sum = 0;
+    long long ans = -1;
+    for (i = 0; i < n - 1; i++) {
+        sum += nums[i];
+        if (i < 1) {
+            continue;
+        }
+        left = i + 1;
+        right = n - 1;
+        // 所求为right
+        while (left <= right) {
+            mid = (right - left) /2 + left;
+            if (sum > nums[mid]) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        if (right <= i) {
+            continue;
+        }
+        ans = max(ans, sum + nums[right]);
+    }
+    return ans;
+}
+
+
+// LC2971
+long long incremovableSubarrayCount(vector<int>& nums)
+{
+    int i;
+    int n = nums.size();
+    long long ans;
+    int len = 1;
+    
+    vector<int> front, rear;
+    front.emplace_back(nums[0]);
+    for (i = 1; i < n; i++) {
+        if (nums[i] > nums[i - 1]) {
+            front.emplace_back(nums[i]);
+            len++;
+        } else {
+            break;
+        }
+    }
+    if (len == n) {
+        return (long long)n * (n + 1) / 2;
+    }
+    ans = 1;
+    ans += len;
+
+    len = 1;
+    rear.emplace_back(nums[n - 1]);
+    for (i = n - 2; i >= 0; i--) {
+        if (nums[i + 1] > nums[i]) {
+            rear.emplace_back(nums[i]);
+            len++;
+        } else {
+            break;
+        }
+    }
+    ans += len;
+
+    n = front.size();
+    int left, right, mid;
+    // cout << ans << endl;
+    reverse(rear.begin(), rear.end());
+    for (i = 0; i < n; i++) {
+        left = 0;
+        right = rear.size() - 1;
+        // 所求为left
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (rear[mid] < front[i]) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        if (left >= rear.size()) {
+            continue;
+        }
+        // cout << left << endl;
+        if (rear[left] == front[i]) {
+            ans += rear.size() - left - 1;
+        } else {
+            ans += rear.size() - left;
+        }
+    }
+
+    return ans;
+}
