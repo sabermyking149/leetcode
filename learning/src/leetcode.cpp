@@ -10997,3 +10997,92 @@ long long incremovableSubarrayCount(vector<int>& nums)
 
     return ans;
 }
+
+
+// LC2975
+int maximizeSquareArea(int m, int n, vector<int>& hFences, vector<int>& vFences)
+{
+    sort(hFences.begin(), hFences.end());
+    sort(vFences.begin(), vFences.end());
+
+    int i, j;
+    long long ans = -1;
+    vector<long long> hvector;
+    vector<long long> vvector;
+    unordered_set<long long> diffHSet;
+
+    hvector.emplace_back(1);
+    for (auto h : hFences) {
+        hvector.emplace_back(h);
+    }
+    hvector.emplace_back(m);
+
+    vvector.emplace_back(1);
+    for (auto v : vFences) {
+        vvector.emplace_back(v);
+    }
+    vvector.emplace_back(n);
+
+    for (i = 0; i < hvector.size() - 1; i++) {
+        for (j = i + 1; j < hvector.size(); j++) {
+            diffHSet.emplace(hvector[j] - hvector[i]);
+        }
+    }
+    // cout << diffHSet.size() << endl;
+    for (i = 0; i < vvector.size() - 1; i++) {
+        for (j = i + 1; j < vvector.size(); j++) {
+            if (diffHSet.count(vvector[j] - vvector[i])) {
+                ans = max(ans, (vvector[j] - vvector[i]) * (vvector[j] - vvector[i]));
+            }
+        }
+    }
+    return ans > 0 ? ans % 1000000007 : ans;
+}
+
+
+// LC924 - 删除某点不删除其网络
+// LC928 - 删除某点同时也删除其网络结构
+int minMalwareSpread(vector<vector<int>>& graph, vector<int>& initial)
+{
+    int i, k;
+    int n = graph.size();
+    int kind = initial.size();
+    int minNode = INT_MAX;
+    int cnt, ans;
+    unordered_set<int> visited;
+    queue<int> q;
+
+    sort(initial.begin(), initial.end());
+    for (k = 0; k < kind; k++) {
+        for (i = 0; i < kind; i++) {
+            if (i != k) {
+                q.push(initial[i]);
+            }
+        }
+        cnt = 0;
+        visited.clear();
+        while (!q.empty()) {
+            auto t = q.front();
+            q.pop();
+
+            if (visited.count(t)) {
+                continue;
+            }
+            cnt++;
+            visited.emplace(t);
+            for (i = 0; i < n; i++) {
+                // LC924
+                // if (graph[t][i] == 1 && i != t && visited.count(i) == 0) {
+                // LC928
+                if (graph[t][i] == 1 && i != t && i != initial[k] && visited.count(i) == 0) {
+                    q.push(i);
+                }
+            }
+        }
+        if (cnt < minNode) {
+            minNode = cnt;
+            ans = initial[k];
+        }
+    }
+    return ans;
+}
