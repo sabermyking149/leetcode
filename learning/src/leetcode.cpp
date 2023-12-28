@@ -10896,7 +10896,7 @@ int minSumOfLengths(vector<int>& arr, int target)
 }
 
 
-// LC2970
+// LC2971
 long long largestPerimeter(vector<int>& nums)
 {
     int i;
@@ -10932,7 +10932,7 @@ long long largestPerimeter(vector<int>& nums)
 }
 
 
-// LC2971
+// LC2972
 long long incremovableSubarrayCount(vector<int>& nums)
 {
     int i;
@@ -11085,4 +11085,304 @@ int minMalwareSpread(vector<vector<int>>& graph, vector<int>& initial)
         }
     }
     return ans;
+}
+
+
+// LC2296
+// 暴力,超时
+class TextEditor1 {
+public:
+    TextEditor1()
+    {
+        cursorPos = 0;
+    }
+
+    void addText(string text)
+    {
+        if (this->text.empty()) {
+            this->text = text;
+            cursorPos = text.size();
+            return;
+        }
+        if (cursorPos == this->text.size()) {
+            this->text += text;
+            cursorPos += text.size();
+            return;
+        } else if (cursorPos == 0) {
+            this->text = text + this->text;
+            cursorPos += text.size();
+            return;
+        }
+        int len = this->text.size();
+        string front = this->text.substr(0, cursorPos);
+        string rear = this->text.substr(cursorPos);
+        this->text = front + text + rear;
+        cursorPos += text.size();
+    }
+
+    int deleteText(int k)
+    {
+        int ans;
+        if (k >= cursorPos) {
+            ans = cursorPos;
+            this->text = this->text.substr(cursorPos);
+            cursorPos = 0;
+            return ans;
+        }
+        string front = this->text.substr(0, cursorPos - k);
+        string rear = this->text.substr(cursorPos);
+        this->text = front + rear;
+        cursorPos -= k;
+        return k;
+    }
+
+    string cursorLeft(int k)
+    {
+        if (k >= cursorPos) {
+            cursorPos = 0;
+            return "";
+        }
+        cursorPos -= k;
+        if (cursorPos <= 10) {
+            return this->text.substr(0, cursorPos);
+        }
+        return this->text.substr(cursorPos - 10, 10);
+    }
+
+    string cursorRight(int k)
+    {
+        if (k + cursorPos >= this->text.size()) {
+            cursorPos = this->text.size();
+            if (cursorPos <= 10) {
+                return this->text.substr(0, cursorPos);
+            }
+            return this->text.substr(cursorPos - 10, 10);
+        }
+        cursorPos += k;
+        if (cursorPos <= 10) {
+            return this->text.substr(0, cursorPos);
+        }
+        return this->text.substr(cursorPos - 10, 10);
+    }
+private:
+    int cursorPos;
+    string text;
+};
+// 双向链表
+class TextEditor {
+public:
+    struct ListNode {
+        char val;
+        ListNode *prev;
+        ListNode *next;
+        ListNode(char v) : val(v), prev(nullptr), next(nullptr) {};
+    };
+    TextEditor()
+    {
+        head = new ListNode('@');
+        tail = new ListNode('#');
+        head->next = tail;
+        tail->prev = head;
+        cursor = tail;
+    }
+
+    void addText(string text)
+    {
+        for (auto ch : text) {
+            ListNode *node = new ListNode(ch);
+            auto prevNode = cursor->prev;
+            prevNode->next = node;
+            node->prev = prevNode;
+            node->next = cursor;
+            cursor->prev = node;
+        }
+    }
+
+    int deleteText(int k)
+    {
+        int i;
+        int ans = 0;
+
+        for (i = 0; i < k; i++) {
+            auto prevNode = cursor->prev; // 要删的点
+            if (prevNode == head) {
+                break;
+            }
+            auto prevprevNode = prevNode->prev;
+            delete prevNode;
+            prevprevNode->next = cursor;
+            cursor->prev = prevprevNode;
+            ans++;
+        }
+        return ans;
+    }
+
+    string cursorLeft(int k)
+    {
+        int i;
+        while (k) {
+            cursor = cursor->prev;
+            if (cursor == head) {
+                cursor = head->next;
+                return "";
+            }
+            k--;
+        }
+        ListNode *point = cursor->prev;
+        string ans;
+        for (i = 0; i < 10; i++) {
+            if (point == head) {
+                break;
+            }
+            ans += point->val;
+            point = point->prev;
+        }
+        reverse(ans.begin(), ans.end());
+        return ans;
+    }
+
+    string cursorRight(int k)
+    {
+        int i;
+        while (k) {
+            if (cursor == tail) {
+                break;
+            }
+            cursor = cursor->next;
+            k--;
+        }
+        ListNode *point = cursor->prev;
+        string ans;
+        for (i = 0; i < 10; i++) {
+            if (point == head) {
+                break;
+            }
+            ans += point->val;
+            point = point->prev;
+        }
+        reverse(ans.begin(), ans.end());
+        return ans;
+    }
+private:
+    ListNode *head;
+    ListNode *tail;
+    ListNode *cursor;
+};
+
+
+// LC87
+bool isScramble(string s1, string s2)
+{
+    int i, j, k, p;
+    int len = s1.size();
+    bool f1, f2;
+
+    // dp[i][j][k] - s1以i下标开始, s2以j下标开始长度为k的子字符串是否可以相互转化
+    // 所求dp[0][0][len];
+    vector<vector<vector<bool>>> dp(len, vector<vector<bool>>(len, vector<bool>(len + 1, false)));
+
+    for (k = 1; k <= len; k++) {
+        for (i = 0; i < len; i++) {
+            for (j = 0; j < len; j++) {
+                if (i + k > len || j + k > len) {
+                    break;
+                }
+                if (k == 1) {
+                    dp[i][j][k] = s1[i] == s2[j];
+                    continue;
+                }
+                for (p = 1; p < k; p++) {
+                    f1 = dp[i][j][p] && dp[i + p][j + p][k - p]; // 不交换
+                    f2 = dp[i][k + j - p][p] && dp[i + p][j][k - p]; // 交换
+                    dp[i][j][k] = dp[i][j][k] || f1 || f2;
+                }
+            }
+        }
+    }
+    return dp[0][0][len];
+}
+
+
+// LC305
+vector<int> numIslands2(int m, int n, vector<vector<int>>& positions)
+{
+    int k;
+    int no, land, oriLand;
+    int nrow, ncol, p, np;
+    unordered_map<int, vector<int>> lands;
+    unordered_map<int, int> posNo;
+    int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+    vector<int> ans;
+
+    no = 1;
+    for (auto pos : positions) {
+        p = pos[0] * n + pos[1];
+        for (k = 0; k < 4; k++) {
+            nrow = pos[0] + directions[k][0];
+            ncol = pos[1] + directions[k][1];
+            if (nrow < 0 || nrow >= m || ncol < 0 || ncol >= n) {
+                continue;
+            }
+            np = nrow * n + ncol;
+            if (posNo.count(np)) {
+                if (posNo.count(p) == 0) {
+                    land = posNo[np];
+                    lands[land].emplace_back(p);
+                    posNo[p] = land;
+                } else {
+                    if (posNo[p] == posNo[np]) {
+                        continue;
+                    }
+                    land = posNo[np];
+                    auto v = lands[land];
+                    oriLand = posNo[p];
+                    for (auto vv : v) {
+                        lands[oriLand].emplace_back(vv);
+                        posNo[vv] = oriLand;
+                    }
+                    lands.erase(land);
+                }
+            }
+        }
+        if (posNo.count(p) == 0) {
+            posNo[p] = no;
+            lands[no].emplace_back(p);
+            no++;
+        }
+        ans.emplace_back(lands.size());
+    }
+    return ans;
+}
+
+
+// LC403
+bool canCross(vector<int>& stones)
+{
+    if (stones[1] - stones[0] != 1) {
+        return false;
+    }
+
+    int i, j;
+    int n = stones.size();
+    int dist;
+    // dp[i][j] - 青蛙是否能从j跳到i
+    vector<vector<bool>> dp(n, vector<bool>(n, false));
+    unordered_map<int, unordered_set<int>> steps; // 跳到i的所有步距
+    dp[1][0] = true;
+    steps[1].emplace(1);
+    for (i = 2; i < n; i++) {
+        for (j = i - 1; j >= 1; j--) {
+            dist = stones[i] - stones[j];
+            if (steps[j].count(dist) || steps[j].count(dist - 1) || steps[j].count(dist + 1)) {
+                dp[i][j] = true;
+                steps[i].emplace(dist);
+            }
+        }
+    }
+    for (auto f : dp[n - 1]) {
+        if (f) {
+            return true;
+        }
+    }
+    return false;
 }
