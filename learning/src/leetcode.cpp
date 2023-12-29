@@ -12,6 +12,7 @@
 #include <cmath>
 #include <cstring>
 #include <functional>
+#include <numeric>
 
 #include "pub.h"
 
@@ -11185,6 +11186,17 @@ public:
         tail->prev = head;
         cursor = tail;
     }
+    ~TextEditor()
+    {
+        ListNode *t = head;
+        ListNode *cur = t;
+        while (t != tail) {
+            t = t->next;
+            delete cur;
+            cur = t;
+        }
+        delete cur;
+    }
 
     void addText(string text)
     {
@@ -11385,4 +11397,138 @@ bool canCross(vector<int>& stones)
         }
     }
     return false;
+}
+
+
+// LC1235
+int jobScheduling(vector<int>& startTime, vector<int>& endTime, vector<int>& profit)
+{
+    int i;
+    int n = startTime.size();
+    int ans;
+    int left, right, mid;
+    vector<vector<int>> range;
+    vector<int> prefixMax(n); // 前缀最大值
+
+    for (i = 0; i < n; i++) {
+        range.push_back({startTime[i], endTime[i], profit[i]});
+    }
+    sort(range.begin(), range.end(), [](const vector<int>& a, const vector<int>& b) {
+        if (a[1] == b[1]) {
+            return a[0] < b[0];
+        }
+        return a[1] < b[1];
+    });
+
+    // dp[i] - 以第i份兼职结束的最大收益
+    vector<int> dp(n, 0);
+
+    dp[0] = range[0][2];
+    prefixMax[0] = dp[0];
+    ans = dp[0];
+    for (i = 1; i < n; i++) {
+        left = 0;
+        right = i - 1;
+        // 所求为right
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (range[mid][1] <= range[i][0]) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        if (right < 0) {
+            dp[i] = range[i][2];
+        } else {
+            dp[i] = range[i][2] + prefixMax[right];
+        }
+        prefixMax[i] = dp[i] > prefixMax[i - 1] ? dp[i] : prefixMax[i - 1];
+        ans = max(ans, dp[i]);
+    }
+    return ans;
+}
+
+
+// LC2251
+vector<int> fullBloomFlowers(vector<vector<int>>& flowers, vector<int>& people)
+{
+    int i;
+    int n;
+    int left, right, mid;
+    int a, b;
+    vector<int> ans;
+    vector<vector<int>> f1, f2;
+
+    f1 = flowers;
+    sort(f1.begin(), f1.end());
+
+    f2 = flowers;
+    sort(f2.begin(), f2.end(), [](const vector<int>& a, const vector<int>& b) {
+        if (a[1] == b[1]) {
+            return a[0] < b[0];
+        }
+        return a[1] < b[1];
+    });
+
+    n = people.size();
+    for (i = 0; i < n; i++) {
+        left = 0;
+        right = f1.size() - 1;
+        // f1中前区间第一个小于等于people[i]的值, right
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (f1[mid][0] > people[i]) {
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        a = right + 1; // 在people[i]时有a朵花开放
+        // f2中后区间第一个小于people[i]的值, right
+        left = 0;
+        right = f2.size() - 1;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (f2[mid][1] >= people[i]) {
+                right = mid - 1;
+                
+            } else {
+                left = mid + 1;
+            }
+        }
+        b = right + 1; // 在people[i]时有b朵花凋零
+        ans.emplace_back(a - b);
+    }
+    return ans;
+}
+
+
+// LC1231
+int maximizeSweetness(vector<int>& sweetness, int k)
+{
+    int i;
+    int n = sweetness.size();
+    int cnt, curSum;
+    int left, right, mid;
+
+    left = *min_element(sweetness.begin(), sweetness.end());
+    right = accumulate(sweetness.begin(), sweetness.end(), 0);
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        curSum = cnt = 0;
+        for (i = 0; i < n; i++) {
+            curSum += sweetness[i];
+            if (curSum >= mid) {
+                cnt++;
+                curSum = 0;
+            }
+        }
+        if (cnt >= k + 1) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    return right;
 }
