@@ -11532,3 +11532,84 @@ int maximizeSweetness(vector<int>& sweetness, int k)
     }
     return right;
 }
+
+
+// LC149
+int maxPoints_LC149(vector<vector<int>>& points)
+{
+    int i, j;
+    int n = points.size();
+    int a, b;
+    unordered_map<int, map<vector<int>, int>> pointK;
+    vector<int> k;
+
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            if (i == j) {
+                continue;
+            }
+            if (points[i][0] == points[j][0]) {
+                pointK[i][{0, 0}]++;
+            } else if (points[i][1] == points[j][1]) {
+                pointK[i][{0, 1}]++;
+            } else {
+                a = points[j][1] - points[i][1];
+                b = points[j][0] - points[i][0];
+                k = {a / gcd(a, b), b / gcd(a, b)};
+                pointK[i][k]++;
+            }
+        }
+    }
+    int ans = 1;
+    for (auto it : pointK) {
+        for (auto it1 : it.second) {
+            ans = max(ans, it1.second + 1);
+        }
+    }
+    return ans;
+}
+
+
+// LC2271
+int maximumWhiteTiles(vector<vector<int>>& tiles, int carpetLen)
+{
+    int i;
+    int n = tiles.size();
+    int left, right, mid;
+    int ans, t;
+    int start;
+    vector<int> prefixSum(n, 0);
+
+    sort(tiles.begin(), tiles.end());
+    prefixSum[0] = tiles[0][1] - tiles[0][0] + 1;
+    for (i = 1; i < n; i++) {
+        prefixSum[i] = prefixSum[i - 1] + tiles[i][1] - tiles[i][0] + 1;
+    }
+
+    ans = 0;
+    for (i = 0; i < n; i++) {
+        left = 0;
+        right = i;
+        // 从后往前覆盖, 避免被浪费
+        start = tiles[i][1] - carpetLen + 1;
+        // 查找第一个比start小的tiles[i][1], 所求为right
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (tiles[mid][1] >= start) {
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        if (right < 0) {
+            t = prefixSum[i];
+        } else {
+            t = prefixSum[i] - prefixSum[right];
+        }
+        if (start > tiles[right + 1][0]) {
+            t -= start - tiles[right + 1][0];
+        }
+        ans = max(ans, t);
+    }
+    return ans;
+}
