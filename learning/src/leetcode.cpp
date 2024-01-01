@@ -236,7 +236,7 @@ vector<string> generateSentences(vector<vector<string>>& synonyms, string text)
     return ans;
 }
 
-
+// 面试题 17.07. 婴儿名字
 vector<string> trulyMostPopular(vector<string>& names, vector<string>& synonyms)
 {
     unordered_set<string> dict;
@@ -328,6 +328,8 @@ int minTotalDistance(vector<vector<int>>& grid)
     return ans;
 }
 
+
+// LC131
 bool IsPalindrome(string &s)
 {
     int i, j;
@@ -344,7 +346,6 @@ bool IsPalindrome(string &s)
     }
     return true;
 }
-
 void PartPalindrome(string s, vector<string>& record, vector<vector<string>>& ans)
 {
     int i;
@@ -372,7 +373,7 @@ vector<vector<string>> partition(string s)
 }
 
 
-
+// LC2402
 class CMPMostBooked {
 public:
     bool operator() (const vector<long long> &a, const vector<long long>& b)
@@ -448,6 +449,7 @@ int mostBooked(int n, vector<vector<int>>& meetings)
 }
 
 
+// LC854
 int kSimilarity(string s1, string s2)
 {
     unsigned int i, j;
@@ -502,6 +504,7 @@ int kSimilarity(string s1, string s2)
 }
 
 
+// LC505
 vector<int> GoThrough(vector<vector<int>>& maze, vector<int>& curPos, int len, int direction, vector<vector<int>>& pathLen)
 {
     int row = maze.size();
@@ -11612,4 +11615,33 @@ int maximumWhiteTiles(vector<vector<int>>& tiles, int carpetLen)
         ans = max(ans, t);
     }
     return ans;
+}
+
+
+// LC2952
+int minimumAddedCoins(vector<int>& coins, int target)
+{
+    int i;
+    int value, idx;
+    int n = coins.size();
+    int cnt;
+
+    sort(coins.begin(), coins.end());
+    value = 1;
+    idx = cnt = 0;
+    while (value <= target) {
+        if (idx == n) {
+            value *= 2;
+            cnt++;
+            continue;
+        }
+        if (value < coins[idx]) {
+            value *= 2;
+            cnt++;
+        } else {
+            value += coins[idx];
+            idx++;
+        }
+    }
+    return cnt;
 }
