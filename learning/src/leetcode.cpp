@@ -11645,3 +11645,63 @@ int minimumAddedCoins(vector<int>& coins, int target)
     }
     return cnt;
 }
+
+
+// LC2907
+int maxProfit_LC2907(vector<int>& prices, vector<int>& profits)
+{
+    int i, j;
+    int n = prices.size();
+    int ans;
+    // dp[i][k] - 取i商品且一共选k个的最大利润
+    vector<vector<int>> dp(n, vector<int>(4, 0));
+    for (i = 0; i < n; i++) {
+        dp[i][1] = profits[i];
+    }
+    for (i = 1; i < n; i++) {
+        for (j = i - 1; j >= 0; j--) {
+            if (prices[i] > prices[j]) {
+                dp[i][2] = max(dp[i][2], profits[i] + dp[j][1]);
+            }
+        }
+    }
+    ans = -1;
+    for (i = 2; i < n; i++) {
+        for (j = i - 1; j >= 1; j--) {
+            if (prices[i] > prices[j] && dp[j][2] != 0) {
+                dp[i][3] = max(dp[i][3], profits[i] + dp[j][2]);
+                ans = max(ans, dp[i][3]);
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LC2992
+int selfDivisiblePermutationCount(int n)
+{
+    int ans;
+    vector<bool> visited(n + 1, false);
+    vector<int> permutation(n + 1);
+
+    function<void (int, int)> CreatePermutation = [&CreatePermutation, &visited, &permutation, &ans](int idx, int n) {
+
+        int i;
+        if (idx > n) {
+            ans++;
+            return;
+        }
+        for (i = 1; i <= n; i++) {
+            if (visited[i] == false && (i % idx == 0 || idx % i == 0)) {
+                permutation[idx] = i;
+                visited[i] = true;
+                CreatePermutation(idx + 1, n);
+                visited[i] = false;
+            }
+        }
+    };
+    ans = 0;
+    CreatePermutation(1, n);
+    return ans;
+}
