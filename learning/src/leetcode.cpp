@@ -11705,3 +11705,106 @@ int selfDivisiblePermutationCount(int n)
     CreatePermutation(1, n);
     return ans;
 }
+
+
+// LC639
+int numDecodings(string s)
+{
+    int i;
+    int n = s.size();
+    int mod = 1000000007;
+    vector<long long> dp(n + 1, 0);
+
+    dp[0] = 1;
+    if (s[0] == '0') {
+        return 0;
+    }
+    if (s[0] == '*') {
+        dp[1] = 9;
+    } else {
+        dp[1] = 1;
+    }
+    for (i = 1; i < n; i++) {
+        if (s[i - 1] == '*') {
+            if (s[i] == '*') {
+                dp[i + 1] = (dp[i] * 9 + dp[i - 1] * 15) % mod; // 1 - 9, 11 - 19, 21 - 26
+            } else if (s[i] == '0') {
+                dp[i + 1] = dp[i - 1] * 2 % mod; // 10, 20
+            } else if (s[i] > '6') {
+                dp[i + 1] = (dp[i] + dp[i - 1]) % mod; // 7 - 9, 17 - 19
+            } else {
+                dp[i + 1] = (dp[i] + dp[i - 1] * 2) % mod; // 7 - 9, 17 - 19, 27 - 29
+            }
+        } else if (s[i - 1] == '0' || s[i - 1] > '2') {
+            if (s[i] == '*') {
+                dp[i + 1] = dp[i] * 9 % mod; // 1 - 9
+            } else {
+                if (s[i] == '0') {
+                    return 0;
+                }
+                dp[i + 1] = dp[i];
+            }
+        } else if (s[i - 1] == '2') {
+            if (s[i] == '*') {
+                dp[i + 1] = (dp[i] * 9 + dp[i - 1] * 6) % mod; // 1 - 9, 21 - 26
+            } else {
+                if (s[i] > '6') {
+                    dp[i + 1] = dp[i]; // 7 - 9
+                } else if (s[i] == '0') {
+                    dp[i + 1] = dp[i - 1]; // 20
+                } else {
+                    dp[i + 1] = (dp[i] + dp[i - 1]) % mod; // 1 - 6, 21 - 26
+                }
+            }
+        } else { // s[i - 1] == '1'
+            if (s[i] == '*') {
+                dp[i + 1] = (dp[i] * 9 + dp[i - 1] * 9) % mod; // 1 - 9, 11 - 19
+            } else {
+                if (s[i] == '0') {
+                    dp[i + 1] = dp[i - 1]; // 10
+                } else {
+                    dp[i + 1] = (dp[i] + dp[i - 1]) % mod; // 1 - 9, 11 - 19
+                }
+            }
+        }
+    }
+    return dp[n];
+}
+
+
+// LC91
+int numDecodings_LC91(string s)
+{
+    int i;
+    int n = s.size();
+    vector<long long> dp(n + 1, 0);
+
+    dp[0] = 1;
+    if (s[0] == '0') {
+        return 0;
+    }
+    dp[1] = 1;
+    for (i = 1; i < n; i++) {
+        if (s[i - 1] == '0' || s[i - 1] > '2') {
+            if (s[i] == '0') {
+                    return 0;
+            }
+            dp[i + 1] = dp[i];
+        } else if (s[i - 1] == '2') {
+            if (s[i] > '6') {
+                dp[i + 1] = dp[i]; // 7 - 9
+            } else if (s[i] == '0') {
+                dp[i + 1] = dp[i - 1]; // 20
+            } else {
+                dp[i + 1] = (dp[i] + dp[i - 1]); // 1 - 6, 21 - 26
+            }
+        } else { // s[i - 1] == '1'
+            if (s[i] == '0') {
+                dp[i + 1] = dp[i - 1]; // 10
+            } else {
+                dp[i + 1] = (dp[i] + dp[i - 1]); // 1 - 9, 11 - 19
+            }
+        }
+    }
+    return dp[n];
+}
