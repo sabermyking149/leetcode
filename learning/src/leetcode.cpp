@@ -11808,3 +11808,36 @@ int numDecodings_LC91(string s)
     }
     return dp[n];
 }
+
+
+// LC1944
+vector<int> canSeePersonsCount(vector<int>& heights)
+{
+    int i;
+    int idx;
+    int n = heights.size();
+    vector<int> ans(n, 0);
+    // 单调递减栈
+    stack<int> st;
+
+    for (i = 0; i < n; i++) {
+        if (st.empty()) {
+            st.push(i);
+            continue;
+        }
+        idx = st.top();
+        while (heights[i] > heights[idx]) {
+            ans[idx]++;
+            st.pop();
+            if (st.empty()) {
+                break;
+            }
+            idx = st.top();
+        }
+        if (!st.empty()) {
+            ans[idx]++;
+        }
+        st.push(i);
+    }
+    return ans;
+}
