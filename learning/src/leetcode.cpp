@@ -13,6 +13,7 @@
 #include <cstring>
 #include <functional>
 #include <numeric>
+#include <list>
 
 #include "pub.h"
 
@@ -11838,6 +11839,154 @@ vector<int> canSeePersonsCount(vector<int>& heights)
             ans[idx]++;
         }
         st.push(i);
+    }
+    return ans;
+}
+
+
+// LC3002
+int maximumSetSize(vector<int>& nums1, vector<int>& nums2)
+{
+    unordered_set<int> s1(nums1.begin(), nums1.end());
+    unordered_set<int> s2(nums2.begin(), nums2.end());
+
+    int n1 = s1.size();
+    int n2 = s2.size();
+    int common = 0; // 相同元素个数
+    for (auto it : s1) {
+        if (s2.count(it)) {
+            common++;
+        }
+    }
+    int unique1 = n1 - common;
+    int unique2 = n2 - common;
+    int n = nums1.size();
+    int m = n / 2;
+    int ans = 0;
+
+    if (unique1 >= m) {
+        ans += m;
+        if (unique2 >= m) {
+            ans += m;
+        } else {
+            ans += min(unique2 + common, m);
+        }
+    } else {
+        if (unique1 + common >= m) {
+            ans += m;
+            if (unique2 >= m) {
+                ans += m;
+            } else {
+                ans += unique2 + min(common - (m - unique1), m - unique2);
+            }
+        } else {
+            ans += unique1 + common;
+            if (unique2 >= m) {
+                ans += m;
+            } else {
+                ans += unique2;
+            }
+        }
+    }
+
+    return ans;
+}
+
+
+// LC545
+vector<int> boundaryOfBinaryTree(TreeNode* root)
+{
+    vector<int> ans;
+    list<TreeNode *> left;
+    unordered_set<TreeNode *> maybeRightNode, maybeLeftNode;
+    // 左边界
+    TreeNode * t = root;
+    if (t->left != nullptr) {
+        while (1) {
+            if (t->left) {
+                t = t->left;
+                left.emplace_back(t);
+            } else if (t->right) {
+                t = t->right;
+                left.emplace_back(t);
+                // 此节点可能会占用右节点, 记录
+                maybeRightNode.emplace(t);
+            } else {
+                break;
+            }
+        }
+    }
+    // 右边界
+    list<TreeNode *> right;
+    t = root;
+    if (t->right != nullptr) {
+        while (1) {
+            if (t->right) {
+                t = t->right;
+                right.emplace_back(t);
+            } else if (t->left) {
+                t = t->left;
+                right.emplace_back(t);
+                // 此节点可能会占用左节点, 记录
+                maybeLeftNode.emplace(t);
+            } else {
+                break;
+            }
+        }
+    }
+    // 去除左边界与右边界重复的点
+    for (auto it : left) {
+        // 如果这个节点在右边界中, 删除
+        auto Right_iter = find(right.begin(), right.end(), it);
+        if (Right_iter != right.end() && maybeLeftNode.count(it)) {
+            right.erase(Right_iter);
+        }
+    }
+    for (auto it : right) {
+        // 如果这个节点在左边界中, 删除
+        auto Left_iter = find(left.begin(), left.end(), it);
+        if (Left_iter != left.end() && maybeRightNode.count(it)) {
+            left.erase(Left_iter);
+        }
+    }
+    // 将右边界逆序
+    reverse(right.begin(), right.end());
+    // 叶子节点
+    list<TreeNode *> leaf;
+    function<void (TreeNode *)> Preorder = [&Preorder, &leaf, &root](TreeNode *node) {
+        if (node == nullptr) {
+            return;
+        }
+        if (node != root && node->left == nullptr && node->right == nullptr) {
+            leaf.emplace_back(node);
+            return;
+        }
+        Preorder(node->left);
+        Preorder(node->right);
+    };
+    Preorder(root);
+    // 去除leaf里面与right和left重复的点
+    for (auto it = leaf.begin(); it != leaf.end();) {
+        auto Left_iter = find(left.begin(), left.end(), *it);
+        auto Right_iter = find(right.begin(), right.end(), *it);
+        if (Left_iter != left.end()) {
+            leaf.erase(it++);
+        } else if (Right_iter != right.end()) {
+            leaf.erase(it++);
+        } else {
+            it++;
+        }
+    }
+    // 组合答案
+    ans.emplace_back(root->val);
+    for (auto it : left) {
+        ans.emplace_back(it->val);
+    }
+    for (auto it : leaf) {
+        ans.emplace_back(it->val);
+    }
+    for (auto it : right) {
+        ans.emplace_back(it->val);
     }
     return ans;
 }
