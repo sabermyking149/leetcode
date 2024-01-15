@@ -11990,3 +11990,113 @@ vector<int> boundaryOfBinaryTree(TreeNode* root)
     }
     return ans;
 }
+
+
+// LC2182
+string repeatLimitedString(string s, int repeatLimit)
+{
+    map<char, int, greater<>> m;
+    for (auto ch : s) {
+        m[ch]++;
+    }
+    string t;
+    char ch;
+    while (1) {
+        auto it = m.begin();
+        if (it == m.end()) {
+            goto repeatLimitedStringEND;
+        }
+        for (; it != m.end();) {
+            if (t.empty()) {
+                if (it->second <= repeatLimit) {
+                    t.append(it->second, it->first);
+                    m.erase(it++);
+                } else {
+                    t.append(repeatLimit, it->first);
+                    m[it->first] -= repeatLimit;
+                }
+                break;
+            } else {
+                ch = t[t.size() - 1];
+                if (ch == it->first) {
+                    it++;
+                    if (it == m.end()) {
+                        goto repeatLimitedStringEND;
+                    }
+                    continue;
+                }
+                if (it == m.begin()) {
+                    if (it->second <= repeatLimit) {
+                        t.append(it->second, it->first);
+                        m.erase(it++);
+                    } else {
+                        t.append(repeatLimit, it->first);
+                        m[it->first] -= repeatLimit;
+                    }
+                } else {
+                    t.append(1, it->first);
+                    if (it->second == 1) {
+                        m.erase(it++);
+                    } else {
+                        it->second--;
+                    }
+                }
+                break;
+            }
+        }
+    }
+repeatLimitedStringEND:
+    return t;
+}
+
+
+// LC998
+TreeNode* insertIntoMaxTree(TreeNode* root, int val)
+{
+    vector<int> v;
+    // 重建原数组
+    function<vector<int> (TreeNode *)> RebuildVector = [&RebuildVector](TreeNode *node) {
+        if (node == nullptr) {
+            return vector<int>();
+        }
+        vector<int> v;
+        vector<int> left = RebuildVector(node->left);
+        vector<int> right = RebuildVector(node->right);
+        v.insert(v.end(), left.begin(), left.end());
+        v.emplace_back(node->val);
+        v.insert(v.end(), right.begin(), right.end());
+        return v;
+    };
+    v = RebuildVector(root);
+
+    v.emplace_back(val);
+    // 从数组构建新树
+    TreeNode *newroot = nullptr;
+    function<TreeNode *(vector<int>&)> BuildTree = [&BuildTree](vector<int>& v) {
+        if (v.empty()) {
+            return static_cast<TreeNode *>(nullptr);
+        }
+        vector<int> left;
+        vector<int> right;
+        int maxVal = *max_element(v.begin(), v.end());
+        int i, j;
+        int n = v.size();
+        for (i = 0; i < n; i++) {
+            if (v[i] != maxVal) {
+                left.emplace_back(v[i]);
+            } else {
+                j = i + 1;
+                break;
+            }
+        }
+        for (i = j; i < n; i++) {
+            right.emplace_back(v[i]);
+        }
+        TreeNode *node = new TreeNode(maxVal);
+        node->left = BuildTree(left);
+        node->right = BuildTree(right);
+        return node;
+    };
+    newroot = BuildTree(v);
+    return newroot;
+}
