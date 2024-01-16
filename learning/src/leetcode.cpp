@@ -12100,3 +12100,87 @@ TreeNode* insertIntoMaxTree(TreeNode* root, int val)
     newroot = BuildTree(v);
     return newroot;
 }
+
+
+// LC2979
+int mostExpensiveItem(int primeOne, int primeTwo)
+{
+    int i, j, k;
+    int n = primeOne * primeTwo;
+    vector<int> dp(n + 1, 0);
+
+    dp[0] = 0;
+    i = 0;
+    j = 0;
+    for (k = 1; k <= n; k++) {
+        dp[k] = min(dp[i] + primeOne, dp[j] + primeTwo);
+        if (dp[k] == dp[i] + primeOne) {
+            i++;
+        }
+        if (dp[k] == dp[j] + primeTwo) {
+            j++;
+        }
+    }
+    for (k = n - 1; k >= 0; k--) {
+        if (dp[k] + 1 != dp[k + 1]) {
+            return dp[k] + 1;
+        }
+    }
+    return 0;
+}
+
+
+// LC777
+bool canTransform(string start, string end)
+{
+    int i;
+    int m = start.size();
+    int n = end.size();
+
+    if (m != n) {
+        return false;
+    }
+    string t1, t2;
+    vector<int> idxStart, idxEnd;
+
+    i = 0;
+    for (auto ch : start) {
+        if (ch != 'X') {
+            t1 += ch;
+            idxStart.emplace_back(i);
+        }
+        i++;
+    }
+    i = 0;
+    for (auto ch : end) {
+        if (ch != 'X') {
+            t2 += ch;
+            idxEnd.emplace_back(i);
+        }
+        i++;
+    }
+    if (t1 != t2) {
+        return false;
+    }
+    for (i = 0; i < idxStart.size(); i++) {
+        if (start[idxStart[i]] == 'L' && idxStart[i] < idxEnd[i]) {
+            return false;
+        }
+        if (start[idxStart[i]] == 'R' && idxStart[i] > idxEnd[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+// LC3008
+// KMP
+void GenerateNextArr(string& s, vector<int>& next)
+{
+
+}
+vector<int> beautifulIndices(string s, string a, string b, int k)
+{
+    
+}
