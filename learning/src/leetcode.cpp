@@ -12174,6 +12174,188 @@ bool canTransform(string start, string end)
 }
 
 
+// LC2488
+int countSubarrays(vector<int>& nums, int k)
+{
+    int i;
+    int n = nums.size();
+    int ans = 0;
+    unordered_map<int, int> um;
+    vector<int> prefixSum(n, 0);
+
+    auto idx = find(nums.begin(), nums.end(), k) - nums.begin();
+    if (nums[0] < k) {
+        prefixSum[0] = -1;
+        um[-1] = 1;
+    } else if (nums[0] > k) {
+        prefixSum[0] = 1;
+        um[1] = 1;
+    } else {
+        prefixSum[0] = 0;
+        ans++;
+    }
+    for (i = 1; i < n; i++) {
+        if (nums[i] < k) {
+            prefixSum[i] = prefixSum[i - 1] - 1;
+        } else if (nums[i] > k) {
+            prefixSum[i] = prefixSum[i - 1] + 1;
+        } else {
+            prefixSum[i] = prefixSum[i - 1];
+        }
+        if (i < idx) {
+            um[prefixSum[i]]++;
+            continue;
+        }
+        if (prefixSum[i] == 0 || prefixSum[i] == 1) {
+            ans++;
+        }
+        if (um.count(prefixSum[i] - 1)) {
+            ans += um[prefixSum[i] - 1];
+        }
+        if (um.count(prefixSum[i])) {
+            ans += um[prefixSum[i]];
+        }
+        // um[prefixSum[i]]++; 不再记录, 因为nums[idx]必须包含
+    }
+    return ans;
+}
+
+
+// LC2054
+int maxTwoEvents(vector<vector<int>>& events)
+{
+    sort(events.begin(), events.end(), [](vector<int>& a, vector<int>& b) {
+            if (a[1] != b[1]) {
+                return a[1] < b[1];
+            }
+            return a[0] < b[0];
+        }
+    );
+
+    int i;
+    int n = events.size();
+    int ans;
+    vector<int> dp(n, 0);
+
+    // pair<int, int> - {开始时间, val} 按val从大到小, 开始时间从小到大排
+    auto CMP = [](const pair<int, int>& a, const pair<int, int>& b) {
+        if (a.second != b.second) {
+            return a.second < b.second;
+        }
+        return a.first > b.first;
+    };
+    priority_queue<pair<int, int>, vector<pair<int, int>>, decltype(CMP)> pq(CMP);
+    
+    for (i = 0; i < n; i++) {
+        pq.push({events[i][0], events[i][2]});
+    }
+    ans = 0;
+    for (i = 0; i < n; i++) {
+        dp[i] = events[i][2];
+        while (!pq.empty()) {
+            auto top = pq.top();
+            if (top.first > events[i][1]) {
+                dp[i] += top.second;
+                break;
+            }
+            pq.pop();
+        }
+        ans = max(ans, dp[i]);
+    }
+    return ans;
+}
+
+
+// LC2171
+long long minimumRemoval(vector<int>& beans)
+{
+    sort(beans.begin(), beans.end());
+
+    int i;
+    int n = beans.size();
+    vector<long long> prefixSum(n, 0);
+    unordered_map<int, int> first; // 某个值第一次出现时的下标
+    unordered_map<int, int> last; // 某个值最后一次出现时的下标
+
+    prefixSum[0] = beans[0];
+    first[beans[0]] = 0;
+    for (i = 1; i < n; i++) {
+        prefixSum[i] = prefixSum[i - 1] + beans[i];
+        if (beans[i] != beans[i - 1]) {
+            first[beans[i]] = i;
+            last[beans[i - 1]] = i - 1;
+        }
+    }
+    last[beans[n - 1]] = n - 1;
+
+    long long ans = LONG_LONG_MAX;
+    long long cur, left, right;
+    for (i = 0; i < n; i++) {
+        if (i == 0) {
+            cur = prefixSum[n - 1] - prefixSum[last[beans[i]]] - static_cast<long long>(beans[i]) * (n - 1 - last[beans[i]]);
+        } else if (i == n - 1) {
+            if (first[beans[i]] == 0) {
+                cur = 0;
+                continue;
+            }
+            cur = prefixSum[first[beans[i]] - 1];
+        } else {
+            if (first[beans[i]] == 0) {
+                left = 0;
+            } else {
+                left = prefixSum[first[beans[i]] - 1];
+            }
+            if (last[beans[i]] == n - 1) {
+                right = 0;
+            } else {
+                right = prefixSum[n - 1] - prefixSum[last[beans[i]]] - static_cast<long long>(beans[i]) * (n - 1 - last[beans[i]]);
+            }
+            cur = left + right;
+        }
+        ans = min(ans, cur);
+    }
+    return ans;
+}
+
+
+// LC1223
+int dieSimulator(int n, vector<int>& rollMax)
+{
+    int mod = 1e9 + 7;
+    // dp[i][j][k] - 第i次投骰子为j且已经连续投k次j的总序列数
+    vector<vector<vector<long long>>> dp(n, vector<vector<long long>>(7, vector<long long>(16, 0)));
+
+    int i, j, k;
+    int jCur, jPrev;
+    for (i = 1; i <= 6; i++) {
+        dp[0][i][1] = 1;
+    }
+    for (i = 1; i < n; i++) {
+        for (jCur = 1; jCur <= 6; jCur++) {
+            for (jPrev = 1; jPrev <= 6; jPrev++) {
+                for (k = 1; k <= 15; k++) {
+                    if (k > i + 1 || (k == rollMax[jPrev - 1] && jCur == jPrev)) {
+                        break;
+                    }
+                    if (jCur == jPrev) {
+                        dp[i][jCur][k + 1] = (dp[i][jCur][k + 1] + dp[i - 1][jPrev][k]) % mod;
+                    } else {
+                        dp[i][jCur][1] = (dp[i][jCur][1] + dp[i - 1][jPrev][k]) % mod;
+                    }
+                }
+            }
+        }
+    }
+    long long ans = 0;
+    for (i = 1; i <= 6; i++) {
+        for (j = 1; j <= rollMax[i - 1]; j++) {
+            ans = (ans + dp[n - 1][i][j]) % mod;
+        }
+    }
+    return ans;
+}
+
+
 // LC3008
 // KMP
 void GenerateNextArr(string& s, vector<int>& next)
