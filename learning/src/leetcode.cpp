@@ -12356,6 +12356,120 @@ int dieSimulator(int n, vector<int>& rollMax)
 }
 
 
+// LC1361
+bool validateBinaryTreeNodes(int n, vector<int>& leftChild, vector<int>& rightChild)
+{
+    int i;
+    unordered_map<int, int> outDegree, inDegree;
+    unordered_map<int, vector<int>> edges;
+
+    for (i = 0; i < n; i++) {
+        if (leftChild[i] != -1) {
+            if (leftChild[leftChild[i]] == i || rightChild[leftChild[i]] == i) { // 双向边
+                return false;
+            }
+            outDegree[i]++;
+            inDegree[leftChild[i]]++;
+            edges[i].emplace_back(leftChild[i]);
+        }
+        if (rightChild[i] != -1) {
+            if (leftChild[rightChild[i]] == i || rightChild[rightChild[i]] == i) { // 双向边
+                return false;
+            }
+            outDegree[i]++;
+            inDegree[rightChild[i]]++;
+            edges[i].emplace_back(rightChild[i]);
+        }
+    }
+    int m = inDegree.size();
+    if (n - m != 1) { // 入度为0(根)不止一个或没有根
+        return false;
+    }
+    for (auto it : inDegree) {
+        if (it.second > 1) { // 图
+            return false;
+        }
+    }
+    for (auto it : outDegree) {
+        if (it.second > 2) { // 多个子节点
+            return false;
+        }
+    }
+    // 判断环
+    vector<int> visited(n, 0);
+    function<void (int, vector<int>&, bool&)> Loop = [&edges, &Loop](int cur, vector<int>& visited, bool& find) {
+        if (find) {
+            return;
+        }
+        if (visited[cur] == 2) {
+            find = true;
+            return;
+        }
+        visited[cur] = 2; // 正在被访问
+        if (edges.count(cur)) {
+            for (auto it : edges[cur]) {
+                Loop(it, visited, find);
+            }
+        }
+        visited[cur] = 1; // 访问完成
+    };
+    bool find = false;
+    for (i = 0; i < n; i++) {
+        if (visited[i] == 0) {
+            find = false;
+            Loop(i, visited, find);
+            if (find) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+
+// LC1229
+vector<int> minAvailableDuration(vector<vector<int>>& slots1, vector<vector<int>>& slots2, int duration)
+{
+    sort(slots1.begin(), slots1.end());
+    sort(slots2.begin(), slots2.end());
+
+    int i, j;
+    int start, end;
+    int m = slots1.size();
+    int n = slots2.size();
+
+    i = j = 0;
+    while (i < m && j < n) {
+        if (slots2[j][0] > slots1[i][1]) {
+            i++;
+        } else if (slots1[i][0] > slots2[j][1]) {
+            j++;
+        } else {
+            if (slots2[j][0] <= slots1[i][0]) {
+                start = slots1[i][0];
+                end = min(slots1[i][1], slots2[j][1]);
+            } else if (slots2[j][1] < slots1[i][1]) {
+                start = slots2[j][0];
+                end = slots2[j][1];
+            } else {
+                start = slots2[j][0];
+                end = slots1[i][1];
+            }
+            if (end - start >= duration) {
+                return {start, start + duration};
+            } else {
+                if (slots2[j][1] > slots1[i][1]) {
+                    i++;
+                } else {
+                    j++;
+                }
+            }
+        }
+    }
+    return {};
+}
+
+
 // LC3008
 // KMP
 void GenerateNextArr(string& s, vector<int>& next)
