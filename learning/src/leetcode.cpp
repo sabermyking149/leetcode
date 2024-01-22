@@ -5774,6 +5774,7 @@ vector<vector<int>> findMaximalUncoveredRanges(int n, vector<vector<int>>& range
 
 
 // LC1334
+// 迪杰斯特拉
 int findTheCity(int n, vector<vector<int>>& edges, int distanceThreshold)
 {
     int i, k;
@@ -9608,6 +9609,7 @@ int minimumMountainRemovals(vector<int>& nums)
 
 
 // LC2959
+// 迪杰斯特拉
 int numberOfSets(int n, int maxDistance, vector<vector<int>>& roads)
 {
     // 一共有 2^n 种情况
@@ -12474,9 +12476,149 @@ vector<int> minAvailableDuration(vector<vector<int>>& slots1, vector<vector<int>
 // KMP
 void GenerateNextArr(string& s, vector<int>& next)
 {
+    int i, j;
+    int n = s.size();
+    next.resize(n);
 
+    next[0] = 0;
+    j = 0;
+    for (i = 1; i < n; i++) {
+        while (s[i] != s[j]) {
+            if (j == 0) {
+                break;
+            }
+            j = next[j - 1];
+        }
+        if (s[i] == s[j]) {
+            next[i] = j + 1;
+            j++;
+        } else {
+            next[i] = 0;
+        }
+    }
 }
 vector<int> beautifulIndices(string s, string a, string b, int k)
 {
-    
+    int i, j;
+    vector<int> nextA, nextB;
+
+    GenerateNextArr(a, nextA);
+    GenerateNextArr(b, nextB);
+
+    vector<int> idxa, idxb;
+    int n = s.size();
+    int m = a.size();
+
+    j = 0;
+    for (i = 0; i < n; i++) {
+        while (s[i] != a[j]) {
+            if (j == 0) {
+                break;
+            }
+            j = nextA[j - 1];
+        }
+        if (s[i] == a[j]) {
+            j++;
+        }
+        if (j == m) {
+            idxa.emplace_back(i - j + 1);
+        }
+    }
+
+    j = 0;
+    m = b.size();
+    for (i = 0; i < n; i++) {
+        while (s[i] != b[j]) {
+            if (j == 0) {
+                break;
+            }
+            j = nextB[j - 1];
+        }
+        if (s[i] == b[j]) {
+            j++;
+        }
+        if (j == m) {
+            idxb.emplace_back(i - j + 1);
+        }
+    }
+    vector<int> ans;
+    int left, right, mid;
+    for (i = 0; i < idxa.size(); i++) {
+        left = 0;
+        right = idxb.size() - 1;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (idxb[mid] < idxa[i] && abs(idxb[mid] - idxa[i]) > k) {
+                left = mid + 1;
+            } else if (idxb[mid] > idxa[i] && abs(idxb[mid] - idxa[i]) > k) {
+                right = mid - 1;
+            } else {
+                ans.emplace_back(idxa[i]);
+                break;
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LC3011
+bool canSortArray(vector<int>& nums)
+{
+    unordered_map<int, int> bitCnt;
+
+    int cnt;
+    int n = nums.size();
+    int i;
+    for (i = 0; i < n; i++) {
+        cnt = 0;
+        auto t = nums[i];
+        while (t) {
+            if (t % 2 == 1) {
+                cnt++;
+            }
+            t /= 2;
+        }
+        bitCnt[nums[i]] = cnt;
+    }
+    for (i = 1; i < n; i++) {
+        while (nums[i] < nums[i - 1]) {
+            if (bitCnt[nums[i]] != bitCnt[nums[i - 1]]) {
+                return false;
+            }
+            swap(nums[i], nums[i - 1]);
+            i--;
+            if (i == 0) {
+                break;
+            }
+        }
+    }
+    return true;
+}
+
+
+// LC3012
+int minimumArrayLength(vector<int>& nums)
+{
+    map<int, int> cnt;
+    for (auto n : nums) {
+        cnt[n]++;
+    }
+
+    vector<int> v;
+    for (auto it : cnt) {
+        v.emplace_back(it.first);
+    }
+    if (cnt[v[0]] == 1) {
+        return 1;
+    }
+
+    int i;
+    int n = v.size();
+    for (i = 1; i < n; i++) {
+        if (v[i] % v[0] != 0) {
+            return 1;
+        }
+    }
+    return (cnt[v[0]] + 1) / 2;
 }
