@@ -5774,7 +5774,7 @@ vector<vector<int>> findMaximalUncoveredRanges(int n, vector<vector<int>>& range
 
 
 // LC1334
-// 迪杰斯特拉
+// 迪杰斯特拉 dijstra
 int findTheCity(int n, vector<vector<int>>& edges, int distanceThreshold)
 {
     int i, k;
@@ -12472,7 +12472,7 @@ vector<int> minAvailableDuration(vector<vector<int>>& slots1, vector<vector<int>
 }
 
 
-// LC3008
+// LC3008 LC1392
 // KMP
 void GenerateNextArr(string& s, vector<int>& next)
 {
@@ -12621,4 +12621,239 @@ int minimumArrayLength(vector<int>& nums)
         }
     }
     return (cnt[v[0]] + 1) / 2;
+}
+
+
+// LC1156
+int maxRepOpt1(string text)
+{
+    int i, k;
+    int n = text.size();
+    int ans, size;
+    int start, end;
+    bool f = false;
+    unordered_set<int> us;
+    vector<pair<int, int>> vp;
+    for (auto ch : text) {
+        us.emplace(ch);
+    }
+    ans = 0;
+    for (auto it : us) {
+        vp.clear();
+        f = false;
+        for (i = 0; i < n; i++) {
+            if (text[i] == it) {
+                if (f == false) {
+                    f = true;
+                    start = i;
+                }
+            } else {
+                if (f) {
+                    f = false;
+                    end = i - 1;
+                    vp.push_back({start, end});
+                }
+            }
+        }
+        if (f) {
+            vp.push_back({start, n - 1});
+        }
+
+        size = vp.size();
+        if (size == 1) {
+            ans = max(ans, vp[0].second - vp[0].first + 1);
+        } else {
+            ans = max(ans, 1 + vp[0].second - vp[0].first + 1);
+        }
+        for (k = 1; k < size; k++) {
+            if (vp[k - 1].second + 2 == vp[k].first) {
+                if (size == 2) {
+                    ans = max(ans, 
+                    vp[k - 1].second - vp[k - 1].first + 1 + vp[k].second - vp[k].first + 1);
+                } else { // 从第3个字符串"借"一个
+                    ans = max(ans, 1 +
+                    vp[k - 1].second - vp[k - 1].first + 1 + vp[k].second - vp[k].first + 1);
+                }
+            } else {
+                ans = max(ans, 1 + vp[k].second - vp[k].first + 1);
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LC2121
+vector<long long> getDistances(vector<int>& arr)
+{
+    int i;
+    int n = arr.size();
+    unordered_map<int, vector<int>> idx;
+
+    for (i = 0; i < n; i++) {
+        idx[arr[i]].emplace_back(i);
+    }
+    // 计算差值前缀和
+    unordered_map<int, vector<long long>> diffPreSum;
+    for (auto it : idx) {
+        auto v = it.second;
+        n = v.size();
+        diffPreSum[it.first].emplace_back(0);
+        for (i = 1; i < n; i++) {
+            diffPreSum[it.first].emplace_back(
+                diffPreSum[it.first][diffPreSum[it.first].size() - 1] + idx[it.first][i] - idx[it.first][0]);
+        }
+    }
+    // 计算差值后缀和
+    unordered_map<int, vector<long long>> diffSufSum;
+    for (auto it : idx) {
+        auto v = it.second;
+        n = v.size();
+        diffSufSum[it.first].emplace_back(0);
+        for (i = n - 2; i >= 0; i--) {
+            diffSufSum[it.first].emplace_back(
+                diffSufSum[it.first][diffSufSum[it.first].size() - 1] + idx[it.first][n - 1] - idx[it.first][i]);
+        }
+    }
+
+    unordered_map<int, int> um; // 遍历时arr[i]出现的次数
+    n = arr.size();
+    vector<long long> ans(n);
+    long long pre, suf;
+    for (i = 0; i < n; i++) {
+        if (idx[arr[i]].size() == 1) {
+            ans[i] = 0;
+        } else {
+            pre = diffPreSum[arr[i]][diffPreSum[arr[i]].size() - 1];
+            suf = diffSufSum[arr[i]][diffSufSum[arr[i]].size() - 1];
+            if (um[arr[i]] == 0) {
+                ans[i] = pre;
+            } else if (um[arr[i]] == diffPreSum[arr[i]].size() - 1) {
+                ans[i] = suf;
+            } else {
+                pre = static_cast<long long>(um[arr[i]]) * (idx[arr[i]][um[arr[i]]] - idx[arr[i]][0]) - diffPreSum[arr[i]][um[arr[i]] - 1];
+                suf = static_cast<long long>(idx[arr[i]].size() - 1 - um[arr[i]]) * 
+                    (idx[arr[i]][idx[arr[i]].size() - 1] - idx[arr[i]][um[arr[i]]]) - diffSufSum[arr[i]][idx[arr[i]].size() - 1 - um[arr[i]] - 1];
+                ans[i] = pre + suf;
+            }
+            um[arr[i]]++;
+        }
+    }
+    return ans;
+}
+
+
+// LC3004
+int maximumSubtreeSize(vector<vector<int>>& e, vector<int>& colors)
+{
+    int i;
+    int n = colors.size();
+    unordered_map<int, vector<int>> edges;
+
+    if (e.size() == 0) {
+        return 1;
+    }
+    for (auto it : e) {
+        edges[it[0]].emplace_back(it[1]);
+        edges[it[1]].emplace_back(it[0]);
+    }
+
+    unordered_map<int, int> colorCnt;
+    function<int (unordered_map<int, vector<int>>&, int, int)> find = 
+        [&colors, &colorCnt, &find](unordered_map<int, vector<int>>& edges, int cur, int parent) {
+        bool flag = true;
+        if (edges[cur].size() == 1 && edges[cur][0] == parent) {
+            colorCnt[cur] = 1;
+            return 1;
+        }
+        for (auto it : edges[cur]) {
+            if (it != parent) {
+                colorCnt[it] = find(edges, it, cur);
+                if (colors[cur] == colors[it] && flag) {
+                    if (colorCnt[it] != 0) {
+                        colorCnt[cur] += colorCnt[it];
+                    } else {
+                        colorCnt[cur] = 0;
+                        flag = false;
+                    }
+                } else {
+                    flag = false;
+                    colorCnt[cur] = 0;
+                }
+            }
+        }
+        if (colorCnt[cur] != 0) {
+            colorCnt[cur]++;
+        }
+        return colorCnt[cur];
+    };
+    find(edges, 0, -1);
+
+    int ans = 1;
+    for (auto it : colorCnt) {
+        ans = max(ans, it.second);
+    }
+    return ans;
+}
+
+
+// LC780
+bool reachingPoints(int sx, int sy, int tx, int ty)
+{
+    if (sx > tx || sy > ty) {
+        return false;
+    }
+    if (sx == tx && sy == ty) {
+        return true;
+    }
+    int tmpX, tmpY;
+    while (1) {
+        if (tx > ty) {
+            tmpX = (tx - sx) % ty + sx;
+            if (tmpX == tx) {
+                return false;
+            }
+            tx = tmpX;
+        } else if (ty > tx) {
+            tmpY = (ty - sy) % tx + sy;
+            if (tmpY == ty) {
+                return false;
+            }
+            ty = tmpY;
+        } else {
+            return false;
+        }
+        if (sx == tx && sy == ty) {
+            return true;
+        }
+        if (tx < sx || ty < sy) {
+            break;
+        }
+    }
+    return false;
+}
+
+
+// LC2438
+vector<int> productQueries(int n, vector<vector<int>>& queries)
+{
+    vector<long long> powers;
+    long long i = 1;
+    int mod = 1e9 + 7;
+    while (i <= n) {
+        if ((n & i) == i) {
+            powers.emplace_back(i);
+        }
+        i <<= 1;
+    }
+    long long t;
+    vector<int> ans;
+    for (auto q : queries) {
+        t = 1;
+        for (i = q[0]; i <= q[1]; i++) {
+            t = t * powers[i] % mod;
+        }
+        ans.emplace_back(t);
+    }
+    return ans;
 }
