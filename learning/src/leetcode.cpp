@@ -12857,3 +12857,120 @@ vector<int> productQueries(int n, vector<vector<int>>& queries)
     }
     return ans;
 }
+
+
+// LC2585
+int waysToReachTarget(int target, vector<vector<int>>& types)
+{
+    int i, j, k;
+    int n = types.size();
+    int mod = 1e9 + 7;
+    vector<vector<long long>> dp(target + 1, vector<long long>(n, 0)); // dp[i][j] - 前j个题目获得i分的方法数
+
+    for (j = 0; j < n; j++) {
+        dp[0][j] = 1;
+    }
+    for (j = 0; j < n; j++) {
+        if (j == 0) {
+            for (k = 1; k <= types[j][0]; k++) {
+                if (k * types[j][1] <= target) {
+                    dp[k * types[j][1]][j] = 1;
+                } else {
+                    break;
+                }
+            }
+            continue;
+        }
+        for (i = 1; i <= target; i++) {
+            for (k = 1; k <= types[j][0]; k++) {
+                if (i - k * types[j][1] >= 0) {
+                    dp[i][j] = (dp[i][j] + dp[i - k * types[j][1]][j - 1]) % mod;
+                } else {
+                    break;
+                }
+            }
+            dp[i][j] = (dp[i][j] + dp[i][j - 1]) % mod; // 如果k = 0开始循环, 此句不要
+        }
+    }
+    return dp[target][n - 1];
+}
+
+
+// LC1187
+int makeArrayIncreasing(vector<int>& arr1, vector<int>& arr2)
+{
+    int i, j, k;
+    int idx;
+    int n = arr1.size();
+    set<int> arr2Set;
+
+    for (auto a : arr2) {
+        arr2Set.emplace(a);
+    }
+    arr2.clear();
+    for (auto it : arr2Set) {
+        arr2.emplace_back(it);
+    }
+
+    int m = arr2.size();
+    // dp[i][0] - arr1[i]不替换最小操作数
+    // dp[i][j] (j >= 1) - arr1[i]被arr2[j - 1]替换最小操作数
+    vector<vector<int>> dp(n, vector<int>(m + 1, 0x3f3f3f3f));
+
+    dp[0][0] = 0;
+    for (j = 1; j <= m; j++) {
+        dp[0][j] = 1;
+    }
+    for (i = 1; i < n; i++) {
+        // i 不操作 i - 1 也不操作
+        if (arr1[i] > arr1[i - 1]) {
+            dp[i][0] = min(dp[i][0], dp[i - 1][0]);
+        }
+        // i 不操作 i - 1 操作
+        idx = lower_bound(arr2.begin(), arr2.end(), arr1[i]) - arr2.begin();
+        cout << "1:" << idx << endl;
+        for (j = 1; j <= idx; j++) {
+            dp[i][0] = min(dp[i][0], dp[i - 1][j]);
+        }
+        // i 操作, i - 1 不操作
+        idx = upper_bound(arr2.begin(), arr2.end(), arr1[i - 1]) - arr2.begin();
+        cout << "2:" << idx << endl;
+        for (j = idx + 1; j <= m; j++) {
+            dp[i][j] = min(dp[i][j], dp[i - 1][0] + 1);
+        }
+        // i - 1 与 i 都操作
+        for (j = 2; j <= m; j++) {
+            dp[i][j] = min(dp[i][j], dp[i - 1][j - 1] + 1);
+        }
+    }
+    int ans = 0x3f3f3f3f;
+    ans = min(ans, *min_element(dp[n - 1].begin(), dp[n - 1].end()));
+    return ans == 0x3f3f3f3f ? -1 : ans;
+}
+
+
+// LC768
+int maxChunksToSorted(vector<int>& arr)
+{
+    map<int, int> arrCnt;
+
+    for (auto a : arr) {
+        arrCnt[a]++;
+    }
+    int curMaxNum, ans;
+
+    curMaxNum = -1;
+    ans = 0;
+    for (auto num : arr) {
+        curMaxNum = max(curMaxNum, num);
+        if (arrCnt[num] == 1) {
+            arrCnt.erase(num);
+        } else {
+            arrCnt[num]--;
+        }
+        if (arrCnt.empty() || curMaxNum <= arrCnt.begin()->first) {
+            ans++;
+        }
+    }
+    return ans;
+}
