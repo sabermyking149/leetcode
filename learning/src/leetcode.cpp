@@ -12928,13 +12928,13 @@ int makeArrayIncreasing(vector<int>& arr1, vector<int>& arr2)
         }
         // i 不操作 i - 1 操作
         idx = lower_bound(arr2.begin(), arr2.end(), arr1[i]) - arr2.begin();
-        cout << "1:" << idx << endl;
+        // cout << "1:" << idx << endl;
         for (j = 1; j <= idx; j++) {
             dp[i][0] = min(dp[i][0], dp[i - 1][j]);
         }
         // i 操作, i - 1 不操作
         idx = upper_bound(arr2.begin(), arr2.end(), arr1[i - 1]) - arr2.begin();
-        cout << "2:" << idx << endl;
+        // cout << "2:" << idx << endl;
         for (j = idx + 1; j <= m; j++) {
             dp[i][j] = min(dp[i][j], dp[i - 1][0] + 1);
         }
@@ -12973,4 +12973,73 @@ int maxChunksToSorted(vector<int>& arr)
         }
     }
     return ans;
+}
+
+
+// LC955
+int minDeletionSize(vector<string>& strs)
+{
+    int i;
+    int n = strs.size();
+    int len = strs[0].size();
+    int ans;
+    vector<int> deleteChar(len, 0);
+
+    auto Check = [&deleteChar](string& a, string& b) {
+        int i;
+        int len = a.size();
+        bool del = false;
+        for (i = 0; i < len; i++) {
+            if (deleteChar[i] == 1) {
+                continue;
+            }
+            if (a[i] > b[i]) {
+                deleteChar[i] = 1;
+                del = true;
+            } else if (a[i] < b[i]) {
+                break;
+            } else {
+                continue;
+            }
+        }
+        return !del;
+    };
+    for (i = 1; i < n; i++) {
+        if (Check(strs[i - 1], strs[i]) == false) {
+            i = 0;
+        }
+    }
+    ans = 0;
+    for (auto one : deleteChar) {
+        if (one) {
+            ans++;
+        }
+    }
+    return ans;
+}
+
+
+// LC1121
+bool canDivideIntoSubsequences(vector<int>& nums, int k)
+{
+    int size = nums.size();
+    unordered_map<int, int> um;
+    for (auto n : nums) {
+        um[n]++;
+    }
+    int maxFreq = 0;
+    for (auto it : um) {
+        maxFreq = max(maxFreq, it.second);
+    }
+    if (maxFreq * k > size) {
+        return false;
+    }
+    return true;
+}
+
+
+// LC2321
+int maximumsSplicedArray(vector<int>& nums1, vector<int>& nums2)
+{
+    
 }
