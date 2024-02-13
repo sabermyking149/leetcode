@@ -2267,6 +2267,7 @@ int maxCount(vector<int>& banned, int n, long long maxSum)
 }
 
 
+// LC769
 bool CheckContinuousArr(int lastArrVal, vector<int>& arr)
 {
     unsigned int i;
@@ -12950,7 +12951,7 @@ int makeArrayIncreasing(vector<int>& arr1, vector<int>& arr2)
 
 
 // LC768
-int maxChunksToSorted(vector<int>& arr)
+int maxChunksToSorted_LC768(vector<int>& arr)
 {
     map<int, int> arrCnt;
 
@@ -13041,5 +13042,195 @@ bool canDivideIntoSubsequences(vector<int>& nums, int k)
 // LC2321
 int maximumsSplicedArray(vector<int>& nums1, vector<int>& nums2)
 {
-    
+
+}
+
+
+// LC2892
+int minArrayLength(vector<int>& nums, int k)
+{
+    int i;
+    int n = nums.size();
+    int cnt;
+    long long cur;
+    bool f = false; // 是否进行过乘法操作
+
+    cur = 1;
+    cnt = 0;
+    for (i = 0; i < n; i++) {
+        if (nums[i] == 0) {
+            return 1;
+        } else if (nums[i] > k) {
+            if (f) {
+                cnt += 2;
+            } else {
+                cnt++;
+            }
+            f = false;
+            cur = 1;
+            continue;
+        }
+        cur *= nums[i];
+        f = true;
+        if (cur > k) {
+            cur = nums[i];
+            cnt++;
+        }
+    }
+    if (f) {
+        cnt++;
+    }
+    return cnt;
+}
+
+
+// LC2420
+vector<int> goodIndices(vector<int>& nums, int k)
+{
+    int i;
+    int n = nums.size();
+    vector<int> less(n , 0), greater(n , 0);
+    vector<int> ans;
+
+    less[0] = 1;
+    for (i = 1; i < n; i++) {
+        if (nums[i] <= nums[i - 1]) {
+            less[i] = less[i - 1] + 1;
+        } else {
+            less[i] = 1;
+        }
+    }
+    greater[n - 1] = 1;
+    for (i = n - 2; i >= 0; i--) {
+        if (nums[i + 1] >= nums[i]) {
+            greater[i] = greater[i + 1] + 1;
+        } else {
+            greater[i] = 1;
+        }
+    }
+    for (i = k; i < n - k; i++) {
+        if (less[i - 1] >= k && greater[i + 1] >= k) {
+            ans.emplace_back(i);
+        }
+    }
+    return ans;
+}
+
+
+// LC3031
+unsigned long long FastPow(size_t a, size_t b) // 重载一下
+{
+    unsigned long long ans = 1, base = a;
+    while (b != 0) {
+        if ((b & 1) != 0)
+            ans *= base;
+        base *= base;
+        b >>= 1;
+    }
+    return ans;
+}
+int minimumTimeToInitialState(string word, int k)
+{
+    int i;
+    int n = word.size();
+    vector<unsigned long long> prefixHash(n), suffixHash(n);
+
+    prefixHash[0] = word[0] - 'a';
+    for (i = 1; i < n; i++) {
+        prefixHash[i] = prefixHash[i - 1] * 1337 + word[i] - 'a';
+    }
+    suffixHash[n - 1] = word[n - 1] - 'a';
+    for (i = n - 2; i >= 0; i--) {
+        suffixHash[i] = FastPow(1337, n - i - 1) * (word[i] - 'a') + suffixHash[i + 1];
+    }
+    int ans = 1;
+    while (1) {
+        if (ans * k >= n) {
+            break;
+        }
+        if (suffixHash[ans * k] == prefixHash[n - 1 - ans * k]) {
+            break;
+        }
+        ans++;
+    }
+    return ans;
+}
+
+
+// LC3035
+int maxPalindromesAfterOperations(vector<string>& words)
+{
+    unordered_map<char, int> data;
+    int i;
+    int n = words.size();
+    priority_queue<int, vector<int>> pq;
+
+    for (auto w : words) {
+        for (auto ch : w) {
+            data[ch]++;
+        }
+    }
+    // pq只存放偶数个数
+    int single = 0;
+    for (auto it : data) {
+        if (it.second > 1) {
+            if (it.second % 2 == 1) {
+                single++;
+                pq.push(it.second - 1);
+            } else {
+                pq.push(it.second);
+            }
+        } else {
+            single++;
+        }
+    }
+    vector<int> wordsLenData;
+    for (auto w : words) {
+        wordsLenData.emplace_back(w.size());
+    }
+    sort(wordsLenData.begin(), wordsLenData.end());
+
+    int cnt = 0;
+    bool canBuild = true;
+    for (i = 0; i < n; i++) {
+        auto len = wordsLenData[i];
+        while (len) {
+            if (len == 1) {
+                if (single > 0) {
+                    single--;
+                } else {
+                    if (pq.empty()) {
+                        canBuild = false;
+                    } else {
+                        auto top = pq.top();
+                        pq.pop();
+                        if (top == 2) {
+                            single++;
+                        } else {
+                            pq.push(top - 2);
+                            single++;
+                        }
+                    }
+                }
+                break;
+            } else {
+                if (pq.empty()) {
+                    canBuild = false;
+                    break;
+                }
+                auto top = pq.top();
+                pq.pop();
+                if (top > 2) {
+                    pq.push(top - 2);
+                }
+                len -= 2;
+            }
+        }
+        
+        if (canBuild == false) {
+            break;
+        }
+        cnt++;
+    }
+    return cnt;
 }
