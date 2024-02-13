@@ -13042,7 +13042,62 @@ bool canDivideIntoSubsequences(vector<int>& nums, int k)
 // LC2321
 int maximumsSplicedArray(vector<int>& nums1, vector<int>& nums2)
 {
+    int i;
+    int n = nums1.size();
+    vector<int> diff1(n), diff2(n);
+    vector<int> prefixSum1(n), prefixSum2(n);
+    vector<int> dp1(n), dp2(n), len1(n), len2(n); // len[i] - 满足dp[i]的子数组长度, dp[i] - diff[i]的最大子数组和
+    for (i = 0; i < n; i++) {
+        diff1[i] = nums1[i] - nums2[i];
+        diff2[i] = nums2[i] - nums1[i];
+        if (i == 0) {
+            prefixSum1[i] = nums1[i];
+            prefixSum2[i] = nums2[i];
+        } else {
+            prefixSum1[i] = prefixSum1[i - 1] + nums1[i];
+            prefixSum2[i] = prefixSum2[i - 1] + nums2[i];
+        }
+    }
+    int ans = max(prefixSum1[n - 1], prefixSum2[n - 1]);
+    int t, idx;
+    dp1[0] = diff1[0];
+    len1[0] = 1;
+    dp2[0] = diff2[0];
+    len2[0] = 1;
+    for (i = 1; i < n; i++) {
+        if (dp1[i - 1] >= 0) {
+            dp1[i] = dp1[i - 1] + diff1[i];
+            len1[i] = len1[i - 1] + 1;
+        } else {
+            dp1[i] = diff1[i];
+            len1[i] = 1;
+        }
 
+        if (dp2[i - 1] >= 0) {
+            dp2[i] = dp2[i - 1] + diff2[i];
+            len2[i] = len2[i - 1] + 1;
+        } else {
+            dp2[i] = diff2[i];
+            len2[i] = 1;
+        }
+    }
+    for (i = 0; i < n; i++) {
+        idx = i + 1 - len2[i];
+        if (idx == 0) {
+            t = prefixSum2[i] + prefixSum1[n - 1] - prefixSum1[i];
+        } else {
+            t = prefixSum2[i] - prefixSum2[idx - 1] + prefixSum1[n - 1] - (prefixSum1[i] - prefixSum1[idx - 1]);
+        }
+        ans = max(ans, t);
+        idx = i + 1 - len1[i];
+        if (idx == 0) {
+            t = prefixSum2[n - 1] - prefixSum2[i] + prefixSum1[i];
+        } else {
+            t = prefixSum2[n - 1] - prefixSum2[i] + prefixSum2[idx - 1] + prefixSum1[i] - prefixSum1[idx - 1];
+        }
+        ans = max(ans, t);
+    }
+    return ans;
 }
 
 
