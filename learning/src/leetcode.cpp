@@ -1653,8 +1653,22 @@ int FastPow(int a, int b)
 {
     int ans = 1, base = a;
     while (b != 0) {
-        if ((b & 1) != 0)
+        if ((b & 1) != 0) {
             ans = (static_cast<long long>(ans) * base) % mod;
+        }
+        base = (static_cast<long long>(base) * base) % mod;
+        b >>= 1;
+    }
+    return ans;
+}
+long long FastPow(int a, int b, int mod)
+{
+    long long ans = 1;
+    int base = a;
+    while (b != 0) {
+        if ((b & 1) != 0) {
+            ans = (static_cast<long long>(ans) * base) % mod;
+        }
         base = (static_cast<long long>(base) * base) % mod;
         b >>= 1;
     }
@@ -13177,8 +13191,9 @@ unsigned long long FastPow(size_t a, size_t b) // 重载一下
 {
     unsigned long long ans = 1, base = a;
     while (b != 0) {
-        if ((b & 1) != 0)
+        if ((b & 1) != 0) {
             ans *= base;
+        }
         base *= base;
         b >>= 1;
     }
@@ -13190,13 +13205,13 @@ int minimumTimeToInitialState(string word, int k)
     int n = word.size();
     vector<unsigned long long> prefixHash(n), suffixHash(n);
 
-    prefixHash[0] = word[0] - 'a';
+    prefixHash[0] = word[0] - 'a' + 1;
     for (i = 1; i < n; i++) {
-        prefixHash[i] = prefixHash[i - 1] * 1337 + word[i] - 'a';
+        prefixHash[i] = prefixHash[i - 1] * 1337 + word[i] - 'a' + 1;
     }
-    suffixHash[n - 1] = word[n - 1] - 'a';
+    suffixHash[n - 1] = word[n - 1] - 'a' + 1;
     for (i = n - 2; i >= 0; i--) {
-        suffixHash[i] = FastPow(1337, n - i - 1) * (word[i] - 'a') + suffixHash[i + 1];
+        suffixHash[i] = FastPow(1337, n - i - 1) * (word[i] - 'a' + 1) + suffixHash[i + 1];
     }
     int ans = 1;
     while (1) {
@@ -13281,11 +13296,207 @@ int maxPalindromesAfterOperations(vector<string>& words)
                 len -= 2;
             }
         }
-        
+
         if (canBuild == false) {
             break;
         }
         cnt++;
     }
     return cnt;
+}
+
+
+// LC3045
+long long countPrefixSuffixPairs(vector<string>& words)
+{
+    int i, k;
+    int n;
+    int size = words.size();
+    int base1, base2;
+    int mod1, mod2;
+    long long ans;
+    // 双哈希
+    unordered_map<pair<long long, long long>, int, MyHash<long long, long long>> hashCnt;
+    vector<pair<long long, long long>> prefixHash(1e5), suffixHash(1e5);
+
+    base1 = 137;
+    base2 = 1337;
+    mod1 = 1e9 + 7;
+    mod2 = 1e9 + 9;
+    prefixHash[0] = {words[0][0] - 'a' + 1, words[0][0] - 'a' + 1};
+    n = words[0].size();
+    for (i = 1; i < n; i++) {
+        prefixHash[i] = {(prefixHash[i - 1].first * base1 + (words[0][i] - 'a' + 1)) % mod1,
+            (prefixHash[i - 1].second * base2 + (words[0][i] - 'a' + 1)) % mod2};
+    }
+
+    hashCnt[prefixHash[n - 1]]++;
+    ans = 0;
+    for (k = 1; k < size; k++) {
+        prefixHash[0] = {words[k][0] - 'a' + 1, words[k][0] - 'a' + 1};
+        n = words[k].size();
+        for (i = 1; i < n; i++) {
+            prefixHash[i] = {(prefixHash[i - 1].first * base1 + (words[k][i] - 'a' + 1)) % mod1,
+                (prefixHash[i - 1].second * base2 + (words[k][i] - 'a' + 1)) % mod2};
+        }
+        suffixHash[n - 1] = {words[k][n - 1] - 'a' + 1, words[k][n - 1] - 'a' + 1};
+        for (i = n - 2; i >= 0; i--) {
+            suffixHash[i] = {(FastPow(base1, n - i - 1, mod1) * (words[k][i] - 'a' + 1) + suffixHash[i + 1].first) % mod1,
+                (FastPow(base2, n - i - 1, mod2) * (words[k][i] - 'a' + 1) + suffixHash[i + 1].second) % mod2};
+        }
+        for (i = 0; i < n; i++) {
+            if (prefixHash[i] == suffixHash[n - 1 - i] && hashCnt.count(prefixHash[i])) {
+                ans += hashCnt[prefixHash[i]];
+                // printf ("k = %d : %d\n", k, hashCnt[prefixHash[i]]);
+            }
+        }
+        hashCnt[prefixHash[n - 1]]++;
+    }
+    return ans;
+}
+
+
+// LC741
+int cherryPickup(vector<vector<int>>& grid)
+{
+    // 考虑成走两次摘取最多樱桃
+    int i, j, k;
+    int n = grid.size();
+    // dp[i][j][k] - 从(i, j)走到(n - 1, n - 1)和从(k, i + j - k)走到(n - 1, n - 1)的最大摘取樱桃数
+    // 所求dp[0][0][0]
+    vector<vector<vector<int>>> dp(n, vector<vector<int>>(n, vector<int>(n, -1)));
+
+    dp[n - 1][n - 1][n - 1] = grid[n - 1][n - 1];
+    for (i = n - 1; i >= 0; i--) {
+        for (j = n - 1; j >= 0; j--) {
+            for (k = n - 1; k >= 0; k--) {
+                if (i == n - 1 && j == n - 1 && k == n - 1) {
+                    continue;
+                }
+                if (i + j - k >= n || i + j - k < 0 || grid[i][j] == -1 ||
+                    grid[k][i + j - k] == -1) {
+                    continue;
+                }
+                if (i + 1 < n) {
+                    dp[i][j][k] = max(dp[i][j][k], dp[i + 1][j][k]);
+                    if (k + 1 < n) {
+                        dp[i][j][k] = max(dp[i][j][k], dp[i + 1][j][k + 1]);
+                    }
+                }
+                if (j + 1 < n) {
+                    dp[i][j][k] = max(dp[i][j][k], dp[i][j + 1][k]);
+                    if (k + 1 < n) {
+                        dp[i][j][k] = max(dp[i][j][k], dp[i][j + 1][k + 1]);
+                    }
+                }
+                if (dp[i][j][k] == -1) {
+                    continue;
+                }
+                if (i == k) {
+                    dp[i][j][k] += grid[i][j];
+                } else {
+                    dp[i][j][k] += grid[i][j] + grid[k][i + j - k];
+                }
+            }
+        }
+    }
+    return dp[0][0][0] == -1 ? 0 : dp[0][0][0];
+}
+
+
+// LC1463
+int cherryPickup_II(vector<vector<int>>& grid)
+{
+    int i, j, k;
+    int n = grid.size();
+    int m = grid[0].size();
+    int ans = -1;
+    // dp[i][j][k] - 两机器人分别走到(i, j)和(i, k)的最大樱桃摘取数
+    // 所求max(dp[n - 1][j][k])
+    vector<vector<vector<int>>> dp(n, vector<vector<int>>(m, vector<int>(m, -1)));
+
+    dp[0][0][m - 1] = grid[0][0] + grid[0][m - 1];
+    for (i = 1; i < n; i++) {
+        for (j = 0; j < m; j++) {
+            for (k = 0; k < m; k++) {
+                // 9种情况
+                if (j > 0) {
+                    dp[i][j][k] = max(dp[i][j][k], dp[i - 1][j - 1][k]);
+                    if (k > 0) {
+                        dp[i][j][k] = max(dp[i][j][k], dp[i - 1][j - 1][k - 1]);
+                    }
+                    if (k < m - 1) {
+                        dp[i][j][k] = max(dp[i][j][k], dp[i - 1][j - 1][k + 1]);
+                    }
+                }
+                if (j < m - 1) {
+                    dp[i][j][k] = max(dp[i][j][k], dp[i - 1][j + 1][k]);
+                    if (k > 0) {
+                        dp[i][j][k] = max(dp[i][j][k], dp[i - 1][j + 1][k - 1]);
+                    }
+                    if (k < m - 1) {
+                        dp[i][j][k] = max(dp[i][j][k], dp[i - 1][j + 1][k + 1]);
+                    }
+                }
+                if (k > 0) {
+                    dp[i][j][k] = max(dp[i][j][k], dp[i - 1][j][k - 1]);
+                }
+                if (k < m - 1) {
+                    dp[i][j][k] = max(dp[i][j][k],  dp[i - 1][j][k + 1]);
+                }
+                dp[i][j][k] = max(dp[i][j][k], dp[i - 1][j][k]);
+                if (dp[i][j][k] == -1) {
+                    continue;
+                }
+                if (j == k) {
+                    dp[i][j][k] += grid[i][j];
+                } else {
+                    dp[i][j][k] += grid[i][j] + grid[i][k];
+                }
+                if (i == n - 1) {
+                    ans = max(ans, dp[i][j][k]);
+                }
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LC889
+TreeNode* constructFromPrePost(vector<int>& preorder, vector<int>& postorder)
+{
+    if (preorder.empty()) {
+        return static_cast<TreeNode *>(nullptr);
+    }
+    if (preorder.size() == 1) {
+        TreeNode *node = new TreeNode(preorder[0]);
+        return node;
+    }
+    int i, j;
+    int n = preorder.size();
+    TreeNode *root = new TreeNode(preorder[0]);
+    vector<int> a, b, ta, tb;
+    vector<int> a1, b1;
+
+    for (i = 1; i < n; i++) {
+        a.emplace_back(preorder[i]);
+        b.emplace_back(postorder[i - 1]);
+        ta = a;
+        tb = b;
+        sort (ta.begin(), ta.end());
+        sort (tb.begin(), tb.end());
+        if (ta == tb) {
+            root->left = constructFromPrePost(a, b);
+            for (j = i + 1; j < n; j++) {
+                a1.emplace_back(preorder[j]);
+            }
+            for (j = i; j < n - 1; j++) {
+                b1.emplace_back(postorder[j]);
+            }
+            root->right = constructFromPrePost(a1, b1);
+            break;
+        }
+    }
+    return root;
 }

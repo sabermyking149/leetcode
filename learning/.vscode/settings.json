@@ -29,6 +29,12 @@
         "array": "cpp",
         "istream": "cpp",
         "thread": "cpp",
-        "functional": "cpp"
+        "functional": "cpp",
+        "string_view": "cpp",
+        "random": "cpp",
+        "streambuf": "cpp",
+        "iterator": "cpp",
+        "iosfwd": "cpp",
+        "system_error": "cpp"
     }
 }
