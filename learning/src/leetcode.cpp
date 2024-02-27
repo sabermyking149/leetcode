@@ -13500,3 +13500,190 @@ TreeNode* constructFromPrePost(vector<int>& preorder, vector<int>& postorder)
     }
     return root;
 }
+
+
+// LC1814
+int countNicePairs(vector<int>& nums)
+{
+    int i;
+    int n = nums.size();
+    int mod = 1e9 + 7;
+    vector<int> rev_nums(n);
+    long long ans;
+
+    for (i = 0; i < n; i++) {
+        string t = to_string(nums[i]);
+        reverse(t.begin(), t.end());
+        rev_nums[i] = atoi(t.c_str());
+    }
+    unordered_map<int, int> diff;
+    int val;
+
+    ans = 0;
+    for (i = 0; i < n; i++) {
+        val = nums[i] - rev_nums[i];
+        if (diff.count(val)) {
+            ans = (ans + diff[val]) % mod;
+        }
+        diff[val]++;
+    }
+    return ans;
+}
+
+
+// LC1737
+int minCharacters(string a, string b)
+{
+    int ch;
+    int cnt;
+    int ans = INT_MAX;
+    // 换成同一字符
+    for (ch = 'a'; ch <= 'z'; ch++) {
+        cnt = 0;
+        for (auto c : a) {
+            if (c != ch) {
+                cnt++;
+            }
+        }
+        for (auto c : b) {
+            if (c != ch) {
+                cnt++;
+            }
+        }
+        ans = min(ans, cnt);
+    }
+    // string a 严格小于 string b
+    // ch - a 中最大字符
+    for (ch = 'a'; ch <= 'y'; ch++) {
+        cnt = 0;
+        for (auto c : a) {
+            if (c > ch) {
+                cnt++;
+            }
+        }
+        for (auto c : b) {
+            if (c <= ch) {
+                cnt++;
+            }
+        }
+        if (cnt == 1) {
+            auto tt = 12;
+        }
+        ans = min(ans, cnt);
+    }
+    // string a 严格大于 string b
+    // ch - a 中最小字符
+    for (ch = 'b'; ch <= 'z'; ch++) {
+        cnt = 0;
+        for (auto c : a) {
+            if (c < ch) {
+                cnt++;
+            }
+        }
+        for (auto c : b) {
+            if (c >= ch) {
+                cnt++;
+            }
+        }
+        ans = min(ans, cnt);
+    }
+    return ans;
+}
+
+
+// LC3049
+int earliestSecondToMarkIndices(vector<int>& nums, vector<int>& changeIndices)
+{
+    int i;
+    int n = nums.size();
+    int m = changeIndices.size();
+    int left, right, mid;
+    int start, cnt;
+    unordered_map<int, int> idx; // 每个标记下标最后出现的位置
+    unordered_set<int> number;
+
+    vector<int> _nums;
+    vector<int> _changeIndices;
+    vector<pair<int, int>> vp; // {最后出现下标位置changeIndices, 最后出现的下标}
+
+    _nums.emplace_back(-1);
+    _nums.insert(_nums.end(), nums.begin(), nums.end());
+    _changeIndices.emplace_back(-1);
+    _changeIndices.insert(_changeIndices.end(), changeIndices.begin(), changeIndices.end());
+
+    left = 1;
+    right = m;
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        number.clear();
+        for (i = 1; i <= mid; i++) {
+            number.emplace(_changeIndices[i]);
+        }
+        // 不能全部标记
+        if (number.size() != n) {
+            left = mid + 1;
+            if (left > m) {
+                return -1;
+            }
+            continue;
+        }
+
+        idx.clear();
+        for (i = 1; i <= mid; i++) {
+            idx[_changeIndices[i]] = i;
+        }
+        vp.clear();
+        for (auto it : idx) {
+            vp.push_back({it.second, it.first});
+        }
+        sort(vp.begin(), vp.end());
+        start = 1;
+        for (i = 0; i < vp.size(); i++) {
+            cnt = _nums[vp[i].second];
+            start += cnt;
+            if (start > vp[i].first) {
+                break;
+            }
+            start++; // 自身标记
+        }
+        if (i == vp.size()) {
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    if (left > m) {
+        return -1;
+    }
+    return left;
+}
+
+
+// LC2187
+long long minimumTime(vector<int>& time, int totalTrips)
+{
+    int i;
+    int n = time.size();
+    long long left, right, mid;
+    long long cnt;
+
+    left = 1;
+    right = LONG_LONG_MAX - 1;
+
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        cnt = 0;
+        for (i = 0; i < n; i++) {
+            cnt += mid / time[i];
+            if (cnt >= totalTrips) {
+                break;
+            }
+        }
+        if (i < n) {
+            right = mid - 1;
+            continue;
+        }
+        left = mid + 1;
+    }
+    return left;
+}
