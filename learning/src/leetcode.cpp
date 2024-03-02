@@ -13687,3 +13687,43 @@ long long minimumTime(vector<int>& time, int totalTrips)
     }
     return left;
 }
+
+
+// LC2188
+int minimumFinishTime(vector<vector<int>>& tires, int changeTime, int numLaps)
+{
+    int i, j;
+    int n = tires.size();
+    // 2 ^ 18 = 262144 > 2e5
+    vector<vector<long long>> tireCost(n, vector<long long>(18 + 1, 0));
+    vector<vector<long long>> prefixSum(n, vector<long long>(18 + 1, 0));
+    vector<long long> minCostUsingSameTire(18 + 1, INT_MAX);
+
+    for (j = 0; j <= 18; j++) {
+        for (i = 0; i < n; i++) {
+            if (j == 0) {
+                tireCost[i][j] = tires[i][0];
+                prefixSum[i][j] = tires[i][0] + changeTime;
+            } else {
+                tireCost[i][j] = min(static_cast<long long>(INT_MAX), tireCost[i][j - 1] * tires[i][1]);
+                prefixSum[i][j] = min(static_cast<long long>(INT_MAX), prefixSum[i][j - 1] + tireCost[i][j]);
+            }
+            minCostUsingSameTire[j] = min(minCostUsingSameTire[j], prefixSum[i][j]);
+        }
+    }
+
+    vector<long long> dp(numLaps, INT_MAX); // dp[i] - 第i圈最小cost
+    for (i = 0; i <= min(18, numLaps - 1); i++) {
+        dp[i] = minCostUsingSameTire[i];
+    }
+    for (i = 1; i < numLaps; i++) {
+        for (j = 1; j <= 18; j++) {
+            if (i - j >= 0) {
+                dp[i] = min(dp[i], dp[i - j] + minCostUsingSameTire[j - 1]);
+            } else {
+                break;
+            }
+        }
+    }
+    return dp[numLaps - 1] - changeTime; // 第一圈不需要换胎
+}
