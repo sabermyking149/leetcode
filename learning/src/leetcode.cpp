@@ -13727,3 +13727,81 @@ int minimumFinishTime(vector<vector<int>>& tires, int changeTime, int numLaps)
     }
     return dp[numLaps - 1] - changeTime; // 第一圈不需要换胎
 }
+
+
+// LC3067
+vector<int> countPairsOfConnectableServers(vector<vector<int>>& edge, int signalSpeed)
+{
+    int i, k;
+    int n;
+    unordered_map<int, vector<pair<int, int>>> edges;
+
+    n = edge.size() + 1;
+    vector<int> ans(n, 0);
+    for (auto e : edge) {
+        edges[e[0]].push_back({e[1], e[2]});
+        edges[e[1]].push_back({e[0], e[2]});
+    }
+    vector<int> suitNodes;
+    function<void (int, int, int, unordered_map<int, vector<pair<int, int>>>&, int, int&)> DFS = 
+        [&DFS, signalSpeed, &suitNodes]
+        (int root, int cur, int parent, unordered_map<int, vector<pair<int, int>>>& edges, int dist, int &cnt) {
+
+        if (dist != 0 && dist % signalSpeed == 0) {
+            cnt++;
+        }
+        int i;
+        for (i = 0; i < edges[cur].size(); i++) {
+            if (edges[cur][i].first == parent) {
+                continue;
+            }
+            DFS(root, edges[cur][i].first, cur, edges, dist + edges[cur][i].second, cnt);
+            
+            if (cur == root) {
+                suitNodes.emplace_back(cnt);
+                // cout << "cnt = " << cnt << endl;
+                cnt = 0;
+            }
+        }
+    };
+    int cnt;
+    for (i = 0; i < n; i++) {
+        suitNodes.clear();
+        cnt = 0;
+        DFS(i, i, -1, edges, 0, cnt);
+        if (suitNodes.size() > 1) {
+            int t = 0;
+            int sum = 0;
+            for (k = 0; k < suitNodes.size(); k++) {
+                sum += suitNodes[k];
+            }
+            for (k = 0; k < suitNodes.size(); k++) {
+                t += (sum - suitNodes[k]) * suitNodes[k];
+            }
+            ans[i] = t / 2;
+        }
+    }
+    return ans;
+}
+
+
+// LC799
+double champagneTower(int poured, int query_row, int query_glass)
+{
+    // 第i层j列的香槟满了只会向champagne[i + 1][j]和champagne[i + 1][j + 1]流动
+    vector<vector<double>> champagne(101, vector<double>(101, 0.0));
+    int i, j;
+    double t;
+
+    champagne[0][0] = poured;
+    for (i = 0; i <= query_row; i++) {
+        for (j = 0; j <= i; j++) {
+            if (champagne[i][j] > 1) {
+                t = (champagne[i][j] - 1) / 2;
+                champagne[i + 1][j] += t;
+                champagne[i + 1][j + 1] += t;
+            }
+        }
+    }
+    return champagne[query_row][query_glass] > 1 ? 1 : champagne[query_row][query_glass];
+}
