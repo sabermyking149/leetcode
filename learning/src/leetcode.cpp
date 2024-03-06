@@ -13805,3 +13805,114 @@ double champagneTower(int poured, int query_row, int query_glass)
     }
     return champagne[query_row][query_glass] > 1 ? 1 : champagne[query_row][query_glass];
 }
+
+
+// LC839
+int numSimilarGroups(vector<string>& strs)
+{
+    int i, j;
+    int n = strs.size();
+
+    auto Check = [](string& a, string& b) {
+        int i;
+        int n = a.size();
+        int cnt = 0;
+        char aa, bb;
+        for (i = 0; i < n; i++) {
+            if (a[i] != b[i]) {
+                if (cnt > 2) {
+                    return false;
+                } else if (cnt == 0) {
+                    aa = a[i];
+                    bb = b[i];
+                    cnt++;
+                } else {
+                    if (a[i] == bb && b[i] == aa) {
+                        cnt++;
+                    } else {
+                        return false;
+                    }
+                }
+            }
+        }
+        if (cnt == 1) {
+            return false;
+        }
+        return true;
+    };
+
+    // 建图求连通分量个数
+    unordered_map<int, unordered_set<int>> edges;
+    for (i = 0; i < n - 1; i++) {
+        for (j = i + 1; j < n; j++) {
+            if (Check(strs[i], strs[j])) {
+                edges[i].emplace(j);
+                edges[j].emplace(i);
+            }
+        }
+    }
+    vector<bool> visited(n, false);
+    function<void (unordered_map<int, unordered_set<int>>&, int, int)> DFS = 
+        [&visited, &DFS](unordered_map<int, unordered_set<int>>& edges, int cur, int parent) {
+
+        visited[cur] = true;
+        if (edges.count(cur) == 0) {
+            return;
+        }
+        for (auto it : edges[cur]) {
+            if (it != parent && visited[it] == false) {
+                DFS(edges, it, cur);
+            }
+        }
+    };
+    int cnt = 0;
+    for (i = 0; i < n; i++) {
+        if (visited[i] == false) {
+            DFS(edges, i, -1);
+            cnt++;
+        }
+    }
+    return cnt;
+}
+
+
+// LC895
+class FreqStack {
+public:
+    unordered_map<int, int> valFrequency;
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>> pq; // {frequency, timestamp, val}
+    int timestamp;
+
+    FreqStack()
+    {
+        timestamp = 0;
+    }
+    void push(int val)
+    {
+        timestamp++;
+        valFrequency[val]++;
+        pq.push({valFrequency[val], timestamp, val});
+    }
+    int pop()
+    {
+        int val;
+        int freq;
+        while (1) {
+            auto t = pq.top();
+            pq.pop();
+            val = get<2>(t);
+            freq = get<0>(t);
+            if (valFrequency.count(val) == 0 || valFrequency[val] != freq) {
+                continue;
+            } else {
+                if (freq == 1) {
+                    valFrequency.erase(val);
+                } else {
+                    valFrequency[val]--;
+                }
+                break;
+            }
+        }
+        return val;
+    }
+};
