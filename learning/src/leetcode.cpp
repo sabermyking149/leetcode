@@ -13916,3 +13916,88 @@ public:
         return val;
     }
 };
+
+
+// LC1537
+int maxSum(vector<int>& nums1, vector<int>& nums2)
+{
+    int i;
+    int mod = 1e9 + 7;
+    int m = nums1.size();
+    int n = nums2.size();
+    int size;
+    vector<long long> prefixSum1(m, 0);
+    vector<long long> prefixSum2(n, 0);
+    map<int, int> idx1, idx2;
+
+    prefixSum1[0] = nums1[0];
+    idx1[nums1[0]] = 0;
+    for (i = 1; i < m; i++) {
+        idx1[nums1[i]] = i;
+        prefixSum1[i] = prefixSum1[i - 1] + nums1[i];
+    }
+    prefixSum2[0] = nums2[0];
+    idx2[nums2[0]] = 0;
+    for (i = 1; i < n; i++) {
+        idx2[nums2[i]] = i;
+        prefixSum2[i] = prefixSum2[i - 1] + nums2[i];
+    }
+
+    vector<int> sameValIdx1, sameValIdx2;
+    for (auto it : idx1) {
+        if (idx2.count(it.first)) {
+            sameValIdx1.emplace_back(it.second);
+            sameValIdx2.emplace_back(idx2[it.first]);
+        }
+    }
+    if (sameValIdx1.empty()) {
+        return max(prefixSum1[m - 1], prefixSum2[n - 1]) % mod;
+    }
+
+    long long ans;
+    long long t1, t2;
+
+    size = sameValIdx1.size();
+    ans = max(prefixSum1[sameValIdx1[0]], prefixSum2[sameValIdx2[0]]);
+    for (i = 1; i < size; i++) {
+        t1 = prefixSum1[sameValIdx1[i]] - prefixSum1[sameValIdx1[i - 1]];
+        t2 = prefixSum2[sameValIdx2[i]] - prefixSum2[sameValIdx2[i - 1]];
+        ans += max(t1, t2);
+    }
+    t1 = prefixSum1[m - 1] - prefixSum1[sameValIdx1[size - 1]];
+    t2 = prefixSum2[n - 1] - prefixSum2[sameValIdx2[size - 1]];
+    ans += max(t1, t2);
+    return ans % mod;
+}
+
+
+// LC3073
+int maximumTripletValue(vector<int>& nums)
+{
+    int i;
+    int third;
+    int n = nums.size();
+    int ans = INT_MIN;
+    multiset<int, greater<>> front;
+    map<int, int, greater<>> tail;
+
+    for (i = n - 1; i >= 2; i--) {
+        tail[nums[i]]++;
+    }
+    front.emplace(nums[0]);
+    for (i = 1; i < n - 1; i++) {
+        auto it = front.upper_bound(nums[i]);
+
+        third = tail.begin()->first;
+        if (it != front.end() && third > nums[i]) {
+            ans = max(ans, *it - nums[i] + third);
+        }
+        front.emplace(nums[i]);
+        if (tail[nums[i + 1]] == 1) {
+            tail.erase(nums[i + 1]);
+        } else {
+            tail[nums[i + 1]]--;
+        }
+    }
+    return ans;
+}
