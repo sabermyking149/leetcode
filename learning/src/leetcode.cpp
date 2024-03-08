@@ -14001,3 +14001,65 @@ int maximumTripletValue(vector<int>& nums)
     }
     return ans;
 }
+
+
+// LC555
+string splitLoopedString(vector<string>& strs)
+{
+    int i, j;
+    int n = strs.size();
+    string t, rev;
+    vector<string> vs;
+
+    for (i = 0; i < n; i++) {
+        t = strs[i];
+        reverse(t.begin(), t.end());
+        strs[i] = max(strs[i], t);
+        vs.emplace_back(strs[i]);
+    }
+    string ans;
+    vector<string> possibleRes;
+    for (i = 0; i < n; i++) {
+        // 考虑每一个strs[i]及其翻转作为头的情况
+        // 中间部分
+        ans = "";
+        for (j = i + 1; j < n; j++) {
+            ans += vs[j];
+        }
+        for (j = 0; j < i; j++) {
+            ans += vs[j];
+        }
+        // 拼接头尾
+        for (j = 0; j < strs[i].size(); j++) {
+            t = strs[i].substr(j) + ans + strs[i].substr(0, j);
+            possibleRes.emplace_back(t);
+        }
+        rev = strs[i];
+        reverse(rev.begin(), rev.end());
+        for (j = 0; j < rev.size(); j++) {
+            t = rev.substr(j) + ans + rev.substr(0, j);
+            possibleRes.emplace_back(t);
+        }
+    }
+    sort(possibleRes.rbegin(), possibleRes.rend());
+    return possibleRes[0];
+}
+
+
+// LC1526
+int minNumberOperations(vector<int>& target)
+{
+    int i;
+    int n = target.size();
+    vector<int> dp(n, 0);
+
+    dp[0] = target[0];
+    for (i = 1; i < n; i++) {
+        if (target[i] > target[i - 1]) {
+            dp[i] = dp[i - 1] + target[i] - target[i - 1];
+        } else {
+            dp[i] = dp[i - 1];
+        }
+    }
+    return dp[n - 1];
+}
