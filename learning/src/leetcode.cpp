@@ -14063,3 +14063,160 @@ int minNumberOperations(vector<int>& target)
     }
     return dp[n - 1];
 }
+
+
+// LC3076
+vector<string> shortestSubstrings(vector<string>& arr)
+{
+    unordered_map<string, unordered_set<int>> allSubstrings;
+    auto cmp = [](const string& a, const string& b) {
+        if (a.size() == b.size()) {
+            return a < b;
+        }
+        return a.size() < b.size();
+    };
+    unordered_map<string, vector<string>> substrings;
+    int i, j, k;
+    int len;
+    string t;
+    for (k = 0; k < arr.size(); k++) {
+        len = arr[k].size();
+        for (i = 0; i < len; i++) {
+            t = arr[k][i];
+            allSubstrings[t].emplace(k);
+            substrings[arr[k]].emplace_back(t);
+            for (j = i + 1; j < len; j++) {
+                t += arr[k][j];
+                allSubstrings[t].emplace(k);
+                substrings[arr[k]].emplace_back(t);
+            }
+        }
+        sort(substrings[arr[k]].begin(), substrings[arr[k]].end(), cmp);
+        /*for (auto w : substrings[arr[k]]) {
+            cout << w << " ";
+        }
+        cout << endl;
+        */
+    }
+    vector<string> ans(arr.size(), "");
+    for (i = 0; i < arr.size(); i++) {
+        for (auto it : substrings[arr[i]]) {
+            if (allSubstrings[it].size() == 1) {
+                ans[i] = it;
+                break;
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LC815
+int numBusesToDestination(vector<vector<int>>& routes, int source, int target)
+{
+    int i, j, k;
+    int n = routes.size();
+    unordered_set<int> A;
+    unordered_map<int, unordered_set<int>> edges;
+    unordered_set<int> sourceStation;
+    unordered_set<int> targetStation;
+
+    if (source == target) {
+        return 0;
+    }
+    for (i = 0; i < n; i++) {
+        A.clear();
+        for (auto r : routes[i]) {
+            A.emplace(r);
+            if (r == source) {
+                sourceStation.emplace(i);
+            }
+            if (r == target) {
+                targetStation.emplace(i);
+            }
+        }
+        if (sourceStation.count(i) && targetStation.count(i)) { // 起点到终点在一条线路上
+            return 1;
+        }
+        for (j = i + 1; j < n; j++) {
+            for (k = 0; k < routes[j].size(); k++) {
+                if (A.count(routes[j][k])) {
+                    edges[i].emplace(j);
+                    edges[j].emplace(i);
+                    break;
+                }
+            }
+        }
+    }
+
+    int ans = INT_MAX;
+    int cnt, size;
+    queue<int> q;
+    vector<int> dist(n, INT_MAX);
+    for (auto it : sourceStation) {
+        cnt = 1;
+        q.push(it);
+        while (!q.empty()) {
+            size = q.size();
+            for (i = 0; i < size; i++) {
+                auto node = q.front();
+                q.pop();
+                if (dist[node] < cnt) {
+                    continue;
+                }
+                dist[it] = cnt;
+                if (targetStation.count(node)) {
+                    ans = min(ans, cnt);
+                    goto QUITQUEUE; // 也可以遍历完, 效率上差距不大
+                }
+                for (auto it : edges[node]) {
+                    if (dist[it] > cnt + 1) {
+                        dist[it] = cnt + 1;
+                        q.push(it);
+                    }
+                }
+            }
+            cnt++;
+        }
+QUITQUEUE:
+        if (!q.empty()) {
+            while (q.size()) {
+                q.pop();
+            }
+        }
+    }
+    return ans == INT_MAX ? -1 : ans;
+}
+
+
+// LC1642
+int furthestBuilding(vector<int>& heights, int bricks, int ladders)
+{
+    int i;
+    int n = heights.size();
+    int needBricks, ans;
+    long long sum;
+    priority_queue<int, vector<int>> pq;
+
+    sum = 0;
+    ans = n - 1;
+    for (i = 1; i < n; i++) {
+        if (heights[i] > heights[i - 1]) {
+            needBricks = heights[i] - heights[i - 1];
+            pq.push(needBricks);
+            sum += needBricks;
+            if (sum > bricks) {
+                if (ladders > 0) {
+                    auto t = pq.top();
+                    pq.pop();
+                    sum -= t;
+                    ladders--;
+                } else {
+                    ans = i - 1;
+                    break;
+                }
+            }
+        }
+    }
+    return ans;
+}
