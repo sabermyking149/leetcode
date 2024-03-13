@@ -14220,3 +14220,248 @@ int furthestBuilding(vector<int>& heights, int bricks, int ladders)
     }
     return ans;
 }
+
+
+// LC892
+int surfaceArea(vector<vector<int>>& grid)
+{
+    int i, j, k;
+    int n = grid.size();
+    int cnt;
+    set<tuple<int, int, int>> brick;
+
+    cnt = 0;
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            if (grid[i][j] == 0) {
+                continue;
+            }
+            cnt += grid[i][j];
+            for (k = 0; k < grid[i][j]; k++) {
+                brick.insert({i, j, k});
+            }
+        }
+    }
+    cnt *= 6;
+    // 扣除相交的面
+    int a, b, c;
+    for (auto it : brick) {
+        a = get<0>(it);
+        b = get<1>(it);
+        c = get<2>(it);
+
+        if (brick.count({a - 1, b, c})) {
+            cnt--;
+        }
+        if (brick.count({a + 1, b, c})) {
+            cnt--;
+        }
+        if (brick.count({a, b - 1, c})) {
+            cnt--;
+        }
+        if (brick.count({a, b + 1, c})) {
+            cnt--;
+        }
+        if (brick.count({a, b, c - 1})) {
+            cnt--;
+        }
+        if (brick.count({a, b, c + 1})) {
+            cnt--;
+        }
+    }
+    return cnt;
+}
+
+
+// LC805
+bool splitArraySameAverage(vector<int>& nums)
+{
+    int i, k;
+    int t;
+    int n = nums.size();
+    int sum;
+
+    if (n <= 1) {
+        return false;
+    } else if (n == 2) {
+        return nums[0] == nums[1];
+    }
+
+    sum = 0;
+    for (auto num : nums) {
+        sum += num;
+    }
+
+    int sum1, sum2;
+    vector<int> part1, part2;
+
+    sum1 = sum2 = 0;
+    for (i = 0; i < n / 2; i++) {
+        part1.emplace_back(nums[i] * n - sum);
+        sum1 += nums[i] * n - sum;
+    }
+    for (i = n / 2; i < n; i++) {
+        part2.emplace_back(nums[i] * n - sum);
+        sum2 += nums[i] * n - sum;
+    }
+
+    vector<int> record;
+    int choose;
+    set<pair<int, int>> chooseSum1, chooseSum2;
+
+    // 30个数, 一边最多15个, 2^15数量级是可接受的
+    record.resize(n / 2);
+    for (i = 1; i < static_cast<int>(pow(2, n / 2)); i++) {
+        k = 0;
+        t = i;
+        while (k < n / 2) {
+            if (t % 2 == 1) {
+                record[k] = 1;
+            } else {
+                record[k] = 0;
+            }
+            t /= 2;
+            k++;
+        }
+        choose = 0;
+        for (k = 0; k < n / 2; k++) {
+            if (record[k]) {
+                choose += part1[k];
+            }
+        }
+        chooseSum1.insert({choose, sum1 - choose});
+    }
+    record.resize(n - n / 2);
+    for (i = 1; i < static_cast<int>(pow(2, n - n / 2)); i++) {
+        k = 0;
+        t = i;
+        while (k < n - n / 2) {
+            if (t % 2 == 1) {
+                record[k] = 1;
+            } else {
+                record[k] = 0;
+            }
+            t /= 2;
+            k++;
+        }
+        if (i == 5) {
+            auto tt =12;
+        }
+        choose = 0;
+        for (k = 0; k < n - n / 2; k++) {
+            if (record[k]) {
+                choose += part2[k];
+            }
+        }
+        chooseSum2.insert({choose, sum2 - choose});
+    }
+    for (auto it : chooseSum1) {
+        if (chooseSum2.count({it.second * -1, it.first * -1})) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+// LC1771
+// 基础版最长回文子序列
+// 返回 - dp数组
+vector<vector<int>> longestPalindrome(string& word)
+{
+    int i, j;
+    int n = word.size();
+    vector<vector<int>> dp(n, vector<int>(n, 0));
+
+    for (j = 0; j < n; j++) {
+        for (i = j; i >= 0; i--) {
+            if (i == j) {
+                dp[i][j] = 1;
+                continue;
+            }
+            if (word[i] == word[j]) {
+                if (i + 1 == j) {
+                    dp[i][j] = 2;
+                } else {
+                    dp[i][j] = 2 + dp[i + 1][j - 1];
+                }
+            } else {
+                if (i + 1 == j) {
+                    dp[i][j] = 1;
+                } else {
+                    dp[i][j] = max(dp[i + 1][j], dp[i][j - 1]);
+                }
+            }
+        }
+    }
+    return dp;
+}
+int longestPalindrome(string word1, string word2)
+{
+    int i, j;
+    int m = word1.size();
+    int n = word2.size();
+    int ans;
+
+    string word = word1 + word2;
+    vector<vector<int>> dp = longestPalindrome(word);
+
+    ans = 0;
+    for (i = m - 1; i >= 0; i--) {
+        for (j = m; j < n + m; j++) {
+            if (word[i] == word[j]) {
+                if (i + 1 == j) {
+                    ans = max(ans, 2);
+                } else {
+                    ans = max(ans, 2 + dp[i + 1][j - 1]);
+                }
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LC1382
+TreeNode* balanceBST(TreeNode* root)
+{
+    vector<TreeNode *> nodes;
+    function<void (TreeNode *)> Inorder = [&Inorder, &nodes](TreeNode *node) {
+        if (node == nullptr) {
+            return;
+        }
+        Inorder(node->left);
+        nodes.emplace_back(node);
+        Inorder(node->right);
+    };
+
+    Inorder(root);
+
+    function<TreeNode* (vector<TreeNode *>&)> CreateBinaryTree = [&CreateBinaryTree](vector<TreeNode *>& nodes) {
+        if (nodes.size() == 1) {
+            nodes[0]->left = nullptr;
+            nodes[0]->right = nullptr;
+            return nodes[0];
+        } else if (nodes.empty()) {
+            return static_cast<TreeNode *>(nullptr);
+        }
+
+        int i;
+        int n = nodes.size();
+        int mid;
+        vector<TreeNode *> left, right;
+
+        mid = nodes.size() / 2;
+        for (i = 0; i <= mid - 1; i++) {
+            left.emplace_back(nodes[i]);
+        }
+        for (i = mid + 1; i < n; i++) {
+            right.emplace_back(nodes[i]);
+        }
+        nodes[mid]->left = CreateBinaryTree(left);
+        nodes[mid]->right = CreateBinaryTree(right);
+        return nodes[mid];
+    };
+
+    return CreateBinaryTree(nodes);
+}
