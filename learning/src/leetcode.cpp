@@ -14344,9 +14344,6 @@ bool splitArraySameAverage(vector<int>& nums)
             t /= 2;
             k++;
         }
-        if (i == 5) {
-            auto tt =12;
-        }
         choose = 0;
         for (k = 0; k < n - n / 2; k++) {
             if (record[k]) {
@@ -14464,4 +14461,186 @@ TreeNode* balanceBST(TreeNode* root)
     };
 
     return CreateBinaryTree(nodes);
+}
+
+
+// LC1770
+int maximumScore(vector<int>& nums, vector<int>& multipliers)
+{
+    int i;
+    int n = nums.size();
+    int m = multipliers.size();
+    int ans;
+    pair<int, int> np;
+    map<pair<int, int>, int> record, t;
+
+    if (m == 1) {
+        return multipliers[0] * max(nums[0], nums[n - 1]);
+    }
+
+    record[{0, 0}] = nums[0] * multipliers[0];
+    record[{-1, -1}] = nums[n - 1] * multipliers[0];
+    ans = INT_MIN;
+    for (i = 1; i < m; i++) {
+        // cout << record.size() << endl;
+        for (auto it : record) {
+            auto p = it.first;
+            np = {p.first - 1, p.second};
+            if (t.count(np)) {
+                t[np] = max(t[np], it.second + multipliers[i] * nums[n + p.first - 1]);
+            } else {
+                t[np] = it.second + multipliers[i] * nums[n + p.first - 1];
+            }
+            if (i == m - 1) {
+                ans = max(ans, t[np]);
+            }
+
+            np = {p.first, p.second + 1};
+            if (t.count(np)) {
+                t[np] = max(t[np], it.second + multipliers[i] * nums[p.second + 1]);
+            } else {
+                t[np] = it.second + multipliers[i] * nums[p.second + 1];
+            }
+            if (i == m - 1) {
+                ans = max(ans, t[np]);
+            }
+        }
+        record = t;
+        t.clear();
+    }
+    return ans;
+}
+
+
+// LC1793
+int maximumScore(vector<int>& nums, int k)
+{
+    int i, j;
+    int n = nums.size();
+    int curMin, ans;
+
+    i = j = k;
+    curMin = ans = nums[k];
+    while (1) {
+        if (i - 1 >= 0) {
+            if (j + 1 < n) {
+                if (nums[j + 1] >= nums[i - 1]) {
+                    j++;
+                    curMin = min(curMin, nums[j]);
+                } else {
+                    i--;
+                    curMin = min(curMin, nums[i]);
+                }
+                ans = max(ans, curMin * (j - i + 1));
+            } else {
+                i--;
+                curMin = min(curMin, nums[i]);
+                ans = max(ans, curMin * (j - i + 1));
+            }
+        } else {
+            if (j + 1 < n) {
+                j++;
+                curMin = min(curMin, nums[j]);
+                ans = max(ans, curMin * (j - i + 1));
+            } else {
+                break;
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LC2092
+vector<int> findAllPeople(int n, vector<vector<int>>& meetings, int firstPerson)
+{
+    sort (meetings.begin(), meetings.end(), [](const vector<int>& a, const vector<int>& b){
+        return a[2] < b[2];
+    });
+
+    int i;
+    int m = meetings.size();
+    bool flag = false;
+    unordered_set<int> known;
+    unordered_set<int> start, visited;
+    unordered_map<int, unordered_set<int>> edges;
+
+    function<void (unordered_map<int, unordered_set<int>>&, int, int)> DFS = 
+        [&visited, &DFS](unordered_map<int, unordered_set<int>>& edges, int cur, int parent) {
+
+        visited.emplace(cur);
+        if (edges.count(cur) == 0) {
+            return;
+        }
+        for (auto it : edges[cur]) {
+            if (it != parent && visited.count(it) == 0) {
+                DFS(edges, it, cur);
+            }
+        }
+    };
+
+    known.emplace(0);
+    known.emplace(firstPerson);
+    for (i = 0; i < m; i++) {
+        if (i == 0) {
+            edges[meetings[i][0]].emplace(meetings[i][1]);
+            edges[meetings[i][1]].emplace(meetings[i][0]);
+            if (known.count(meetings[i][0])) {
+                start.emplace(meetings[i][0]);
+            }
+            if (known.count(meetings[i][1])) {
+                start.emplace(meetings[i][1]);
+            }
+            continue;
+        }
+        if (i > 0 && meetings[i][2] == meetings[i - 1][2]) {
+            edges[meetings[i][0]].emplace(meetings[i][1]);
+            edges[meetings[i][1]].emplace(meetings[i][0]);
+            if (known.count(meetings[i][0])) {
+                start.emplace(meetings[i][0]);
+            }
+            if (known.count(meetings[i][1])) {
+                start.emplace(meetings[i][1]);
+            }
+        } else {
+            if (edges.size() == 0) {
+                edges[meetings[i][0]].emplace(meetings[i][1]);
+                edges[meetings[i][1]].emplace(meetings[i][0]);
+                if (known.count(meetings[i][0])) {
+                    start.emplace(meetings[i][0]);
+                }
+                if (known.count(meetings[i][1])) {
+                    start.emplace(meetings[i][1]);
+                }
+                continue;
+            }
+            visited.clear();
+            for (auto node : start) {
+                DFS(edges, node, -1);
+            }
+            known.insert(visited.begin(), visited.end());
+            edges.clear();
+            start.clear();
+            edges[meetings[i][0]].emplace(meetings[i][1]);
+            edges[meetings[i][1]].emplace(meetings[i][0]);
+            if (known.count(meetings[i][0])) {
+                start.emplace(meetings[i][0]);
+            }
+            if (known.count(meetings[i][1])) {
+                start.emplace(meetings[i][1]);
+            }
+        }
+    }
+    if (edges.size()) {
+        visited.clear();
+        for (auto node : start) {
+            DFS(edges, node, -1);
+        }
+        known.insert(visited.begin(), visited.end());
+    }
+    vector<int> ans;
+    for (auto it : known) {
+        ans.emplace_back(it);
+    }
+    return ans;
 }
