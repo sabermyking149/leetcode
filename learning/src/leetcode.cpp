@@ -14644,3 +14644,78 @@ vector<int> findAllPeople(int n, vector<vector<int>>& meetings, int firstPerson)
     }
     return ans;
 }
+
+
+// LC986
+vector<vector<int>> intervalIntersection(vector<vector<int>>& firstList, vector<vector<int>>& secondList)
+{
+    int i, j;
+    int left, right;
+    int m = firstList.size();
+    int n = secondList.size();
+    vector<vector<int>> ans;
+
+    i = j = 0;
+    while (i < m && j < n) {
+        if (firstList[i][1] < secondList[j][0]) {
+            i++;
+            continue;
+        }
+        if (secondList[j][1] < firstList[i][0]) {
+            j++;
+            continue;
+        }
+        left = max(firstList[i][0], secondList[j][0]);
+        right = min(firstList[i][1], secondList[j][1]);
+        ans.push_back({left, right});
+        if (firstList[i][1] == secondList[j][1]) {
+            i++;
+            j++;
+        } else if (firstList[i][1] > secondList[j][1]) {
+            j++;
+        } else {
+            i++;
+        }
+    }
+    return ans;
+}
+
+
+// LC1058
+string minimizeError(vector<string>& prices, int target)
+{
+    int i;
+    int minVal, maxVal;
+    int diff, num;
+    double res;
+    vector<pair<double, double>> r;
+
+    minVal = maxVal = 0;
+    for (auto p : prices) {
+        num = static_cast<int>(stod(p));
+        if (stod(p) - num < 1e-5) {
+            target -= num;
+            continue;
+        }
+        minVal += num;
+        maxVal += num + 1;
+        r.push_back({stod(p) - num, num + 1 - stod(p)});
+    }
+    if (maxVal < target || minVal > target) {
+        return "-1";
+    }
+
+    diff = maxVal - target; // 把diff个数调小
+    sort(r.begin(), r.end());
+    res = 0.0;
+    for (i = 0; i < r.size(); i++) {
+        if (i < diff) {
+            res += r[i].first;
+        } else {
+            res += r[i].second;
+        }
+    }
+    char s[100] = {0};
+    sprintf (s, "%.3lf", res);
+    return string(s);
+}
