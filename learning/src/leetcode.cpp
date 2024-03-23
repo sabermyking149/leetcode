@@ -14719,3 +14719,178 @@ string minimizeError(vector<string>& prices, int target)
     sprintf (s, "%.3lf", res);
     return string(s);
 }
+
+
+// LC3078
+vector<int> findPattern(vector<vector<int>>& board, vector<string>& pattern)
+{
+    int i, j, k;
+    int m, n, a, b;
+    string p;
+
+    m = pattern.size();
+    n = pattern[0].size();
+    for (i = 0; i < m; i++) {
+        p += pattern[i];
+    }
+
+    a = board.size();
+    b = board[0].size();
+    if (m > a || n > b) {
+        return {-1, -1};
+    }
+
+    string t;
+    vector<string> s;
+    for (i = 0; i < a; i++) {
+        t.clear();
+        for (j = 0; j < b; j++) {
+            t += board[i][j] + '0';
+        }
+        s.emplace_back(t);
+    }
+    int len;
+    int row;
+    unordered_map<char, char> dict1, dict2; // 字母 - 数字  数字 - 字母
+    for (i = 0; i <= a - m; i++) {
+        for (j = 0; j <= b - n; j++) {
+            t.clear();
+            row = i;
+            for (k = 0; k < m; k++) {
+                t += s[row].substr(j, n);
+                row++;
+            }
+            len = p.size();
+            dict1.clear();
+            dict2.clear();
+            for (k = 0; k < len; k++) {
+                if (t[k] != p[k]) {
+                    if (p[k] >= '0' && p[k] <= '9') {
+                        break;
+                    }
+                    if (dict1.count(p[k]) == 0 && dict2.count(t[k]) == 0) {
+                        dict1[p[k]] = t[k];
+                        dict2[t[k]] = p[k];
+                    } else if (
+                        (dict1.count(p[k]) && dict1[p[k]] != t[k]) || 
+                        (dict1.count(p[k]) == 0 && dict2.count(t[k]) != 0)
+                        ) {
+                        break;
+                    }
+                }
+            }
+            if (k == len) {
+                return {i, j};
+            }
+        }
+    }
+    return {-1, -1};
+}
+
+
+// LC2345
+int visibleMountains(vector<vector<int>>& peaks)
+{
+    int i;
+    int n = peaks.size();
+
+    // 转换成底边的起始位置, 顶点为(x0, y0), 则两底边点为(x0 - y0, 0), (x0 + y0, 0)
+    vector<pair<int, int>> vp;
+    for (auto p : peaks) {
+        vp.emplace_back(make_pair(p[0] - p[1], p[0] + p[1]));
+    }
+    sort(vp.begin(), vp.end(), [](const pair<int, int>& a, const pair<int, int>& b) {
+        if (a.first != b.first) {
+            return a.first < b.first;
+        }
+        return a.second > b.second;
+    });
+
+    bool same;
+    int left, right;
+    int cnt, cntSame;
+
+    cnt = 1;
+    left = vp[0].first;
+    right = vp[0].second;
+    same = false;
+    cntSame = 0;
+    for (i = 1; i < n; i++) {
+        if (vp[i].second <= right) {
+            if (left == vp[i].first && right == vp[i].second) {
+                if (same == false) {
+                    same = true;
+                    cntSame++;
+                }
+            }
+            continue;
+        } else {
+            same = false;
+            cnt++;
+            left = vp[i].first;
+            right = vp[i].second;
+        }
+    }
+    return cnt - cntSame;
+}
+
+
+// LC2865
+int maxSubarrayLength(vector<int>& nums)
+{
+    int i;
+    int n = nums.size();
+    int ans;
+
+    vector<pair<int, int>> vp;
+    for (i = 0; i < n; i++) {
+        vp.emplace_back(make_pair(nums[i], i));
+    }
+    sort(vp.rbegin(), vp.rend());
+
+    int minIdx = n;
+    ans = 0;
+    for (i = 0; i < n; i++) {
+        if (minIdx > vp[i].second) {
+            minIdx = vp[i].second;
+        } else {
+            if (minIdx != n) {
+                ans = max(ans, vp[i].second - minIdx + 1);
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LC1063
+int validSubarrays(vector<int>& nums)
+{
+    int i;
+    int n = nums.size();
+    int ans;
+    stack<int> st; // 单调递增栈
+    
+    ans = 0;
+    for (i = 0; i < n; i++) {
+        if (st.empty()) {
+            st.push(i);
+            continue;
+        }
+        auto top = st.top();
+        while (nums[top] > nums[i]) {
+            ans += i - top;
+            st.pop();
+            if (st.empty()) {
+                break;
+            }
+            top = st.top();
+        }
+        st.push(i);
+    }
+    while (!st.empty()) {
+        ans += n - st.top();
+        st.pop();
+    }
+    return ans;
+}
