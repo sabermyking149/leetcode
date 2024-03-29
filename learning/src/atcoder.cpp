@@ -34,3 +34,49 @@ void ABC_346_D()
     long long ans = min(dp[n - 1][0][1], dp[n - 1][1][1]);
     cout << ans << endl;
 }
+
+
+void ARC_175_B()
+{
+    int i;
+    long long n, a, b;
+    long long ans;
+    string s;
+
+    cin >> n >> a >> b;
+    cin >> s;
+
+    int left, right;
+    int len = s.size();
+
+    left = right = 0;
+    for (i = 0; i < len; i++) {
+        if (s[i] == '(') {
+            left++;
+        } else {
+            if (left > 0) {
+                left--;
+            } else {
+                right++;
+            }
+        }
+    }
+    long long small = min(right, left);
+    long long big = max(right, left);
+    long long swap = (small + 1) / 2;
+    long long ts, tb, cost;
+
+    ans = LLONG_MAX;
+    for (i = 0; i <= swap; i++) {
+        if (small - i * 2 >= 0) {
+            ts = small - i * 2;
+            tb = big - i * 2;
+        } else {
+            ts = 0;
+            tb = big - small;
+        }
+        cost = i * a + ((ts + 1) / 2 + (tb + 1) / 2) * b;
+        ans = min(ans, cost);
+    }
+    cout << ans << endl;
+}

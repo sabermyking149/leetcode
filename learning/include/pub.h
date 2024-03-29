@@ -39,12 +39,14 @@ template <typename T>
 class Trie {
 public:
     T val;
+    int timestamp; // 单词时间戳
     bool IsEnd;
     vector<Trie *> children;
     Trie() : IsEnd(false) {}
     Trie(T t) : val(t), IsEnd(false) {}
 
     static void CreateWordTrie(Trie<char> *root, string& word);
+    static void CreateWordTrie(Trie<char> *root, string& word, int timestamp);
 };
 
 class FileSystem {

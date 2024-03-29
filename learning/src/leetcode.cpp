@@ -1931,6 +1931,38 @@ void Trie<char>::CreateWordTrie(Trie<char> *root, string& word)
     }
     root->IsEnd = true;
 }
+template<>
+void Trie<char>::CreateWordTrie(Trie<char> *root, string& word, int timestamp)
+{
+    int i, j;
+    int n, m;
+
+    n = word.size();
+    for (i = 0; i < n; i++) {
+        if (root->children.size() == 0) {
+            Trie<char> *node = new Trie(word[i]);
+            root->children.emplace_back(node);
+            root = node;
+            root->timestamp = timestamp;
+        } else {
+            m = root->children.size();
+            for (j = 0; j < m; j++) {
+                if (root->children[j]->val == word[i]) {
+                    root = root->children[j];
+                    break;
+                }
+            }
+            if (j == m) {
+                Trie<char> *node = new Trie(word[i]);
+                root->children.emplace_back(node);
+                root = node;
+                root->timestamp = timestamp;
+            }
+        }
+    }
+    root->IsEnd = true;
+    // root->timestamp = timestamp;
+}
 void DFSScanWordTrie(Trie<char> *root, string& t, int point, unordered_map<string, int>& wordPrefixPoint)
 {
     int i;
@@ -8942,7 +8974,7 @@ int uniqueLetterString(string s)
 
     f[0] = 1;
     dp[0] = 1;
-    alphaIdx[s[i] - 'A'][0] = 0;
+    alphaIdx[s[0] - 'A'][0] = 0;
     for (i = 1; i < n; i++) {
         if (alphaIdx[s[i] - 'A'][0] == -1) {
             f[i] = f[i - 1] + i + 1;
@@ -14892,5 +14924,107 @@ int validSubarrays(vector<int>& nums)
         ans += n - st.top();
         st.pop();
     }
+    return ans;
+}
+
+// LC3093
+vector<int> stringIndices(vector<string>& wordsContainer, vector<string>& wordsQuery)
+{
+    int i, j, id;
+    int m;
+    vector<pair<string, int>> vp;
+
+    i = 0;
+    for (auto w : wordsContainer) {
+        vp.emplace_back(make_pair(w, i));
+        i++;
+    }
+    auto cmp = [](const pair<string, int>& a, const pair<string, int>& b) {
+        if (a.first.size() != b.first.size()) {
+            return a.first.size() < b.first.size();
+        }
+        return a.second < b.second;
+    };
+    sort (vp.begin(), vp.end(), cmp);
+    vector<pair<string, int>> vp1;
+    // 去重
+    vp1.emplace_back(vp[0]);
+    for (i = 1; i < vp.size(); i++) {
+        if (vp[i].first != vp[i - 1].first) {
+            vp1.emplace_back(vp[i]);
+        }
+    }
+    vp = vp1;
+
+    Trie<char> *root = new Trie<char>('/');
+    Trie<char> *t;
+    for (auto p : vp) {
+        reverse(p.first.begin(), p.first.end());
+        t = root;
+        Trie<char>::CreateWordTrie(t, p.first, p.second);
+    }
+
+    int n = wordsQuery.size();
+    vector<int> ans(n, -1);
+    
+    id = 0;
+    for (auto q : wordsQuery) {
+        // reverse(q.begin(), q.end());
+        t = root;
+        for (i = q.size() - 1; i >= 0; i--) {
+            m = t->children.size();
+            for (j = 0; j < m; j++) {
+                if (t->children[j]->val == q[i]) {
+                    t = t->children[j];
+                    break;
+                }
+            }
+            if (j < m) {
+                continue;
+            } else {
+                if (t->val == '/') {
+                    ans[id] = vp[0].second;
+                } else {
+                    ans[id] = t->timestamp;
+                }
+                break;
+            }
+        }
+        if (i < 0) {
+            ans[id] = t->timestamp;
+        }
+        id++;
+    }
+    return ans;
+}
+
+
+// LC22
+vector<string> generateParenthesis(int n)
+{
+    vector<string> ans;
+
+    function<void (string&, int, int)> DFS = [&DFS, &ans](string& cur, int left, int right) {
+        if (left == right && left == 0) {
+            ans.emplace_back(cur);
+            return;
+        }
+        if (left == right) {
+            cur += '(';
+            DFS(cur, left - 1, right);
+            cur.pop_back();
+        } else if (right > left) {
+            if (left > 0) {
+                cur += '(';
+                DFS(cur, left - 1, right);
+                cur.pop_back();
+            }
+            cur += ')';
+            DFS(cur, left, right - 1);
+            cur.pop_back();
+        }
+    };
+    string cur;
+    DFS(cur, n, n);
     return ans;
 }
