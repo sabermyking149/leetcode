@@ -15028,3 +15028,66 @@ vector<string> generateParenthesis(int n)
     DFS(cur, n, n);
     return ans;
 }
+
+
+// LC878
+int nthMagicalNumber(int n, int a, int b)
+{
+    int mod = 1e9 + 7;
+    int g;
+    long long cnt;
+    long long left, right, mid;
+
+    g = gcd(a, b);
+    a /= g;
+    b /= g;
+    left = 1;
+    right = LLONG_MAX >> 1;
+
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        cnt = mid / a + mid / b - mid / (a * b);
+        if (cnt >= n) {
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    return left * g % mod;
+}
+
+
+// LC1788
+int maximumBeauty(vector<int>& flowers)
+{
+    int i;
+    int n = flowers.size();
+    int left, right;
+    vector<int> prefixSum(n), prefixMinusSum(n);
+    unordered_map<int, vector<int>> flowersIdx;
+
+    prefixSum[0] = flowers[0];
+    prefixMinusSum[0] = flowers[0] < 0 ? flowers[0] : 0;
+    flowersIdx[flowers[0]].emplace_back(0);
+    for (i = 1; i < n; i++) {
+        prefixSum[i] = prefixSum[i - 1] + flowers[i];
+        prefixMinusSum[i] = prefixMinusSum[i - 1] + (flowers[i] < 0 ? flowers[i] : 0);
+        flowersIdx[flowers[i]].emplace_back(i);
+    }
+    int ans = INT_MIN;
+    int cur;
+    for (auto it : flowersIdx) {
+        if (it.second.size() == 1) {
+            continue;
+        }
+        left = it.second[0];
+        right = it.second[it.second.size() - 1];
+        if (left == 0) {
+            cur = prefixSum[right] - (prefixMinusSum[right - 1] - prefixMinusSum[left]);
+        } else {
+            cur = prefixSum[right] - prefixSum[left - 1] - (prefixMinusSum[right - 1] - prefixMinusSum[left]);
+        }
+        ans = max(ans, cur);
+    }
+    return ans;
+}
