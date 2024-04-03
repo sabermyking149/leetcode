@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <algorithm>
 using namespace std;
 
 void ABC_346_D()
@@ -79,4 +80,116 @@ void ARC_175_B()
         ans = min(ans, cost);
     }
     cout << ans << endl;
+}
+
+
+void ABC_347_C()
+{
+    int i;
+    int n;
+    int a, b;
+
+    cin >> n >> a >> b;
+
+    vector<int> d(n);
+    int weekLen = a + b;
+    for (i = 0; i < n; i++) {
+        cin >> d[i];
+        d[i] %= weekLen;
+    }
+    sort(d.begin(), d.end());
+    if (d[n - 1] - d[0] + 1 <= a) {
+        cout << "Yes" << endl;
+        return;
+    }
+    // 工作日在中间
+    // 2 5 5
+    // 1 7
+    for (i = 1; i < n; i++) {
+        if (d[i] - d[i - 1] > b) {
+            cout << "Yes" << endl;
+            return;
+        }
+    }
+    cout << "No" << endl;
+}
+
+
+void ABC_347_D()
+{
+    int a, b;
+    int i, j, k;
+    int cnt0, cnt1;
+    unsigned long long c, n;
+
+    cin >> a >> b >> c;
+
+    n = c;
+    cnt0 = cnt1 = 0;
+    while (n) {
+        if (n % 2 == 1) {
+            cnt1++;
+        } else {
+            cnt0++;
+        }
+        n >>= 1;
+    }
+
+    int same = (a + b - cnt1) / 2;
+    int distinctA = a - same;
+    int distinctB = b - same;
+
+    // cout << same << distinctA << endl;
+    if (a + b < cnt1 || abs(a - b) > cnt1) {
+        cout << "-1" << endl;
+        return;
+    }
+    // construct
+    unsigned long long A, B;
+    bool f;
+
+    j = i = 0;
+    A = B = 0;
+    if (same >= cnt0) {
+        f = true;
+    } else {
+        k = cnt0 - same;
+        f = false;
+    }
+    while (1) {
+        if (distinctA == 0 && distinctB == 0 && same == 0) {
+            break;
+        }
+        if ((c & 1ull << i) == 1ull << i) {
+            if (distinctA > 0) {
+                A += 1ull << i;
+                distinctA--;
+            } else {
+                B += 1ull << i;
+                distinctB--;
+            }
+        } else {
+            if (same > 0) {
+                if (f) {
+                    A += 1ull << i;
+                    B += 1ull << i;
+                    same--;
+                } else {
+                    j++;
+                    if (j > k) {
+                        A += 1ull << i;
+                        B += 1ull << i;
+                        same--;
+                    }
+                }
+            }
+        }
+        i++;
+        // 超过ull范围
+        if (i > 63) {
+            cout << "-1" << endl;
+            return;
+        }
+    }
+    cout << A << " " << B << endl;
 }
