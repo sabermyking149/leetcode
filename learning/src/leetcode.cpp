@@ -15091,3 +15091,82 @@ int maximumBeauty(vector<int>& flowers)
     }
     return ans;
 }
+
+
+// LC3088
+string makeAntiPalindrome(string s)
+{
+    sort(s.begin(), s.end());
+
+    int i, j;
+    int idx;
+    int n = s.size();
+    unordered_map<char, set<int>> charIdx;
+    vector<int> charCnt(26, 0);
+    for (i = 0; i < n; i++) {
+        charCnt[s[i] - 'a']++;
+        if (charCnt[s[i] - 'a'] > n / 2) {
+            return "-1";
+        }
+        charIdx[s[i]].emplace(i);
+    }
+    for (i = n / 2 - 1; i >= 0; i--) {
+        if (s[i] == s[n - 1 - i]) {
+            idx = n;
+            for (j = s[i]; j <= 'z'; j++) {
+                if (j == s[i] || charIdx.count(j) == 0) {
+                    continue;
+                }
+                auto it = charIdx[j].upper_bound(n - 1 - i);
+                if (it == charIdx[j].end()) {
+                    continue;
+                }
+                idx = *it;
+                break;
+            }
+            if (idx == n) {
+                return "-1";
+            }
+            charIdx[s[n - 1 - i]].erase(n - 1 - i);
+            // charIdx[s[n - 1 - i]].emplace(idx);
+            charIdx[s[idx]].erase(idx);
+            // charIdx[s[idx]].emplace(n - 1 - i);
+            swap(s[n - 1 - i], s[idx]);
+        }
+    }
+    return s;
+}
+
+
+// n个点的最大曼哈顿距离
+int GetManhattan(vector<vector<int>>& p)
+{
+    int ans = 0;
+    int Min, Max;
+    int i, j, k;
+    for (i = 0; i < (1 << (2)); i++) {    // 用二进制形式遍历所有可能的运算情况
+        Min = 1e9, Max = -1e9;
+        for (j = 0; j < p.size(); j++) {    // 遍历每一个点
+            int sum = 0;
+            for (k = 0; k < 2; k++) {
+                // 提取当前运算符
+                int t = i & 1 << k;    // 1为+，0为-
+                if (t) {
+                    sum += p[j][k];
+                } else {
+                    sum -= p[j][k];
+                }
+            }
+            if (sum > Max) {
+                Max = sum;
+            }
+            if (sum < Min) {
+                Min = sum;
+            }
+        }
+        if (Max - Min > ans) {
+            ans = Max - Min;
+        }
+    }
+    return ans;
+}
