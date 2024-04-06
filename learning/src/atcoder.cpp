@@ -2,6 +2,9 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <unordered_map>
+#include <queue>
+#include <tuple>
 using namespace std;
 
 void ABC_346_D()
@@ -192,4 +195,83 @@ void ABC_347_D()
         }
     }
     cout << A << " " << B << endl;
+}
+
+
+void ABC_348_D()
+{
+    int i, j;
+    int h, w;
+    int n;
+    int r, c, p;
+    int S, T;
+
+    unordered_map<int, int> energy;
+    vector<vector<int>> directions = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
+
+    cin >> h >> w;
+
+    vector<vector<char>> grid(h, vector<char>(w, '.'));
+    vector<vector<int>> cur_energy(h, vector<int>(w, -1));
+    for (i = 0; i < h; i++) {
+        for (j = 0; j < w; j++) {
+            cin >> grid[i][j];
+            if (grid[i][j] == 'S') {
+                S = i * w + j;
+            }
+            if (grid[i][j] == 'T') {
+                T = i * w + j;
+            }
+        }
+    }
+    cin >> n;
+    // 二维转一维
+    for (i = 0; i < n; i++) {
+        cin >> r >> c >> p;
+        energy[(r - 1) * w + c - 1] = p;
+    }
+    if (energy.count(S) == 0) {
+        cout << "No" << endl;
+        return;
+    }
+    queue<tuple<int, int, unordered_map<int, int>&>> q;
+
+    q.push({S, 0, energy});
+    while (!q.empty()) {
+        auto cur = q.front();
+        q.pop();
+        // printf ("{%d %d} = %d\n", front.first / w, front.first % w, front.second);
+        if (get<0>(cur) == T) {
+            cout << "Yes" << endl;
+            return;
+        }
+        if (cur_energy[get<0>(cur) / w][get<0>(cur) % w] > get<1>(cur)) {
+            continue;
+        }
+        if (get<2>(cur).count(get<0>(cur)) == 1) {
+            if (get<1>(cur) >= get<2>(cur)[get<0>(cur)]) {
+                cur_energy[get<0>(cur) / w][get<0>(cur) % w] = get<1>(cur);
+            } else {
+                cur_energy[get<0>(cur) / w][get<0>(cur) % w] = get<2>(cur)[get<0>(cur)];
+                get<2>(cur).erase(get<0>(cur));
+            }
+        } else {
+            cur_energy[get<0>(cur) / w][get<0>(cur) % w] = get<1>(cur);
+        }
+        if (cur_energy[get<0>(cur) / w][get<0>(cur) % w] == 0) {
+            continue;
+        }
+        for (i = 0; i < 4; i++) {
+            auto nh = get<0>(cur) / w + directions[i][0];
+            auto nw = get<0>(cur) % w + directions[i][1];
+            if (nh < 0 || nh >= h || nw < 0 || nw >= w || grid[nh][nw] == '#') {
+                continue;
+            }
+            if (cur_energy[get<0>(cur) / w][get<0>(cur) % w] - 1 > cur_energy[nh][nw]) {
+                cur_energy[nh][nw] = cur_energy[get<0>(cur) / w][get<0>(cur) % w] - 1;
+                q.push({nh * w + nw, cur_energy[nh][nw], get<2>(cur)});
+            }
+        }
+    }
+    cout << "No" << endl;
 }

@@ -15170,3 +15170,52 @@ int GetManhattan(vector<vector<int>>& p)
     }
     return ans;
 }
+
+
+// LC494
+int findTargetSumWays(vector<int> &nums, int target)
+{
+    int ans = 0;
+    int i, n = nums.size();
+    // 同奇偶
+    int sum = 0;
+    for (auto num : nums) {
+        sum += num;
+    }
+    if (sum % 2 != target % 2) {
+        return 0;
+    }
+    unordered_map<int, int> data1, data2;
+    function<void (vector<int>&, int, int, unordered_map<int, int>&)> DFS = 
+        [&DFS](vector<int>& nums, int idx, int cur, unordered_map<int, int>& data) {
+        if (idx == nums.size()) {
+            data[cur]++;
+            return;
+        }
+        int i;
+        for (i = -1; i <= 1; i += 2) {
+            cur += nums[idx] * i;
+            DFS(nums, idx + 1, cur, data);
+            cur -= nums[idx] * i;
+        }
+    };
+    if (nums.size() == 1) {
+        return abs(nums[0]) == abs(target) ? 1 : 0;
+    }
+    vector<int> nums1, nums2;
+    for (i = 0; i < n; i++) {
+        if (i < n / 2) {
+            nums1.emplace_back(nums[i]);
+        } else {
+            nums2.emplace_back(nums[i]);
+        }
+    }
+    DFS(nums1, 0, 0, data1);
+    DFS(nums2, 0, 0, data2);
+    for (auto it : data1) {
+        if (data2.count(target - it.first)) {
+            ans += it.second * data2[target - it.first];
+        }
+    }
+    return ans;
+}
