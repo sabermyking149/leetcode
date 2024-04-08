@@ -10600,6 +10600,7 @@ int poorPigs(int buckets, int minutesToDie, int minutesToTest)
     int t;
     int cnt = 0;
 
+    t = buckets;
     while (t) {
         cnt++;
         t /= N;
@@ -12793,8 +12794,6 @@ vector<long long> getDistances(vector<int>& arr)
 // LC3004
 int maximumSubtreeSize(vector<vector<int>>& e, vector<int>& colors)
 {
-    int i;
-    int n = colors.size();
     unordered_map<int, vector<int>> edges;
 
     if (e.size() == 0) {
@@ -14592,7 +14591,6 @@ vector<int> findAllPeople(int n, vector<vector<int>>& meetings, int firstPerson)
 
     int i;
     int m = meetings.size();
-    bool flag = false;
     unordered_set<int> known;
     unordered_set<int> start, visited;
     unordered_map<int, unordered_set<int>> edges;
@@ -15216,6 +15214,129 @@ int findTargetSumWays(vector<int> &nums, int target)
         if (data2.count(target - it.first)) {
             ans += it.second * data2[target - it.first];
         }
+    }
+    return ans;
+}
+
+
+// LC3108
+vector<int> minimumCost(int n, vector<vector<int>>& edge, vector<vector<int>>& query)
+{
+    unordered_map<int, unordered_map<int, int>> edges;
+
+    for (auto e : edge) {
+        if (edges[e[0]].count(e[1])) {
+            edges[e[0]][e[1]] &= e[2];
+        } else {
+            edges[e[0]][e[1]] = e[2];
+        }
+        if (edges[e[1]].count(e[0])) {
+            edges[e[1]][e[0]] &= e[2];
+        } else {
+            edges[e[1]][e[0]] = e[2];
+        }
+    }
+    int i;
+    int area;
+    int dist;
+    unordered_set<int> connected;
+    unordered_map<int, pair<int, int>> nodeData;
+    vector<bool> visited(n, false);
+
+    function<void (unordered_map<int, unordered_map<int, int>>&, int)> DFS = 
+        [&DFS, &connected, &visited](unordered_map<int, unordered_map<int, int>>& edges, int node) {
+
+        if (edges.count(node) == 0) {
+            return;
+        }
+        connected.emplace(node);
+        visited[node] = true;
+        for (auto it : edges[node]) {
+            if (connected.count(it.first) == 0) {
+                DFS(edges, it.first);
+            }
+        }
+    };
+
+    area = 0;
+    for (i = 0; i < n; i++) {
+        if (visited[i]) {
+            continue;
+        }
+        connected.clear();
+        DFS(edges, i);
+        dist = 0xfffff; // 注意必须每位为1
+        if (connected.empty()) {
+            nodeData[i] = {area, 0};
+            area++;
+            continue;
+        }
+        for (auto it : connected) {
+            for (auto e : edges[it]) {
+                dist &= e.second;
+            }
+        }
+        for (auto it : connected) {
+            nodeData[it] = {area, dist};
+        }
+        area++;
+    }
+    vector<int> ans;
+    for (auto q : query) {
+        if (q[0] == q[1]) {
+            ans.emplace_back(0);
+            continue;
+        }
+        if (nodeData[q[0]].first == nodeData[q[1]].first) {
+            ans.emplace_back(nodeData[q[0]].second);
+        } else {
+            ans.emplace_back(-1);
+        }
+    }
+    return ans;
+}
+
+
+// LC2009
+int minOperations(vector<int>& nums)
+{
+    int i;
+    int n = nums.size();
+    int left, right, mid, lastnum;
+    int ans = 0x3f3f3f3f;
+    int cur;
+    vector<int> offset(n, 0); // 偏移量数组 offset[i] - nums[i]及以前重复数字个数
+
+    sort(nums.begin(), nums.end());
+    for (i = 1; i < n; i++) {
+        if (nums[i] == nums[i - 1]) {
+            offset[i] = offset[i - 1] + 1;
+        } else {
+            offset[i] = offset[i - 1];
+        }
+    }
+    // 以nums[i]作为第一个数
+    for (i = 0; i < n; i++) {
+        cur = i;
+        lastnum = nums[i] + n - 1;
+        left = i;
+        right = n - 1;
+        // nums中第一个小于等于lastNum的位置
+        // 所求right
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (nums[mid] <= lastnum) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        if (right < i) { // nums最大值小于lastNum
+            // do nothing
+        } else {
+            cur += n - 1 - right + (offset[right] - offset[i]);
+        }
+        ans = min(ans, cur);
     }
     return ans;
 }
