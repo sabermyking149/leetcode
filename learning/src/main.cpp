@@ -220,7 +220,6 @@ vector<int> exclusiveTime(int n, vector<string>& logs)
     // constexpr int stackSize = n;
     // stack<int> s[stackSize];
     int i;
-    int size = logs.size();
     vector<int> ans;
 
     for (i = 0; i < n; i++) {

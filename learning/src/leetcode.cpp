@@ -15340,3 +15340,165 @@ int minOperations(vector<int>& nums)
     }
     return ans;
 }
+
+
+// LC1766
+vector<int> getCoprimes(vector<int>& nums, vector<vector<int>>& e)
+{
+    int i, j;
+    unordered_map<int, unordered_set<int>> edges;
+    // nums 限定范围从1 - 50, 一条分支上最多50种情况
+    vector<stack<int>> sts(51); // sts[i] 表示 nums[i]出现层数的栈,栈顶一定是最新的
+    unordered_map<int, unordered_set<int>> coprime; // 每一个数(1-50)的互质数
+    for (i = 1; i <= 50; i++) {
+        for (j = 1; j <= 50; j++) {
+            if (gcd(i, j) == 1) {
+                coprime[i].emplace(j);
+            }
+        }
+    }
+    for (auto edge : e) {
+        edges[edge[0]].emplace(edge[1]);
+        edges[edge[1]].emplace(edge[0]);
+    }
+    vector<int> ans(nums.size(), -1);
+    function<void (int, int, int, vector<int>&)> DFS = 
+        [&DFS, &edges, &sts, &coprime, &nums, &ans](int cur, int parent, int layer, vector<int>& route) {
+
+        int tLayer;
+
+        // 遍历所有互斥数
+        tLayer = -1;
+        for (auto it : coprime[nums[cur]]) {
+            if (sts[it].size() > 0) {
+                if (sts[it].top() > tLayer) {
+                    tLayer = sts[it].top();
+                    ans[cur] = route[tLayer];
+                }
+            }
+        }
+        if (tLayer == -1) {
+            ans[cur] = -1;
+        }
+        sts[nums[cur]].push(layer);
+        route.emplace_back(cur);
+        for (auto it : edges[cur]) {
+            if (it != parent) {
+                DFS(it, cur, layer + 1, route);
+            }
+        }
+        sts[nums[cur]].pop();
+        route.pop_back();
+    };
+
+    vector<int> route;
+    DFS(0, -1, 0, route);
+    return ans;
+}
+
+
+// LC3113
+long long numberOfSubarrays(vector<int>& nums)
+{
+    int i;
+    int n = nums.size();
+    long long ans;
+    stack<int> st;
+    unordered_map<int, long long> um;
+
+    ans = 0;
+    for (i = 0; i < n; i++) {
+        if (st.empty()) {
+            st.push(nums[i]);
+            
+            continue;
+        }
+        auto t = st.top();
+        while (t < nums[i]) {
+            st.pop();
+            um[t]++;
+            if (st.empty()) {
+                break;
+            }
+            t = st.top();
+        }
+        st.push(nums[i]);
+        for (auto it : um) {
+            ans += (it.second + 1) * it.second / 2;
+        }
+        um.clear();
+    }
+    while (!st.empty()) {
+        um[st.top()]++;
+        st.pop();
+    }
+    for (auto it : um) {
+        ans += (it.second + 1) * it.second / 2;
+    }
+    return ans;
+}
+
+
+// LC3116
+// 多重容斥原理
+long long findKthSmallest(vector<int>& coins, int k)
+{
+    int i, j;
+    int n = coins.size();
+    int size = 1 << n; // size - 1 种选币可能, 2进制
+
+    sort(coins.begin(), coins.end());
+    long long left, right, mid;
+    long long cur, t;
+    int cnt, cntOne;
+    int lastIdx;
+    vector<int> bits(n);
+    vector<vector<long long>> lcm(n + 1); // n个数最小公倍数 Least Common Multiple
+
+    for (i = 1; i < size; i++) {
+        bits.assign(n, 0);
+        cnt = cntOne = 0;
+        t = i;
+        cur = 1;
+        while (cnt < n) {
+            bits[cnt] = t % 2;
+            if (bits[cnt] == 1) {
+                cur = cur * coins[cnt] / gcd(cur, coins[cnt]);
+                if (cur > INT_MAX) {
+                    cur = INT_MAX;
+                }
+                cntOne++;
+            }
+            t /= 2;
+            cnt++;
+        }
+        lcm[cntOne].emplace_back(cur);
+    }
+    /*for (auto lc : lcm) {
+        for (auto l : lc) {
+            cout << l << " ";
+        }
+        cout << endl;
+    }*/
+    left = coins[0];
+    right = LLONG_MAX >> 1;
+
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        cur = 0;
+        for (i = 1; i <= n; i++) {
+            for (j = 0; j < lcm[i].size(); j++)
+            if (i % 2 == 1) {
+                cur += mid / lcm[i][j];
+            } else {
+                cur -= mid / lcm[i][j];
+            }
+        }
+        if (cur >= k) {
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    return left;
+}

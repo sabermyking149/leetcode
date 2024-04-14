@@ -275,3 +275,44 @@ void ABC_348_D()
     }
     cout << "No" << endl;
 }
+
+
+// 有问题
+void ABC_349_D()
+{
+    int i;
+    vector<unsigned long long> base;
+    unsigned long long L, R, t;
+    int cnt;
+    vector<vector<unsigned long long>> ans;
+    vector<unsigned long long> v(2);
+    cin >> L >> R;
+
+    for (i = 0; i <= 60; i++) {
+        base.emplace_back(1ull << i);
+    }
+    while (L < R) {
+        /*if (L % 2 == 1) {
+            v[0] = L;
+            v[1] = L + 1;
+            ans.emplace_back(v);
+            L++;
+        } else {
+            if ((L << 1) <= R) {
+                v[0] = L;
+                v[1] = L << 1;
+                ans.emplace_back(v);
+                L <<= 1;
+            } else {
+                v[0] = L;
+
+            }
+        }*/
+
+        cnt++;
+    }
+    cout << cnt << endl;
+    for (auto v : ans) {
+        cout << v[0] << " " << v[1] << endl;
+    }
+}
