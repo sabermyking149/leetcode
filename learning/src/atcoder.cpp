@@ -3,8 +3,10 @@
 #include <vector>
 #include <algorithm>
 #include <unordered_map>
+#include <unordered_set>
 #include <queue>
 #include <tuple>
+#include <functional>
 using namespace std;
 
 void ABC_346_D()
@@ -277,42 +279,48 @@ void ABC_348_D()
 }
 
 
-// 有问题
-void ABC_349_D()
+void ABC_350_D()
 {
     int i;
-    vector<unsigned long long> base;
-    unsigned long long L, R, t;
-    int cnt;
-    vector<vector<unsigned long long>> ans;
-    vector<unsigned long long> v(2);
-    cin >> L >> R;
+    int N, M;
+    int n1, n2;
+    int cnt, e;
+    unordered_map<int, unordered_set<int>> edges;
+    unordered_map<int, int> um;
 
-    for (i = 0; i <= 60; i++) {
-        base.emplace_back(1ull << i);
+    cin >> N >> M;
+    for (i = 0; i < M; i++) {
+        cin >> n1 >> n2;
+        edges[n1].emplace(n2);
+        edges[n2].emplace(n1);
+        um[n1]++;
     }
-    while (L < R) {
-        /*if (L % 2 == 1) {
-            v[0] = L;
-            v[1] = L + 1;
-            ans.emplace_back(v);
-            L++;
-        } else {
-            if ((L << 1) <= R) {
-                v[0] = L;
-                v[1] = L << 1;
-                ans.emplace_back(v);
-                L <<= 1;
-            } else {
-                v[0] = L;
 
-            }
-        }*/
-
+    vector<bool> visited(N + 1, false);
+    function<void (unordered_map<int, unordered_set<int>>&, int, int, int&, int&)> dfs = 
+        [&dfs, &visited, &um](unordered_map<int, unordered_set<int>>& edges, int cur, int parent, int& cnt, int& e) {
+        if (visited[cur]) {
+            return;
+        }
+        visited[cur] = true;
         cnt++;
+        e += um[cur];
+        if (edges.count(cur)) {
+            for (auto it : edges[cur]) {
+                if (it != parent) {
+                    dfs(edges, it, cur, cnt, e);
+                }
+            }
+        }
+    };
+    long long ans = 0;
+    for (i = 1; i <= N; i++) {
+        if (visited[i] == false) {
+            e = cnt = 0;
+            dfs(edges, i, -1, cnt, e);
+            ans += (long long)(cnt - 1) * cnt / 2 - e;
+        }
     }
-    cout << cnt << endl;
-    for (auto v : ans) {
-        cout << v[0] << " " << v[1] << endl;
-    }
+    cout << ans << endl;
+    return;
 }

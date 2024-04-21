@@ -15502,3 +15502,191 @@ long long findKthSmallest(vector<int>& coins, int k)
     }
     return left;
 }
+
+
+// LC2018
+bool placeWordInCrossword(vector<vector<char>>& board, string word)
+{
+    int i, j;
+    int m = board.size();
+    int n = board[0].size();
+
+    // 在board圈外再加一层'#'
+    vector<vector<char>> nboard(m + 2, vector<char>(n + 2, '#'));
+    for (i = 1; i <= m; i++) {
+        for (j = 1; j <= n; j++) {
+            nboard[i][j] = board[i - 1][j - 1];
+        }
+    }
+
+    string a = '#' + word + '#';
+    reverse(word.begin(), word.end());
+    string b = '#' + word + '#';
+
+    string t;
+    vector<int> idx;
+
+    auto f = [](vector<int>& idx, string& t, string& a) {
+        int i, k;
+        int p;
+        for (i = 1; i < idx.size(); i++) {
+            p = 1;
+            if (idx[i] - idx[i - 1] - 1 == a.size() - 2) {
+                for (k = idx[i - 1] + 1; k <= idx[i] - 1; k++) {
+                    if (t[k] == ' ' || t[k] == a[p]) {
+                        p++;
+                        continue;
+                    } else {
+                        break;
+                    }
+                }
+                if (k == idx[i]) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+
+    // 横向
+    for (i = 0; i <= m + 1; i++) {
+        t.clear();
+        idx.clear();
+        for (j = 0; j <= n + 1; j++) {
+            t += nboard[i][j];
+            if (nboard[i][j] == '#') {
+                idx.emplace_back(j);
+            }
+        }
+        if (f(idx, t, a) || f(idx, t, b)) {
+            return true;
+        }
+    }
+
+    // 纵向
+    for (j = 0; j <= n + 1; j++) {
+        t.clear();
+        idx.clear();
+        for (i = 0; i <= m + 1; i++) {
+            t += nboard[i][j];
+            if (nboard[i][j] == '#') {
+                idx.emplace_back(i);
+            }
+        }
+        if (f(idx, t, a) || f(idx, t, b)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+// LC730
+int countPalindromicSubsequences(string s)
+{
+    int i, j;
+    int l, r;
+    int mod = 1e9 + 7;
+    int n = s.size();
+    vector<vector<long long>> dp(n, vector<long long>(n, 0));
+    for (j = 0; j < n; j++) {
+        for (i = j; i >= 0; i--) {
+            if (i == j) {
+                dp[i][j] = 1;
+                continue;
+            }
+            if (i + 1 == j) {
+                dp[i][j] = 2;
+                continue;
+            }
+            if (s[i] != s[j]) {
+                dp[i][j] = (dp[i + 1][j] + dp[i][j - 1] + mod - dp[i + 1][j - 1]) % mod;
+            } else {
+                dp[i][j] = dp[i + 1][j - 1] * 2;
+                l = i + 1;
+                r = j - 1;
+                while (l <= j - 1) {
+                    if (s[l] == s[i]) {
+                        break;
+                    }
+                    l++;
+                }
+                while (r >= i + 1) {
+                    if (s[r] == s[i]) {
+                        break;
+                    }
+                    r--;
+                }
+                if (l > r) {
+                    dp[i][j] = (dp[i][j] + 2) % mod;
+                } else if (l == r) {
+                    dp[i][j] = (dp[i][j] + 1) % mod;
+                } else {
+                    dp[i][j] = (dp[i][j] + mod - dp[l + 1][r - 1]) % mod;
+                }
+            }
+        }
+    }
+    return dp[0][n - 1];
+}
+
+
+// LC2930
+int stringCount(int n)
+{
+    int i;
+    int mod = 1e9 + 7;
+    // dp[n][0 - 4][0 - 2] - 前n位字符串有0 - 4个满足要求的字符的总字符串数, 且之前已包含0 - 2个'e'字符
+    vector<vector<vector<long long>>> dp(n, vector<vector<long long>>(5, vector<long long>(3, 0)));
+    // l e e t四个字符
+    dp[0][0][0] = 23;
+    dp[0][1][0] = 2;
+    dp[0][1][1] = 1;
+    for (i = 1; i < n; i++) {
+        dp[i][0][0] = dp[i - 1][0][0] * 23 % mod;
+
+        dp[i][1][0] = (dp[i - 1][0][0] * 2 + dp[i - 1][1][0]* (23 + 1)) % mod; // l和t
+        dp[i][1][1] = (dp[i - 1][0][0] + dp[i - 1][1][1] * 23) % mod; // e
+
+        dp[i][2][0] = (dp[i - 1][1][0] + dp[i - 1][2][0] * (23 + 2)) % mod; // l和t
+        dp[i][2][1] = (dp[i - 1][1][0] + dp[i - 1][1][1] * 2 + dp[i - 1][2][1] * (23 + 1)) % mod; // 只有一个e
+        dp[i][2][2] = (dp[i - 1][1][1] + dp[i - 1][2][2] * (23 + 1)) % mod;
+
+        dp[i][3][1] = (dp[i - 1][2][0] + dp[i - 1][2][1] + dp[i - 1][3][1] * (23 + 2)) % mod;
+        dp[i][3][2] = (dp[i - 1][2][1] + dp[i - 1][2][2] * 2 + dp[i - 1][3][2] * (23 + 2)) % mod;
+
+        dp[i][4][2] = (dp[i - 1][3][1] + dp[i - 1][3][2] + dp[i - 1][4][2] * 26) % mod;
+    }
+    return dp[n - 1][4][2];
+}
+
+
+// LC216
+vector<vector<int>> combinationSum3(int k, int n)
+{
+    // 枚举迭代
+    int i, j;
+    int cnt;
+    int curSum;
+    vector<vector<int>> ans;
+    vector<int> record;
+
+    for (i = 1; i <= 511; i++) {
+        cnt = curSum = 0;
+        record.clear();
+        for (j = 0; j < 9; j++) {
+            if ((i & 1 << j) == (1 << j)) {
+                cnt++;
+                curSum += j + 1;
+                if (curSum > n || cnt > k || (cnt == k && curSum != n)) {
+                    break;
+                }
+                record.emplace_back(j + 1);
+            }
+        }
+        if (cnt == k && curSum == n) {
+            ans.emplace_back(record);
+        }
+    }
+    return ans;
+}
