@@ -15690,3 +15690,121 @@ vector<vector<int>> combinationSum3(int k, int n)
     }
     return ans;
 }
+
+
+// LC3122
+int minimumOperations(vector<vector<int>>& grid)
+{
+    int i, j, k;
+    int n = grid.size();
+    int m = grid[0].size();
+    vector<vector<int>> costs(m, vector<int>(10, 0)); // costs[i][0 - 9] 第i列全变成0 - 9的花费
+    vector<int> cnt(10);
+
+    for (j = 0; j < m; j++) {
+        cnt.assign(10, 0);
+        for (i = 0; i < n; i++) {
+            cnt[grid[i][j]]++;
+        }
+        for (i = 0; i < 10; i++) {
+            costs[j][i] = n - cnt[i];
+        }
+    }
+
+    vector<vector<int>> dp(m, vector<int>(10, INT_MAX)); // dp[i][0 - 9] 第i列全变成0 - 9的总花销最小值
+    for (i = 0; i < 10; i++) {
+        dp[0][i] = costs[0][i];
+    }
+    for (j = 1; j < m; j++) {
+        for (k = 0; k < 10; k++) {
+            for (i = 0; i < 10; i++) {
+                if (k == i) {
+                    continue;
+                }
+                dp[j][k] = min(dp[j][k], costs[j][k] + dp[j - 1][i]);
+            }
+        }
+    }
+    return *min_element(dp[m - 1].begin(), dp[m - 1].end());
+}
+
+
+// LC3123
+vector<bool> findAnswer(int n, vector<vector<int>>& edges)
+{
+    int i, k;
+    int size = edges.size();
+    int cnt;
+    vector<int> dist;
+    vector<bool> ans(size, false);
+    vector<vector<pair<int, int>>> edgeWithWeight(n);
+    priority_queue<pair<int, int>, vector<pair<int, int>>> q;
+    pair<int, int> t;
+    map<vector<int>, int> edgesIdx;
+
+    for (i = 0; i < size; i++) {
+        edgeWithWeight[edges[i][0]].push_back({edges[i][1], edges[i][2]});
+        edgeWithWeight[edges[i][1]].push_back({edges[i][0], edges[i][2]});
+        edgesIdx[{edges[i][0], edges[i][1]}] = i;
+        edgesIdx[{edges[i][1], edges[i][0]}] = i;
+    }
+
+    dist.assign(n, INT_MAX);
+    q.push({0, 0});
+    while (q.size()) {
+        t = q.top();
+        q.pop();
+
+        if (dist[t.first] < t.second) {
+            continue;
+        }
+        dist[t.first] = t.second;
+        size = edgeWithWeight[t.first].size();
+        for (auto e : edgeWithWeight[t.first]) {
+            if (e.second + t.second < dist[e.first]) {
+                dist[e.first] = e.second + t.second;
+                q.push({e.first, dist[e.first]});
+            }
+        }
+    }
+    /*for (auto d : dist) {
+        cout << d << " ";
+    }*/
+    vector<bool> visited(n, false);
+    vector<int> record;
+    record.emplace_back(0);
+    function<void (vector<vector<pair<int, int>>>&, int, int, int, int)> dfs = 
+        [&dfs, &ans, &dist, &edgesIdx, &visited, &record](vector<vector<pair<int, int>>>& edgeWithWeight, int cur, int parent, int target, int curDist) {
+
+        int i;
+        if (cur == target) {
+            if (curDist == dist[cur]) {
+                /*for (auto r : record) {
+                    cout << r << "->";
+                }
+                cout << endl;
+                */
+                for (i = 1; i < record.size(); i++) {
+                    ans[edgesIdx[{record[i - 1], record[i]}]] = true;
+                }
+            }
+            return;
+        }
+        if (visited[cur]) {
+            return;
+        }
+        visited[cur] = true;
+        for (i = 0; i < edgeWithWeight[cur].size(); i++) {
+            if (edgeWithWeight[cur][i].first != parent && 
+                curDist + edgeWithWeight[cur][i].second == dist[edgeWithWeight[cur][i].first]) {
+                record.emplace_back(edgeWithWeight[cur][i].first);
+                dfs(edgeWithWeight, edgeWithWeight[cur][i].first, cur, target, curDist + edgeWithWeight[cur][i].second);
+                record.pop_back();
+            }
+        }
+        visited[cur] = false;
+    };
+
+    dfs(edgeWithWeight, 0, -1, n - 1, 0);
+    return ans;
+}
