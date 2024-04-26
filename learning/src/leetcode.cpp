@@ -15732,9 +15732,8 @@ int minimumOperations(vector<vector<int>>& grid)
 // LC3123
 vector<bool> findAnswer(int n, vector<vector<int>>& edges)
 {
-    int i, k;
+    int i;
     int size = edges.size();
-    int cnt;
     vector<int> dist;
     vector<bool> ans(size, false);
     vector<vector<pair<int, int>>> edgeWithWeight(n);
@@ -15807,4 +15806,38 @@ vector<bool> findAnswer(int n, vector<vector<int>>& edges)
 
     dfs(edgeWithWeight, 0, -1, n - 1, 0);
     return ans;
+}
+
+
+// LC1274
+class Sea {
+public:
+    bool hasShips(vector<int> topRight, vector<int> bottomLeft)
+    {
+        return true;
+    }
+};
+int countShips(Sea sea, vector<int> topRight, vector<int> bottomLeft)
+{
+    function<int (vector<int>, vector<int>)> find = 
+        [&find, &sea](vector<int> topRight, vector<int> bottomLeft) {
+        if (bottomLeft[0] > topRight[0] || bottomLeft[1] > topRight[1]) {
+            return 0;
+        }
+        int midx, midy;
+        if (sea.hasShips(topRight, bottomLeft)) {
+            if (topRight == bottomLeft) {
+                return 1;
+            }
+            midx = (topRight[0] + bottomLeft[0]) / 2;
+            midy = (topRight[1] + bottomLeft[1]) / 2;
+            // 分成四个区间
+            return find({midx, midy}, bottomLeft) + find(topRight, {midx + 1, midy + 1}) + 
+                find({midx, topRight[1]}, {bottomLeft[0], midy + 1}) + 
+                find({topRight[0], midy}, {midx + 1, bottomLeft[1]});
+        } else {
+            return 0;
+        }
+    };
+    return find(topRight, bottomLeft);
 }
