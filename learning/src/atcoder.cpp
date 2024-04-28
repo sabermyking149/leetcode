@@ -324,3 +324,88 @@ void ABC_350_D()
     cout << ans << endl;
     return;
 }
+
+
+// 接近超时
+void ABC_351_D()
+{
+    int i, j;
+    int H, W;
+    unordered_set<int> dangerZone;
+    cin >> H >> W;
+
+    vector<vector<char>> grid(H, vector<char>(W, ' '));
+    for (i = 0; i < H; i++) {
+        for (j = 0; j < W; j++) {
+            cin >> grid[i][j];
+        }
+    }
+    for (i = 0; i < H; i++) {
+        for (j = 0; j < W; j++) {
+            if (grid[i][j] == '#') {
+                // 相邻四格都为dangerZone;
+                if (i - 1 >= 0 && grid[i - 1][j] == '.') {
+                    dangerZone.emplace((i - 1) * W + j);
+                }
+                if (i + 1 < H && grid[i + 1][j] == '.') {
+                    dangerZone.emplace((i + 1) * W + j);
+                }
+                if (j - 1 >= 0 && grid[i][j - 1] == '.') {
+                    dangerZone.emplace(i * W + j - 1);
+                }
+                if (j + 1 < W && grid[i][j + 1] == '.') {
+                    dangerZone.emplace(i * W + j + 1);
+                }
+            }
+        }
+    }
+
+    vector<vector<bool>> visited(H, vector<bool>(W, false));
+    unordered_set<int> visitedDangerZone;
+
+    function<void (vector<vector<char>>&, int, int, int&)> dfs = 
+        [&dfs, &visited, &visitedDangerZone, &dangerZone](vector<vector<char>>& grid, int row, int col, int& cnt) {
+
+        int i;
+        int pos;
+        int H, W;
+        int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+
+        H = grid.size();
+        W = grid[0].size();
+        pos = row * W + col;
+        if (dangerZone.count(pos)) {
+            if (visitedDangerZone.count(pos) == 0) {
+                visitedDangerZone.emplace(pos);
+                cnt++;
+            }
+            return;
+        }
+        visited[row][col] = true;
+        cnt++;
+        for (i = 0; i < 4; i++) {
+            auto nr = row + directions[i][0];
+            auto nc = col + directions[i][1];
+            if (nr < 0 || nr >= H || nc < 0 || nc >= W || grid[nr][nc] != '.' || visited[nr][nc]) {
+                continue;
+            }
+            dfs(grid, nr, nc, cnt);
+        }
+    };
+    int cnt;
+    int ans = 1;
+    for (i = 0; i < H; i++) {
+        for (j = 0; j < W; j++) {
+            if (visited[i][j] == false && grid[i][j] == '.' && 
+                dangerZone.count(i * W + j) == 0) {
+                cnt = 0;
+                visitedDangerZone.clear();
+                dfs(grid, i, j, cnt);
+                ans = max(ans, cnt);
+                //cout << cnt << endl;
+            }
+        }
+    }
+    cout << ans << endl;
+    return;
+}
