@@ -15841,3 +15841,158 @@ int countShips(Sea sea, vector<int> topRight, vector<int> bottomLeft)
     };
     return find(topRight, bottomLeft);
 }
+
+
+// LC576
+int findPaths(int m, int n, int maxMove, int startRow, int startColumn)
+{
+    // dp[i][j][n] - 在(i, j)移动n步的出界方案数
+    vector<vector<vector<long long>>> dp(m, vector<vector<long long>>(n, vector<long long>(maxMove + 1, 0)));
+    int i, j, k, p;
+    int mod = 1e9 + 7;
+    int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+
+    if (maxMove == 0) {
+        return 0;
+    }
+    for (i = 0; i < m; i++) {
+        dp[i][0][1]++;
+        dp[i][n - 1][1]++;
+    }
+    for (j = 0; j < n; j++) {
+        dp[0][j][1]++;
+        dp[m - 1][j][1]++;
+    }
+
+    for (k = 2; k <= maxMove; k++) {
+        for (i = 0; i < m; i++) {
+            for (j = 0; j < n; j++) {
+                for (p = 0; p < 4; p++) {
+                    auto nrow = i + directions[p][0];
+                    auto ncol = j + directions[p][1];
+                    if (nrow < 0 || nrow >= m || ncol < 0 || ncol >= n) {
+                        continue;
+                    }
+                    dp[i][j][k] = (dp[i][j][k] + dp[nrow][ncol][k - 1]) % mod;
+                }
+            }
+        }
+    }
+    long long ans = 0;
+    for (auto val : dp[startRow][startColumn]) {
+        ans = (ans + val) % mod;
+    }
+    return ans;
+}
+
+
+// LC778
+int swimInWater(vector<vector<int>>& grid)
+{
+    int i;
+    int n = grid.size();
+    int left, right, mid;
+    bool canReach = false;
+    vector<vector<int>> curGrid(n, vector<int>(n));
+    vector<vector<bool>> visited(n, vector<bool>(n, false));
+
+    auto AssignAltitude = [](vector<vector<int>>& grid, int time, vector<vector<int>>& curGrid) {
+        int i, j;
+        int n = grid.size();
+        for (i = 0; i < n; i++) {
+            for (j = 0; j < n; j++) {
+                curGrid[i][j] = max(time, grid[i][j]);
+            }
+        }
+    };
+    function<void (vector<vector<int>>&, int, int, int, bool&)> CanReach = 
+        [&visited, &CanReach](vector<vector<int>>& curGrid, int row, int col, int curHeight, bool& canReach) {
+        int i;
+        int n = curGrid.size();
+        int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+        if (canReach) {
+            return;
+        }
+        if (row == n - 1 && col == n - 1) {
+            canReach = true;
+            return;
+        }
+
+        visited[row][col] = true;
+        for (i = 0; i < 4; i++) {
+            auto nrow = row + directions[i][0];
+            auto ncol = col + directions[i][1];
+            if (nrow < 0 || nrow >= n || ncol < 0 || ncol >= n || visited[nrow][ncol] || curGrid[nrow][ncol] > curHeight) {
+                continue;
+            }
+            CanReach(curGrid, nrow, ncol, curHeight, canReach);
+        }
+
+    };
+    left = grid[0][0];
+    right = 2500; 
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        canReach = false;
+        for (i = 0; i < n; i++) {
+            visited[i].assign(n, false);
+        }
+        AssignAltitude(grid, mid, curGrid);
+        CanReach(curGrid, 0, 0, mid, canReach);
+        if (canReach) {
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    return left;
+}
+
+
+// LC2435
+int numberOfPaths(vector<vector<int>>& grid, int k)
+{
+    int mod = 1e9 + 7;
+    int i, j, p;
+    int m = grid.size();
+    int n = grid[0].size();
+    int sum, r;
+    // dp[i][j][k] - (i, j) 余数为k的路径总数
+    vector<vector<vector<long long>>> dp(m, vector<vector<long long>>(n, vector<long long>(k, -1)));
+
+    dp[0][0][grid[0][0] % k] = 1;
+    sum = grid[0][0];
+    for (j = 1; j < n; j++) {
+        sum += grid[0][j];
+        dp[0][j][sum % k] = 1;
+    }
+    sum = grid[0][0];
+    for (i = 1; i < m; i++) {
+        sum += grid[i][0];
+        dp[i][0][sum % k] = 1;
+    }
+
+    for (i = 1; i < m; i++) {
+        for (j = 1; j < n; j++) {
+            for (p = 0; p < k; p++) {
+                if (dp[i - 1][j][p] != -1) {
+                    r = (p + grid[i][j]) % k;
+                    if (dp[i][j][r] == -1) {
+                        dp[i][j][r] = dp[i - 1][j][p];
+                    } else {
+                        dp[i][j][r] = (dp[i][j][r] + dp[i - 1][j][p]) % mod;
+                    }
+                }
+                if (dp[i][j - 1][p] != -1) {
+                    r = (p + grid[i][j]) % k;
+                    if (dp[i][j][r] == -1) {
+                        dp[i][j][r] = dp[i][j - 1][p];
+                    } else {
+                        dp[i][j][r] = (dp[i][j][r] + dp[i][j - 1][p]) % mod;
+                    }
+                }
+            }
+        }
+    }
+    return dp[m - 1][n - 1][0] == -1 ? 0 : dp[m - 1][n - 1][0];
+}
