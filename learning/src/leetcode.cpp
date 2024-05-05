@@ -15996,3 +15996,167 @@ int numberOfPaths(vector<vector<int>>& grid, int k)
     }
     return dp[m - 1][n - 1][0] == -1 ? 0 : dp[m - 1][n - 1][0];
 }
+
+
+// LC351
+// 手机九键解锁
+int numberOfPatterns(int m, int n)
+{
+    if (m > n) {
+        return 0;
+    }
+    vector<bool> visited(10, false);
+    unordered_map<int, vector<pair<int, int>>> edges; // edges[i] - {j, k} i到j需要经过k, 不经过其他点就是0
+    // 暴力建图
+    edges[1].emplace_back(make_pair(2, 0));
+    edges[1].emplace_back(make_pair(3, 2));
+    edges[1].emplace_back(make_pair(4, 0));
+    edges[1].emplace_back(make_pair(5, 0));
+    edges[1].emplace_back(make_pair(6, 0));
+    edges[1].emplace_back(make_pair(7, 4));
+    edges[1].emplace_back(make_pair(8, 0));
+    edges[1].emplace_back(make_pair(9, 5));
+
+    edges[2].emplace_back(make_pair(1, 0));
+    edges[2].emplace_back(make_pair(3, 0));
+    edges[2].emplace_back(make_pair(4, 0));
+    edges[2].emplace_back(make_pair(5, 0));
+    edges[2].emplace_back(make_pair(6, 0));
+    edges[2].emplace_back(make_pair(7, 0));
+    edges[2].emplace_back(make_pair(8, 5));
+    edges[2].emplace_back(make_pair(9, 0));
+
+    edges[3].emplace_back(make_pair(1, 2));
+    edges[3].emplace_back(make_pair(2, 0));
+    edges[3].emplace_back(make_pair(4, 0));
+    edges[3].emplace_back(make_pair(5, 0));
+    edges[3].emplace_back(make_pair(6, 0));
+    edges[3].emplace_back(make_pair(7, 5));
+    edges[3].emplace_back(make_pair(8, 0));
+    edges[3].emplace_back(make_pair(9, 6));
+
+    edges[4].emplace_back(make_pair(1, 0));
+    edges[4].emplace_back(make_pair(2, 0));
+    edges[4].emplace_back(make_pair(3, 0));
+    edges[4].emplace_back(make_pair(5, 0));
+    edges[4].emplace_back(make_pair(6, 5));
+    edges[4].emplace_back(make_pair(7, 0));
+    edges[4].emplace_back(make_pair(8, 0));
+    edges[4].emplace_back(make_pair(9, 0));
+
+    edges[5].emplace_back(make_pair(1, 0));
+    edges[5].emplace_back(make_pair(2, 0));
+    edges[5].emplace_back(make_pair(3, 0));
+    edges[5].emplace_back(make_pair(4, 0));
+    edges[5].emplace_back(make_pair(6, 0));
+    edges[5].emplace_back(make_pair(7, 0));
+    edges[5].emplace_back(make_pair(8, 0));
+    edges[5].emplace_back(make_pair(9, 0));
+
+    edges[6].emplace_back(make_pair(1, 0));
+    edges[6].emplace_back(make_pair(2, 0));
+    edges[6].emplace_back(make_pair(3, 0));
+    edges[6].emplace_back(make_pair(4, 5));
+    edges[6].emplace_back(make_pair(5, 0));
+    edges[6].emplace_back(make_pair(7, 0));
+    edges[6].emplace_back(make_pair(8, 0));
+    edges[6].emplace_back(make_pair(9, 0));
+
+    edges[7].emplace_back(make_pair(1, 4));
+    edges[7].emplace_back(make_pair(2, 0));
+    edges[7].emplace_back(make_pair(3, 5));
+    edges[7].emplace_back(make_pair(4, 0));
+    edges[7].emplace_back(make_pair(5, 0));
+    edges[7].emplace_back(make_pair(6, 0));
+    edges[7].emplace_back(make_pair(8, 0));
+    edges[7].emplace_back(make_pair(9, 8));
+
+    edges[8].emplace_back(make_pair(1, 0));
+    edges[8].emplace_back(make_pair(2, 5));
+    edges[8].emplace_back(make_pair(3, 0));
+    edges[8].emplace_back(make_pair(4, 0));
+    edges[8].emplace_back(make_pair(5, 0));
+    edges[8].emplace_back(make_pair(6, 0));
+    edges[8].emplace_back(make_pair(7, 0));
+    edges[8].emplace_back(make_pair(9, 0));
+
+    edges[9].emplace_back(make_pair(1, 5));
+    edges[9].emplace_back(make_pair(2, 0));
+    edges[9].emplace_back(make_pair(3, 6));
+    edges[9].emplace_back(make_pair(4, 0));
+    edges[9].emplace_back(make_pair(5, 0));
+    edges[9].emplace_back(make_pair(6, 0));
+    edges[9].emplace_back(make_pair(7, 8));
+    edges[9].emplace_back(make_pair(8, 0));
+
+    int ans;
+    function<void (unordered_map<int, vector<pair<int, int>>>&, int, int, int)> dfs = 
+        [&dfs, &visited, &ans](unordered_map<int, vector<pair<int, int>>>& edges, int cur, int cnt, int len) {
+        if (cnt == len) {
+            ans++;
+            return;
+        }
+        int i;
+        visited[cur] = true;
+        for (i = 0; i < edges[cur].size(); i++) {
+            auto p = edges[cur][i];
+            if ((p.second == 0 && visited[p.first] == false) || (p.second != 0 && visited[p.second] && visited[p.first] == false)) {
+                visited[p.first] = true;
+                dfs(edges, p.first, cnt + 1, len);
+                visited[p.first] = false;
+            }
+        }
+        visited[cur] = false;
+    };
+
+    int tol = 0;
+    int i, j;
+    for (i = m; i <= n; i++) {
+        for (j = 1; j <= 9; j++) {
+            ans = 0;
+            dfs(edges, j, 1, i);
+            tol += ans;
+        }
+    }
+    return tol;
+}
+
+
+// LC857
+double mincostToHireWorkers(vector<int>& quality, vector<int>& wage, int k)
+{
+    int i, n;
+    int tolQuality;
+    vector<pair<int, int>> vp;
+    double ans;
+
+    n = wage.size();
+    for (i = 0; i < n; i++) {
+        vp.emplace_back(make_pair(wage[i], quality[i]));
+    }
+    sort(vp.begin(), vp.end(), [](const pair<int, int>& a, const pair<int, int>& b) {
+        return a.first * b.second < a.second * b.first;
+    });
+
+    priority_queue<int, vector<int>> pq; // 维持一个大小为k的最大堆
+    ans = INT_MAX;
+    tolQuality = 0;
+    for (i = 0; i < n; i++) {
+        if (pq.size() < k) {
+            tolQuality += vp[i].second;
+            pq.push(vp[i].second);
+            if (pq.size() == k) {
+                ans = min(ans, tolQuality * 1.0 * vp[i].first / vp[i].second);
+            }
+        } else {
+            auto t = pq.top();
+            if (t > vp[i].second) {
+                tolQuality = tolQuality - t + vp[i].second;
+                pq.pop();
+                pq.push(vp[i].second);
+                ans = min(ans, tolQuality * 1.0 * vp[i].first / vp[i].second);
+            }
+        }
+    }
+    return ans;
+}
