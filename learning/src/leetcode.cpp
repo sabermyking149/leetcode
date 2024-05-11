@@ -16160,3 +16160,132 @@ double mincostToHireWorkers(vector<int>& quality, vector<int>& wage, int k)
     }
     return ans;
 }
+
+
+// LC3138
+int minAnagramLength(string s)
+{
+    int i;
+    int n = s.size();
+    vector<vector<int>> prefix(n, vector<int>(26, 0));
+
+    for (i = 0; i < n; i++) {
+        if (i != 0) {
+            prefix[i] = prefix[i - 1];
+        }
+        prefix[i][s[i] - 'a']++;
+    }
+
+    auto check = [](const vector<int>& a, const vector<int>& b) {
+        int i;
+        int n = a.size();
+        for (i = 0; i < n; i++) {
+            if (a[i] != b[i]) {
+                return false;
+            }
+        }
+        return true;
+    };
+    auto minus = [](const vector<int>& a, const vector<int>& b) {
+        int i;
+        int n = a.size();
+        vector<int> ans(n);
+        for (i = 0; i < n; i++) {
+            ans[i] = b[i] - a[i];
+        }
+        return ans;
+    };
+    int len = 1;
+    vector<int> start, t;
+    while (len <= n) {
+        if (n % len) {
+            len++;
+            continue;
+        }
+        for (i = 0; i < n; i += len) {
+            if (i == 0) {
+                start = prefix[len - 1];
+                continue;
+            }
+            t = minus(prefix[i - 1], prefix[i - 1 + len]);
+            if (check(start, t) == false) {
+                break;
+            }
+        }
+        if (i == n) {
+            break;
+        }
+        len++;
+    }
+    return len;
+}
+
+
+// LC3104
+int maxSubstringLength(string s)
+{
+    int i, j;
+    int n = s.size();
+    vector<vector<int>> prefix(n, vector<int>(26, 0));
+    vector<vector<int>> idxes(26, vector<int>(2, -1));
+    for (i = 0; i < n; i++) {
+        if (i != 0) {
+            prefix[i] = prefix[i - 1];
+        }
+        prefix[i][s[i] - 'a']++;
+        if (idxes[s[i] - 'a'][0] == -1) {
+            idxes[s[i] - 'a'][0] = i;
+            idxes[s[i] - 'a'][1] = i;
+        } else {
+            idxes[s[i] - 'a'][1] = i;
+        }
+    }
+
+    vector<int> a, b;
+    auto check = [](const vector<int>& a, const vector<int>& b) {
+        int i;
+        int n = a.size();
+        for (i = 0; i < n; i++) {
+            if (a[i] != 0 && b[i] != 0) {
+                return false;
+            }
+        }
+        return true;
+    };
+    auto minus = [](const vector<int>& a, const vector<int>& b) {
+        int i;
+        int n = a.size();
+        vector<int> ans(n);
+        for (i = 0; i < n; i++) {
+            ans[i] = b[i] - a[i];
+        }
+        return ans;
+    };
+
+    // 枚举每一个字符的起始与结尾下标位置
+    int ans = -1;
+    for (i = 0; i < 26; i++) {
+        if (idxes[i][0] == -1) {
+            continue;
+        }
+        for (j = 0; j < 26; j++) {
+            if (idxes[j][1] - idxes[i][0] + 1 == n) {
+                continue;
+            }
+            if (idxes[j][0] >= idxes[i][0] && idxes[j][1] >= idxes[i][1]) {
+                if (idxes[i][0] == 0) {
+                    a = prefix[idxes[j][1]];
+                    b = minus(a, prefix[n - 1]);
+                } else {
+                    a = minus(prefix[idxes[i][0] - 1], prefix[idxes[j][1]]);
+                    b = minus(a, prefix[n - 1]);
+                }
+                if (check(a, b)) {
+                    ans = max(ans, idxes[j][1] - idxes[i][0] + 1);
+                }
+            }
+        }
+    }
+
+    return ans;
+}
