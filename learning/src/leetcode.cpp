@@ -16289,3 +16289,68 @@ int maxSubstringLength(string s)
 
     return ans;
 }
+
+
+// LC3144
+int minimumSubstringsInPartition(string s)
+{
+    int i, j;
+    int n = s.size();
+    vector<vector<int>> prefix(n, vector<int>(26, 0));
+
+    for (i = 0; i < n; i++) {
+        if (i != 0) {
+            prefix[i] = prefix[i - 1];
+        }
+        prefix[i][s[i] - 'a']++;
+    }
+
+    auto check = [](const vector<int>& a) {
+        int i;
+        int n = a.size();
+        int freq;
+        bool f = false;
+
+        for (i = 0; i < n; i++) {
+            if (a[i] != 0 && f == false) {
+                f = true;
+                freq = a[i];
+                continue;
+            }
+            if (f && a[i] != 0) {
+                if (a[i] != freq) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    };
+    vector<int> ans(n);
+    auto minus = [&ans](const vector<int>& a, const vector<int>& b) {
+        int i;
+        int n = a.size();
+        for (i = 0; i < n; i++) {
+            ans[i] = b[i] - a[i];
+        }
+    };
+    vector<int> dp(n, 0x3f3f3f3f); // dp[i] - 以s[i]结尾的最小分割次数
+    dp[0] = 1;
+    for (i = 1; i < n; i++) {
+        for (j = i; j >= 0; j--) {
+            if (j == 0) {
+                if (check(prefix[i])) {
+                    dp[i] = 1;
+                }
+            } else {
+                minus(prefix[j - 1], prefix[i]);
+                if (check(ans)) {
+                    dp[i] = min(dp[i], dp[j - 1] + 1);
+                }
+            }
+        }
+    }
+    /* for (auto d : dp) {
+        cout << d << " ";
+    } */
+    return dp[n - 1];
+}

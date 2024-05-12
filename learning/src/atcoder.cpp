@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cmath>
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -405,6 +406,43 @@ void ABC_351_D()
                 //cout << cnt << endl;
             }
         }
+    }
+    cout << ans << endl;
+    return;
+}
+
+
+void ABC_353_D()
+{
+    int i;
+    int n;
+    int mod = 998244353;
+    unordered_map<int, int> bits;
+    cin >> n;
+
+    vector<int> v(n);
+    for (i = 0; i < n; i++) {
+        cin >> v[i];
+        bits[v[i]] = to_string(v[i]).size();
+    }
+
+    vector<unsigned long long> prefixSum(n, 0);
+    vector<unsigned long long> prefixBitSum(n, 0);
+
+    for (i = n - 1; i >= 1; i--) {
+        if (i == n - 1) {
+            prefixSum[i] = v[i];
+            prefixBitSum[i] = pow(10, bits[v[i]]);
+        } else {
+            prefixSum[i] = (v[i] + prefixSum[i + 1]) % mod;
+            prefixBitSum[i] = 
+                (static_cast<unsigned long long>(pow(10, bits[v[i]])) + prefixBitSum[i + 1]) % mod;
+        }
+    }
+
+    unsigned long long ans = 0;
+    for (i = 0; i < n - 1; i++) {
+        ans = (ans + prefixSum[i + 1] + (prefixBitSum[i + 1] * v[i]) % mod) % mod;
     }
     cout << ans << endl;
     return;
