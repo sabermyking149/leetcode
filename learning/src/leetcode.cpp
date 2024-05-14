@@ -16354,3 +16354,60 @@ int minimumSubstringsInPartition(string s)
     } */
     return dp[n - 1];
 }
+
+
+// LC994
+int orangesRotting(vector<vector<int>>& grid)
+{
+    int i, j;
+    int size;
+    int m = grid.size();
+    int n = grid[0].size();
+    int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+    bool f = false;
+    queue<pair<int, int>> q;
+
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            if (grid[i][j] == 2) {
+                q.push({i, j});
+            } else if (grid[i][j] == 1) {
+                f = true;
+            }
+        }
+    }
+    if (q.empty()) {
+        if (f) {
+            return -1;
+        }
+        return 0;
+    }
+
+    int minute = 0;
+    while (q.size()) {
+        size = q.size();
+        for (i = 0; i < size; i++) {
+            auto p = q.front();
+            q.pop();
+
+            for (j = 0; j < 4; j++) {
+                auto ni = p.first + directions[j][0];
+                auto nj = p.second + directions[j][1];
+                if (ni < 0 || ni >= m || nj < 0 || nj >= n || grid[ni][nj] != 1) {
+                    continue;
+                }
+                grid[ni][nj] = 2;
+                q.push({ni, nj});
+            }
+        }
+        minute++;
+    }
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            if (grid[i][j] == 1) {
+                return -1;
+            }
+        }
+    }
+    return minute - 1;
+}

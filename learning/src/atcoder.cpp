@@ -447,3 +447,105 @@ void ABC_353_D()
     cout << ans << endl;
     return;
 }
+
+
+// 搜索迷宫可以n次穿墙的可行方法,但效率低
+void ARC_177_C()
+{
+    int i, j;
+    int n;
+
+    cin >> n;
+
+    vector<vector<char>> grid(n, vector<char>(n, ' '));
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            cin >> grid[i][j];
+        }
+    }
+    char sign;
+    int endRow, endCol;
+
+    function<void (vector<vector<vector<char>>>&, int, int, int, int, bool&)> dfs = 
+        [&dfs, &sign, &endRow, &endCol](vector<vector<vector<char>>>& allgrid, int row, int col, 
+        int canChange, int cnt, bool& canReach) {
+
+        if (canReach) {
+            return;
+        }
+        if (row == endRow && col == endCol) {
+            canReach = true;
+            return;
+        }
+
+        int i;
+        int n = allgrid[0].size();
+        int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+
+        allgrid[cnt][row][col] = 'A';
+        for (i = 0; i < 4; i++) {
+            auto nr = row + directions[i][0];
+            auto nc = col + directions[i][1];
+            if (nr < 0 || nr >= n || nc < 0 || nc >= n) {
+                continue;
+            }
+            if (allgrid[cnt][nr][nc] == sign) {
+                dfs(allgrid, nr, nc, canChange, cnt, canReach);
+            } else {
+                if (canChange > 0) {
+                    // allgrid[cnt + 1] = allgrid[cnt];
+                    dfs(allgrid, nr, nc, canChange - 1, cnt + 1, canReach);
+                }
+            }
+        }
+    };
+
+    int left, right, mid;
+    int cnt1, cnt2;
+    bool canReach = false;
+    vector<vector<vector<char>>> allgrid; // allgrid[k] - 打破k面墙的grid图
+
+    for (i = 0; i < n * 2; i++) {
+        allgrid.emplace_back(grid);
+    }
+
+    left = 0;
+    right = n * 2 - 1;
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        sign = 'R';
+        endRow = endCol = n - 1;
+        canReach = false;
+
+        auto t = allgrid;
+        dfs(t, 0, 0, mid, 0, canReach);
+        if (canReach) {
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    cnt1 = left;
+
+    left = 0;
+    right = n * 2 - 1;
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        sign = 'B';
+        endRow = 0;
+        endCol = n - 1;
+        canReach = false;
+
+        auto t = allgrid;
+        dfs(t, n - 1, 0, mid, 0, canReach);
+        if (canReach) {
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    cnt2 = left;
+
+    cout << cnt1 + cnt2 << endl;
+    return;
+}
