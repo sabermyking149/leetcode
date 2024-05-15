@@ -19,13 +19,32 @@
 
 using namespace std;
 
-/* int gcd(int a, int b)
+int MyGcd(int a, int b)
 {
     if(b == 0) {
         return a;
     }
     return gcd(b, a % b);
-} */
+}
+
+
+// 求组合数
+long long Combine(int m, int n, map<pair<int, int>, long long>& combineData)
+{
+    int mod = 1e9 + 7;
+    if (combineData.count(make_pair(m, n))) {
+        return combineData[{m, n}];
+    }
+    if (n == 0 || m == n) {
+        combineData[{m, n}] = 1;
+        return 1;
+    } else if (n == 1) {
+        combineData[{m, n}] = m;
+        return m;
+    }
+    combineData[{m, n}] = (Combine(m - 1, n - 1, combineData) + Combine(m - 1, n, combineData)) % mod;
+    return combineData[{m, n}];
+}
 
 int TreeNodesNum(TreeNode *root)
 {
@@ -16410,4 +16429,39 @@ int orangesRotting(vector<vector<int>>& grid)
         }
     }
     return minute - 1;
+}
+
+
+// LC3129、LC3130
+int numberOfStableArrays(int zero, int one, int limit)
+{
+    int mod = 1e9 + 7;
+    int i, j;
+
+    // dp[i][j][0 - 1] - i个0, j个1且最后一位是0、1的符合条件的子字符串
+    vector<vector<vector<long long>>> dp(zero + 1, vector<vector<long long>>(one + 1, vector<long long>(2, 0)));
+
+    for (i = 0; i <= zero; i++) {
+        for (j = 0; j <= one; j++) {
+            if (i == 0 && j == 0) {
+                continue;
+            }
+            if (i == 0) {
+                if (j <= limit) {
+                    dp[i][j][1] = 1;
+                }
+                continue;
+            }
+            if (j == 0) {
+                if (i <= limit) {
+                    dp[i][j][0] = 1;
+                }
+                continue;
+            }
+            // 保证i - limit j - limit是0、1
+            dp[i][j][0] = (dp[i - 1][j][0] + dp[i - 1][j][1] + mod - (i - limit > 0 ? dp[i - limit - 1][j][1] : 0)) % mod;
+            dp[i][j][1] = (dp[i][j - 1][0] + dp[i][j - 1][1] + mod - (j - limit > 0 ? dp[i][j - limit - 1][0] : 0)) % mod;
+        }
+    }
+    return (dp[zero][one][0] + dp[zero][one][1]) % mod;
 }
