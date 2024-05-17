@@ -549,3 +549,64 @@ void ARC_177_C()
     cout << cnt1 + cnt2 << endl;
     return;
 }
+// 采用dijstra
+int dij(vector<vector<char>>& grid, pair<int, int> start, pair<int, int> end, char sign)
+{
+    int i;
+    int n = grid.size();
+    int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+    int ans;
+    // dist[i][j] - 从(0, 0)到(i, j)最少经过异色方块
+    vector<vector<int>> dist(n, vector<int>(n, 0x3f3f3f3f));
+    queue<pair<pair<int, int>, int>> q;
+
+    if (grid[start.first][start.second] != sign) {
+        q.push({start, 1});
+    } else {
+        q.push({start, 0});
+    }
+    ans = 0x3f3f3f3f;
+    while (q.size()) {
+        auto p = q.front();
+        q.pop();
+        if (dist[p.first.first][p.first.second] < p.second) {
+            continue;
+        }
+        dist[p.first.first][p.first.second] = p.second;
+        if (p.first == end) {
+            ans = min(ans, p.second);
+        }
+        for (i = 0; i < 4; i++) {
+            auto row = p.first.first + directions[i][0];
+            auto col = p.first.second + directions[i][1];
+            if (row < 0 || row >= n || col < 0 || col >= n) {
+                continue;
+            }
+            if (p.second + (grid[row][col] == sign ? 0 : 1) < dist[row][col]) {
+                dist[row][col] = p.second + (grid[row][col] == sign ? 0 : 1);
+                q.push({{row, col}, dist[row][col]});
+            }
+        }
+    }
+    return ans;
+}
+void ARC_177_C_1()
+{
+    int i, j;
+    int n, cnt1, cnt2;
+
+    cin >> n;
+
+    vector<vector<char>> grid(n, vector<char>(n, ' '));
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            cin >> grid[i][j];
+        }
+    }
+
+    cnt1 = dij(grid, {0, 0}, {n - 1, n - 1}, 'R');
+    cnt2 = dij(grid, {n - 1, 0}, {0, n - 1}, 'B');
+
+    cout << cnt1 + cnt2 << endl;
+    return;
+}

@@ -16465,3 +16465,135 @@ int numberOfStableArrays(int zero, int one, int limit)
     }
     return (dp[zero][one][0] + dp[zero][one][1]) % mod;
 }
+
+
+// LC1202
+string smallestStringWithSwaps(string s, vector<vector<int>>& pairs)
+{
+    int i, j;
+    int n = pairs.size();
+    unordered_map<int, unordered_set<int>> edges;
+
+    for (i = 0; i < n; i++) {
+        edges[pairs[i][0]].emplace(pairs[i][1]);
+        edges[pairs[i][1]].emplace(pairs[i][0]);
+    }
+    vector<bool> visited(n, false);
+    vector<pair<char, int>> record;
+    vector<int> idx;
+
+    function<void (int)> dfs = [&dfs, &visited, &record, &edges, &s](int cur) {
+        visited[cur] = true;
+        record.emplace_back(make_pair(s[cur], cur));
+        if (edges.count(cur)) {
+            for (auto it : edges[cur]) {
+                if (visited[it] == false) {
+                    dfs(it);
+                }
+            }
+        }
+    };
+
+    for (i = 0; i < n; i++) {
+        if (visited[i] == false) {
+            record.clear();
+            idx.clear();
+            dfs(i);
+            for (auto r : record) {
+                idx.emplace_back(r.second);
+            }
+            sort(record.begin(), record.end());
+            sort(idx.begin(), idx.end());
+            for (j = 0; j < record.size(); j++) {
+                s[idx[j]] = record[j].first;
+            }
+        }
+    }
+    return s;
+}
+
+
+// LC2307
+bool checkContradictions(vector<vector<string>>& equations, vector<double>& values)
+{
+    unordered_map<string, vector<pair<string, double>>> edges;
+    unordered_set<string> node;
+    map<pair<string, string>, double> weight;
+    int i;
+    int n = values.size();
+    for (i = 0; i < n; i++) {
+        edges[equations[i][0]].emplace_back(make_pair(equations[i][1], values[i]));
+        weight[{equations[i][0], equations[i][1]}] = values[i];
+        weight[{equations[i][1], equations[i][0]}] = 1.0 / values[i];
+        weight[{equations[i][0], equations[i][0]}] = 1.0;
+        weight[{equations[i][1], equations[i][1]}] = 1.0;
+        node.emplace(equations[i][0]);
+        node.emplace(equations[i][1]);
+    }
+    unordered_set<string> visited;
+    bool conflict;
+    function<void (string, string, double, bool&)> dfs = [&dfs, &visited, &edges, &weight](string node, string root, double val, bool& conflict) {
+        if (conflict) {
+            return;
+        }
+        if (weight.count({root, node}) && fabs(weight[{root, node}] - val) > 1e-5) {
+            conflict = true;
+            return;
+        }
+        if (visited.count(node)) {
+            return;
+        }
+        visited.emplace(node);
+        if (edges.count(node)) {
+            for (auto it : edges[node]) {
+                dfs(it.first, root, val * it.second, conflict);
+            }
+        }
+    };
+    for (auto it : node) {
+        visited.clear();
+        conflict = false;
+        dfs(it, it, 1.0, conflict);
+        if (conflict) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+// LC2328
+int countPaths(vector<vector<int>>& grid)
+{
+    int mod = 1e9 + 7;
+    int i, j;
+    int m = grid.size();
+    int n = grid[0].size();
+
+    vector<vector<long long>> dp(m, vector<long long>(n, -1));
+    // dp[i][j]和f(i, j) 从(i, j)开始的递增路径个数
+    function<long long (int, int, int)> f = [&dp, &f, &grid, mod](int i, int j, int prevVal) {
+        int m = dp.size();
+        int n = dp[0].size();
+        if (i < 0 || i >= m || j < 0 || j >= n) {
+            return 0ll;
+        }
+        if (grid[i][j] <= prevVal) {
+            return 0ll;
+        }
+        if (dp[i][j] != -1) {
+            return dp[i][j];
+        }
+        dp[i][j] = (1 + f(i - 1, j, grid[i][j]) + f(i + 1, j, grid[i][j]) + 
+                f(i, j - 1, grid[i][j]) + f(i, j + 1, grid[i][j])) % mod;
+        return dp[i][j];
+    };
+    int ans = 0;
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            dp[i][j] = f(i, j, -1);
+            ans = (ans + dp[i][j]) % mod;
+        }
+    }
+    return ans;
+}
