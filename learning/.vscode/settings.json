@@ -35,6 +35,7 @@
         "streambuf": "cpp",
         "iterator": "cpp",
         "iosfwd": "cpp",
-        "system_error": "cpp"
+        "system_error": "cpp",
+        "new": "cpp"
     }
 }

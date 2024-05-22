@@ -16597,3 +16597,181 @@ int countPaths(vector<vector<int>>& grid)
     }
     return ans;
 }
+
+
+// LC3154
+int waysToReachStair(int k)
+{
+    // 跳了j次，退了i次
+    // 1 + 2 + 4 + ... + 2^(j - 1) - i + 1(初始) = k
+    // 2^j - i = k; 0 <= i <= j + 1 (j > 0)
+
+    int i, j;
+    vector<long long> base(31);
+    for (i = 0; i <= 30; i++) {
+        base[i] = 1ll << i;
+    }
+    int ans = 0;
+    map<pair<int, int>, long long> combineData;
+    for (j = 0; j <= 30; j++) {
+        for (i = j + 1; i >= 0; i--) {
+            if (base[j] - i == k) {
+                ans += Combine(j + 1, i, combineData);
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LC1542
+int longestAwesome(string s)
+{
+    int i, j;
+    int cnt;
+    int n = s.size();
+    int ans;
+    string t, tmp;
+    unordered_map<string, vector<int>> um;
+
+    vector<string> codes(10);
+    cnt = 0;
+    for (i = 0; i < 10; i++) {
+        codes[i] = "0000000000";
+        codes[i][cnt] = '1';
+        cnt++;
+    }
+    auto StringXor = [](string& a, string& b) {
+        int i;
+        int n = a.size();
+        string ans(n, ' ');
+        for (i = 0; i < n; i++) {
+            if (a[i] == b[i]) {
+                ans[i] = '0';
+            } else {
+                ans[i] = '1';
+            }
+        }
+        return ans;
+    };
+    ans = 0;
+    t = "0000000000";
+    for (i = 0; i < n; i++) {
+        t[s[i] - '0'] = (t[s[i] - '0'] - '0' + 1) % 2 + '0';
+        um[t].emplace_back(i);
+        if (t == "0000000000") {
+            ans = i + 1;
+        } else {
+            if (um.count(t)) {
+                ans = max(ans, i - um[t][0]);
+            }
+            for (j = 0; j < 10; j++) {
+                auto tmp = StringXor(t, codes[j]);
+                if (tmp == "0000000000") {
+                    ans = i + 1;
+                    continue;
+                }
+                if (um.count(tmp)) {
+                    ans = max(ans, i - um[tmp][0]);
+                }
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LC664
+int strangePrinter(string s)
+{
+    int i, j, k;
+    int n = s.size();
+    vector<vector<int>> dp(n, vector<int>(n, 0x3f3f3f3f));
+
+    for (j = 0; j < n; j++) {
+        for (i = j; i >= 0; i--) {
+            if (i == j) {
+                dp[i][j] = 1;
+            } else if (i + 1 == j) {
+                dp[i][j] = (s[i] == s[j] ? 1 : 2);
+            } else {
+                if (s[i] == s[i + 1]) {
+                    dp[i][j] = dp[i + 1][j];
+                } else {
+                    dp[i][j] = 1 + dp[i + 1][j];
+                    for (k = i + 1; k <= j; k++) {
+                        if (s[i] == s[k]) {
+                            dp[i][j] = min(dp[i][j], 
+                                dp[i + 1][k - 1] + dp[k][j]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return dp[0][n - 1];
+}
+
+
+// LC919
+class CBTInserter {
+public:
+    vector<vector<pair<TreeNode *, TreeNode *>>> nodes;
+    TreeNode *root;
+    int layer;
+    CBTInserter(TreeNode* root)
+    {
+        int i, n;
+        this->root = root;
+        layer = 0;
+        queue<pair<TreeNode *, TreeNode *>> q;
+        vector<pair<TreeNode *, TreeNode *>> v;
+
+        q.push({root, nullptr});
+        while (q.size()) {
+            n = q.size();
+            v.clear();
+            for (i = 0; i < n; i++) {
+                auto t = q.front();
+                q.pop();
+                v.emplace_back(t);
+                if (t.first->left != nullptr) {
+                    q.push({t.first->left, t.first});
+                }
+                if (t.first->right != nullptr) {
+                    q.push({t.first->right, t.first});
+                }
+            }
+            layer++;
+            nodes.emplace_back(v);
+        }
+    }
+
+    int insert(int v)
+    {
+        int size = nodes.back().size();
+        // 第layer层已满
+        if (size == (1ll << (layer - 1))) {
+            auto node = nodes.back()[0].first;
+            node->left = new TreeNode(v);
+            nodes.push_back({{node->left, node}});
+            layer++;
+            return node->val;
+        }
+        size++;
+        auto node = nodes[nodes.size() - 2][size % 2 == 1 ? size / 2 : size / 2 - 1].first;
+        if (node->left == nullptr) {
+            node->left = new TreeNode(v);
+            nodes.back().push_back({node->left, node});
+        } else {
+            node->right = new TreeNode(v);
+            nodes.back().push_back({node->right, node});
+        }
+        return node->val;
+    }
+
+    TreeNode* get_root()
+    {
+        return this->root;
+    }
+};
