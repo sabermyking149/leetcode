@@ -16775,3 +16775,124 @@ public:
         return this->root;
     }
 };
+
+
+// LC1584
+int minCostConnectPoints(vector<vector<int>>& points)
+{
+    // 最小生成树, Prim
+    int i, j;
+    int cnt, ans;
+    int n = points.size();
+    unordered_map<int, unordered_map<int, int>> edgesWithWeight;
+    vector<int> dist;
+
+    for (i = 0; i < n - 1; i++) {
+        for (j = i + 1; j < n; j++) {
+            edgesWithWeight[i].insert({j, abs(points[i][0] - points[j][0]) + abs(points[i][1] - points[j][1])});
+            edgesWithWeight[j].insert({i, abs(points[i][0] - points[j][0]) + abs(points[i][1] - points[j][1])});
+        }
+    }
+
+    vector<bool> visited(n, false);
+    auto CMP = [](pair<int, int>& a, pair<int, int>& b) {
+        return a.second > b.second;
+    };
+    priority_queue<pair<int, int>, vector<pair<int, int>>, decltype(CMP)> pq(CMP);
+
+    for (auto it : edgesWithWeight[0]) {
+        pq.push(it);
+    }
+
+    visited[0] = true;
+    cnt = 1;
+    ans = 0;
+    while (cnt < n) {
+        auto p = pq.top();
+        pq.pop();
+        if (visited[p.first]) {
+            continue;
+        }
+        visited[p.first] = true;
+        ans += p.second;
+        for (auto it : edgesWithWeight[p.first]) {
+            if (!visited[it.first]) {
+                pq.push(it);
+            }
+        }
+        cnt++;
+    }
+    return ans;
+}
+
+
+// LC1135
+int minimumCost(int n, vector<vector<int>>& connections)
+{
+    int i;
+    // 判断连通性
+    unordered_map<int, unordered_set<int>> edges;
+    for (auto c : connections) {
+        edges[c[0]].emplace(c[1]);
+        edges[c[1]].emplace(c[0]);
+    }
+    vector<bool> visited(n + 1, false);
+    function<void (int)> dfs = [&edges, &visited, &dfs](int cur) {
+        visited[cur] = true;
+        if (edges.count(cur)) {
+            for (auto it : edges[cur]) {
+                if (visited[it] == false) {
+                    dfs(it);
+                }
+            }
+        }
+    };
+    dfs(1);
+    for (i = 1; i <= n; i++) {
+        if (visited[i] == false) {
+            return -1;
+        }
+    }
+    // 最小生成树, Kruskal
+    sort(connections.begin(), connections.end(), [](vector<int>& a, vector<int>& b) {
+        return a[2] < b[2];
+    });
+
+    unordered_map<int, unordered_set<int>> um;
+    unordered_map<int, int> nodeArea;
+    int size = connections.size();
+    int area = 1;
+    int ans = 0;
+    for (i = 0; i < size; i++) {
+        if (nodeArea.count(connections[i][0]) && nodeArea.count(connections[i][1]) &&
+            nodeArea[connections[i][0]] == nodeArea[connections[i][1]]) {
+            continue;
+        }
+        ans += connections[i][2];
+        if (nodeArea.count(connections[i][0])) {
+            if (nodeArea.count(connections[i][1]) == 0) {
+                nodeArea[connections[i][1]] = nodeArea[connections[i][0]];
+                um[nodeArea[connections[i][1]]].emplace(connections[i][1]);
+            } else {
+                auto t = nodeArea[connections[i][1]];
+                for (auto it : um[nodeArea[connections[i][1]]]) {
+                    nodeArea[it] = nodeArea[connections[i][0]];
+                    um[nodeArea[connections[i][0]]].emplace(it);
+                }
+                um.erase(t);
+            }
+        } else {
+            if (nodeArea.count(connections[i][1]) == 0) {
+                nodeArea[connections[i][1]] = area;
+                nodeArea[connections[i][0]] = area;
+                um[area].emplace(connections[i][0]);
+                um[area].emplace(connections[i][1]);
+                area++;
+            } else {
+                nodeArea[connections[i][0]] = nodeArea[connections[i][1]];
+                um[nodeArea[connections[i][1]]].emplace(connections[i][0]);
+            }
+        }
+    }
+    return ans;
+}
