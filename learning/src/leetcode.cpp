@@ -16896,3 +16896,124 @@ int minimumCost(int n, vector<vector<int>>& connections)
     }
     return ans;
 }
+
+
+// LC548
+bool splitArray(vector<int>& nums)
+{
+    int i, j, k;
+    int n = nums.size();
+    vector<int> prefix(n);
+    vector<int> suffix(n);
+    unordered_map<int, vector<int>> prefixSumIdx;
+    unordered_map<int, vector<int>> suffixSumIdx;
+
+    prefix[0] = nums[0];
+    prefixSumIdx[prefix[0]].emplace_back(0);
+    for (i = 1; i < n; i++) {
+        prefix[i] = prefix[i - 1] + nums[i];
+        prefixSumIdx[prefix[i]].emplace_back(i);
+    }
+    suffix[n - 1] = nums[n - 1];
+    suffixSumIdx[suffix[n - 1]].emplace_back(n - 1);
+    for (i = n - 2; i >= 0; i--) {
+        suffix[i] = suffix[i + 1] + nums[i];
+        suffixSumIdx[suffix[i]].emplace_back(i);
+    }
+
+    int sum;
+    int left, right;
+    for (auto it : prefixSumIdx) {
+        if (suffixSumIdx.count(it.first) == 0) {
+            continue;
+        }
+        for (i = 0; i < it.second.size(); i++) {
+            for (j = 0; j < suffixSumIdx[it.first].size(); j++) {
+                if (it.second[i] + 5 >= suffixSumIdx[it.first][j]) { // 至少需要5的数组长度才能保证中间可分割
+                    break;
+                }
+                sum = it.first;
+                left = it.second[i] + 2;
+                right = suffixSumIdx[it.first][j] - 2;
+                for (k = left + 1; k <= right - 1; k++) {
+                    if (prefix[k - 1] - prefix[left - 1] == sum && 
+                        prefix[k - 1] - prefix[left - 1] == prefix[right] - prefix[k]) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+
+// LC1482
+int minDays(vector<int>& bloomDay, int m, int k)
+{
+    int i;
+    int n = bloomDay.size();
+    vector<int> flowers(n, 0);
+    int cntSet, cnt;
+    int left = *min_element(bloomDay.begin(), bloomDay.end());
+    int right = *max_element(bloomDay.begin(), bloomDay.end());
+    int mid;
+
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        flowers.assign(n, 0);
+        for (i = 0; i < n; i++) {
+            if (bloomDay[i] <= mid) {
+                flowers[i] = 1;
+            }
+        }
+        cntSet = 0;
+        cnt = 0;
+        for (i = 0; i < n; i++) {
+            if (flowers[i]) {
+                cnt++;
+            } else {
+                cntSet += cnt / k;
+                cnt = 0;
+                if (cntSet >= m) {
+                    right = mid - 1;
+                    break;
+                }
+            }
+        }
+        cntSet += cnt / k;
+        if (cntSet >= m) {
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    if (left == *max_element(bloomDay.begin(), bloomDay.end()) + 1) {
+        return -1;
+    }
+    return left;
+}
+
+
+// LC2136
+int earliestFullBloom(vector<int>& plantTime, vector<int>& growTime)
+{
+    vector<pair<int, int>> vp;
+    int i;
+    int n = plantTime.size();
+
+    for (i = 0; i < n; i++) {
+        vp.emplace_back(make_pair(plantTime[i], growTime[i]));
+    }
+    sort(vp.begin(), vp.end(), [](pair<int, int>& a, pair<int, int>& b) {
+        return a.second > b.second;
+    });
+
+    int ans = 0;
+    int sumOfPlantTime = 0;
+    for (i = 0; i < n; i++) {
+        sumOfPlantTime += vp[i].first;
+        ans = max(ans, sumOfPlantTime + vp[i].second);
+    }
+    return ans;
+}
