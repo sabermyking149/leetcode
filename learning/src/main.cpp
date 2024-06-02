@@ -20,6 +20,7 @@
 #include "leetcode.h"
 #include "classOper.h"
 #include "purec.h"
+#include "atcoder.h"
 
 
 
@@ -774,9 +775,5 @@ int main(int argc, char *argv[])
     cout << MySqrt(5.0) << endl;
     cout << MySqrt(0.64) << endl;
 
-    int *p = (int *)malloc(4);
-    *p = 201;
-    pointer();
-    cout << (void *)pointer << endl;
-    cout << (void *)pointer << endl;
+    ABC_356_C();
 }

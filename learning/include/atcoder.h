@@ -7,4 +7,5 @@
 
 using namespace std;
 
+void ABC_356_C();
 #endif

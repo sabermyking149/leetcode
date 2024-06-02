@@ -612,3 +612,86 @@ void ARC_177_C_1()
     cout << cnt1 + cnt2 << endl;
     return;
 }
+
+
+// 恶心人的输入格式
+void ABC_356_C()
+{
+    int i, j, p;
+    int N, M, K;
+    int cnt, t;
+    int c, a;
+    char r;
+    bool conflict = false;
+
+    cin >> N >> M >> K;
+
+    vector<vector<bool>> keys(1 << N, vector<bool>(N, false));
+
+    cnt = 0;
+    for (i = 0; i < (1 << N); i++) {
+        j = 0;
+        t = i;
+        while (j < N) {
+            keys[i][j] = t % 2;
+            t /= 2;
+            j++;
+        }
+    }
+    vector<vector<int>> conditions(M);
+    for (i = 0; i < M; i++) {
+        cin >> c;
+        for (j = 0; j < c; j++) {
+            cin >> a;
+            conditions[i].emplace_back(a);
+        }
+        cin >> r;
+        if (r == 'o') {
+            conditions[i].emplace_back(1);
+        } else {
+            conditions[i].emplace_back(0);
+        }
+    }
+
+    for (i = 0; i < keys.size(); i++) {
+        conflict = false;
+        for (j = 0; j < M; j++) {
+            t = 0;
+            for (p = 0; p < conditions[j].size() - 1; p++) {
+                if (keys[i][conditions[j][p] - 1]) {
+                    t++;
+                }
+            }
+            auto res = conditions[j][p];
+            if ((t >= K && res == 0) || (t < K && res == 1)) {
+                conflict = true;
+                break;
+            }
+        }
+        if (!conflict) {
+            cnt++;
+        }
+    }
+    cout << cnt << endl;
+}
+
+
+void ABC_356_D()
+{
+    int i;
+    int mod = 998244353;
+    unsigned long long N, M;
+    unsigned long long d, r, ans;
+
+    cin >> N >> M;
+
+    ans = 0;
+    for (i = 0; i < 60; i++) {
+        if ((M & (1ull << i)) == (1ull << i)) {
+            d = N / (1ull << (i + 1));
+            r = N % (1ull << (i + 1));
+            ans = (ans + d * (1ull << i) + (r > (1ull << i) - 1 ? r - (1ull << i) + 1 : 0)) % mod;
+        }
+    }
+    cout << ans << endl;
+}
