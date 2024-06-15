@@ -695,3 +695,54 @@ void ABC_356_D()
     }
     cout << ans << endl;
 }
+
+
+void ABC_357_C()
+{
+    int N;
+
+    cin >> N;
+
+    function<vector<string> (int, int)> CreateCarpet = [&CreateCarpet](int n, int color) {
+        vector<string> ans;
+        string t;
+        if (n == 0) {
+            if (color == 1) {
+                t = "#";
+                ans.emplace_back(t);
+                return ans;
+            }
+            t = ".";
+            ans.emplace_back(t);
+            return ans;
+        }
+        vector<string> a = CreateCarpet(n - 1, color);
+        // vector<string> b = CreateCarpet(n - 1, 1 - color);
+        int size = a.size();
+
+        ans.resize(size * 3);
+
+        int i;
+        for (i = 0; i < size; i++) {
+            ans[i] = a[i] + a[i] + a[i];
+        }
+        int len = a[0].size();
+        t.append(len, '.');
+        for (i = size; i < size * 2; i++) {
+            ans[i] = a[i - size] + t + a[i - size];
+        }
+        for (i = size * 2; i < size * 3; i++) {
+            ans[i] = a[i - size * 2] + a[i - size * 2] + a[i - size * 2];
+        }
+
+        return ans;
+    };
+
+    int i;
+    vector<string> ans = CreateCarpet(N, 1);
+    int n = ans.size();
+
+    for (i = 0; i < n; i++) {
+        cout << ans[i] << endl;
+    }
+}

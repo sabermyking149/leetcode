@@ -17017,3 +17017,212 @@ int earliestFullBloom(vector<int>& plantTime, vector<int>& growTime)
     }
     return ans;
 }
+
+
+// LC1168
+int minCostToSupplyWater(int n, vector<int>& wells, vector<vector<int>>& pipes)
+{
+    // 把每一个wills看作一个虚拟节点到每个点的cost
+    int i;
+    unordered_map<int, vector<pair<int, int>>> edges; // wells1 - {wells2, dist}
+
+    for (auto p : pipes) {
+        edges[p[0]].emplace_back(make_pair(p[1], p[2]));
+        edges[p[1]].emplace_back(make_pair(p[0], p[2]));
+    }
+    for (i = 0; i < n; i++) {
+        edges[0].emplace_back(make_pair(i + 1, wells[i]));
+        edges[i + 1].emplace_back(make_pair(0, wells[i]));
+    }
+
+    auto cmp = [](pair<int, int>& a, pair<int, int>& b) {
+        return a.second > b.second;
+    };
+    priority_queue<pair<int, int>, vector<pair<int, int>>, decltype(cmp)> pq(cmp);
+    vector<bool> visited(n + 1, false);
+    
+    int cost, curWell;
+    bool find = false;
+
+    cost = 0;
+    visited[0] = true;
+    curWell = 0;
+    while (1) {
+        if (edges.count(curWell)) {
+            for (auto it : edges[curWell]) {
+                if (visited[it.first] == false) {
+                    pq.push(it);
+                }
+            }
+            pair<int, int> tp;
+            find = false;
+            while (!pq.empty()) {
+                tp = pq.top();
+                if (visited[tp.first] || tp.second > wells[tp.first - 1]) {
+                    pq.pop();
+                    continue;
+                } else {
+                    pq.pop();
+                    find = true;
+                    break;
+                }
+            }
+            if (find == false) {
+                break;
+            }
+            cost += tp.second;
+            curWell = tp.first;
+            visited[curWell] = true;
+        } else {
+            break;
+        }
+    }
+    return cost;
+}
+
+
+// LC3177 (有问题)
+int maximumLength(vector<int>& nums, int k)
+{
+    int i, j, p;
+    int n = nums.size();
+    vector<vector<int>> dp(n, vector<int>(k + 1, 1));
+    vector<priority_queue<pair<int, int>, vector<pair<int, int>>>> vpq(k + 1);
+    int ans = 1;
+    for (i = 0; i <= k; i++) {
+        vpq[i].push({1, 0});
+    }
+
+    unordered_map<int, int> data;
+    vector<map<int, unordered_set<int>, greater<>>> vmap(k + 1);
+    for (i = 0; i <= k; i++) {
+        vmap[i][1].insert(0);
+    }
+    data[nums[0]]++;
+    for (i = 1; i < n; i++) {
+        for (p = 0; p <= k; p++) {
+            if (p == 0) {
+                dp[i][p] = 1;
+                vpq[p].push({1, i});
+                vmap[p][1].insert(i);
+                continue;
+            }
+            auto top = vpq[p].top();
+            auto idx = top.second;
+            auto head = *vmap[p].begin();
+            auto cnt = head.first;
+            // auto idx = head.second;
+            auto point = top.first;
+            if (data.count(nums[i]) && data[nums[i]] == point) {
+                dp[i][p] = max(data[nums[i]] + 1, dp[i][p]);
+                vpq[p].push({data[nums[i]] + 1, i});
+                data[nums[i]] = max(data[nums[i]], dp[i][p]);
+            
+            //if (nums[idx] == nums[i]) {
+            //    dp[i][p] = max(dp[idx][p] + 1, dp[i][p]);
+            //    vpq[p].push({dp[idx][p] + 1, i});
+           
+            } else if (nums[idx] != nums[i]) {
+                if (p > 0) {
+                    dp[i][p] = max(dp[idx][p - 1] + 1, dp[i][p]);
+                    vpq[p].push({dp[idx][p - 1] + 1, i});
+                    data[nums[i]] = max(data[nums[i]], dp[i][p]);
+                }
+            }
+            ans = max(ans, dp[i][p]);
+        }
+    }
+    return ans;
+}
+
+
+// LC3180
+int maxTotalReward(vector<int>& rewardValues)
+{
+    sort(rewardValues.begin(), rewardValues.end());
+
+    int i, j;
+    int n = rewardValues.size();
+    int ans;
+    // dp[i][j] - 前i个rewardValues能否组成j
+    int maxPoint = rewardValues[n - 1] * 2 - 1;
+    vector<vector<bool>> dp(n + 1, vector<bool>(maxPoint + 1, false));
+
+    dp[0][0] = true;
+    ans = 0;
+    for (i = 1; i <= n; i++) {
+        for (j = 0; j <= maxPoint; j++) {
+            if (j >= rewardValues[i - 1] * 2) {
+                break;
+            }
+            dp[i][j] = (dp[i][j] || dp[i - 1][j]); // 不选rewardValues[i - 1]
+            if (dp[i][j]) {
+                ans = max(ans, j);
+                continue;
+            }
+            if (j - rewardValues[i - 1] >= 0 && j - rewardValues[i - 1] < rewardValues[i - 1]) {
+                dp[i][j] = (dp[i][j] || dp[i - 1][j - rewardValues[i - 1]]);
+            }
+            if (dp[i][j]) {
+                ans = max(ans, j);
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LC2106
+int maxTotalFruits(vector<vector<int>>& fruits, int startPos, int k)
+{
+    vector<int> pos(2e5 + 1, 0);
+
+    for (auto f : fruits) {
+        pos[f[0]] = f[1];
+    }
+    int i;
+    int n = pos.size();
+    vector<int> prefix(n);
+
+    prefix[0] = pos[0];
+    for (i = 1; i < n; i++) {
+        prefix[i] = pos[i] + prefix[i - 1];
+    }
+
+    int ans = 0;
+    int left, right, stepLeft;
+
+    // 向左走
+    for (i = 0; i <= k; i++) {
+        if (startPos - i < 0) {
+            break;
+        }
+        left = startPos - i;
+        right = left + k - i > startPos ? left + k - i : startPos;
+        if (right >= n) {
+            right = n - 1;
+        }
+        if (left == 0) {
+            ans = max(ans, prefix[right]);
+        } else {
+            ans = max(ans, prefix[right] - prefix[left - 1]);
+        }
+    }
+    // 向右走
+    for (i = 0; i <= k; i++) {
+        if (startPos + i == n) {
+            break;
+        }
+        right = startPos + i;
+        left = right - (k - i) < startPos ? right - (k - i) : startPos;
+        if (left < 0) {
+            left = 0;
+        }
+        if (left == 0) {
+            ans = max(ans, prefix[right]);
+        } else {
+            ans = max(ans, prefix[right] - prefix[left - 1]);
+        }
+    }
+    return ans;
+}
