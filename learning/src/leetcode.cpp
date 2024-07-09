@@ -17081,61 +17081,6 @@ int minCostToSupplyWater(int n, vector<int>& wells, vector<vector<int>>& pipes)
 }
 
 
-// LC3177 (有问题)
-int maximumLength(vector<int>& nums, int k)
-{
-    int i, j, p;
-    int n = nums.size();
-    vector<vector<int>> dp(n, vector<int>(k + 1, 1));
-    vector<priority_queue<pair<int, int>, vector<pair<int, int>>>> vpq(k + 1);
-    int ans = 1;
-    for (i = 0; i <= k; i++) {
-        vpq[i].push({1, 0});
-    }
-
-    unordered_map<int, int> data;
-    vector<map<int, unordered_set<int>, greater<>>> vmap(k + 1);
-    for (i = 0; i <= k; i++) {
-        vmap[i][1].insert(0);
-    }
-    data[nums[0]]++;
-    for (i = 1; i < n; i++) {
-        for (p = 0; p <= k; p++) {
-            if (p == 0) {
-                dp[i][p] = 1;
-                vpq[p].push({1, i});
-                vmap[p][1].insert(i);
-                continue;
-            }
-            auto top = vpq[p].top();
-            auto idx = top.second;
-            auto head = *vmap[p].begin();
-            auto cnt = head.first;
-            // auto idx = head.second;
-            auto point = top.first;
-            if (data.count(nums[i]) && data[nums[i]] == point) {
-                dp[i][p] = max(data[nums[i]] + 1, dp[i][p]);
-                vpq[p].push({data[nums[i]] + 1, i});
-                data[nums[i]] = max(data[nums[i]], dp[i][p]);
-            
-            //if (nums[idx] == nums[i]) {
-            //    dp[i][p] = max(dp[idx][p] + 1, dp[i][p]);
-            //    vpq[p].push({dp[idx][p] + 1, i});
-           
-            } else if (nums[idx] != nums[i]) {
-                if (p > 0) {
-                    dp[i][p] = max(dp[idx][p - 1] + 1, dp[i][p]);
-                    vpq[p].push({dp[idx][p - 1] + 1, i});
-                    data[nums[i]] = max(data[nums[i]], dp[i][p]);
-                }
-            }
-            ans = max(ans, dp[i][p]);
-        }
-    }
-    return ans;
-}
-
-
 // LC3180
 int maxTotalReward(vector<int>& rewardValues)
 {
@@ -17224,5 +17169,349 @@ int maxTotalFruits(vector<vector<int>>& fruits, int startPos, int k)
             ans = max(ans, prefix[right] - prefix[left - 1]);
         }
     }
+    return ans;
+}
+
+
+// LC261
+bool validTree(int n, vector<vector<int>>& edges)
+{
+    unordered_map<int, unordered_set<int>> edge;
+    for (auto e : edges) {
+        edge[e[0]].emplace(e[1]);
+        edge[e[1]].emplace(e[0]);
+    }
+    vector<int> visited(n, 0);
+    function<void (int, int, bool&)> dfs = [&dfs, &edge, &visited](int cur, int parent, bool &loop) {
+        if (loop) {
+            return;
+        }
+        if (visited[cur] == 1) {
+            loop = true;
+            return;
+        }
+        visited[cur] = 1;
+        if (edge.count(cur)) {
+            for (auto it : edge[cur]) {
+                if (it != parent) {
+                    dfs(it, cur, loop);
+                }
+            }
+        }
+        visited[cur] = 2;
+    };
+
+    bool loop = false;
+    dfs(0, -1, loop);
+    if (loop) {
+        return false;
+    }
+    for (auto v : visited) {
+        if (v == 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+// LC3164
+long long numberOfPairs(vector<int>& nums1, vector<int>& nums2, int k)
+{
+    int i;
+    int a, b;
+    unordered_map<int, long long> factors;
+
+    for (auto num : nums1) {
+        if (num % k != 0) {
+            continue;
+        } else {
+            num /= k;
+        }
+        for (i = 1; i <= static_cast<int>(sqrt(num)); i++) {
+            if (num % i == 0) {
+                a = num / i;
+                factors[i]++;
+                if (a != i) {
+                    factors[a]++;
+                }
+            }
+        }
+    }
+    long long ans = 0;
+    for (auto num : nums2) {
+        if (factors.count(num)) {
+            ans += factors[num];
+        }
+    }
+    return ans;
+}
+
+
+// LC843
+class Master {
+public:
+    int guess(string word)
+    {
+        return 0;
+    }
+};
+
+void findSecretWord(vector<string>& words, Master& master)
+{
+    int i;
+    int len, cnt_s;
+    int n = words.size();
+    unordered_set<string> unvisited;
+    vector<bool> visited(n, false);
+    unordered_map<string, int> wordIdx;
+    unordered_map<string, unordered_map<int, unordered_set<string>>> wordsSimilarity;
+
+    for (i = 0; i < n; i++) {
+        wordIdx[words[i]] = i;
+    }
+    auto CreateSimilarity = [&visited, &wordsSimilarity](vector<string>& words) {
+        int i, j, k;
+        int len, cnt_s;
+        int n = words.size();
+        // unordered_map<string, unordered_map<int, unordered_set<string>>> wordsSimilarity;
+        wordsSimilarity.clear();
+        for (i = 0; i < n; i++) {
+            if (visited[i]) {
+                continue;
+            }
+            for (j = 0; j < n; j++) {
+                if (visited[j]) {
+                    continue;
+                }
+                if (i == j) {
+                    continue;
+                }
+                len = words[i].size();
+                cnt_s = 0;
+                for (k = 0; k < len; k++) {
+                    if (words[i][k] == words[j][k]) {
+                        cnt_s++;
+                    }
+                }
+                wordsSimilarity[words[i]][cnt_s].emplace(words[j]);
+            }
+        }
+        // return wordsSimilarity;
+    };
+
+    string word;
+    unordered_set<string> wordset;
+    int maxLen;
+    while (1) {
+        CreateSimilarity(words);
+        // 找到wordsSimilarity中最大的word集合
+        maxLen = 0;
+        for (auto it : wordsSimilarity) {
+            len = 0;
+            for (auto p : it.second) {
+                len += p.second.size();
+            }
+            if (len > maxLen) {
+                maxLen = len;
+                word = it.first;
+            }
+        }
+        int t = master.guess(word);
+        if (t == 6) {
+            return;
+        }
+        // 大于等于similarity的都不符合
+        int similarity = t + 1;
+        visited[wordIdx[word]] = true;
+        while (similarity < 6) {
+            if (wordsSimilarity[word].count(similarity)) {
+                for (auto s : wordsSimilarity[word][similarity]) {
+                    visited[wordIdx[s]] = true;
+                }
+            }
+            similarity++;
+        }
+        // wordset以外的都不符合
+        visited[wordIdx[word]] = true;
+        wordset = wordsSimilarity[word][t];
+        for (i = 0; i < n; i++) {
+            if (wordset.count(words[i]) == 0) {
+                visited[i] = true;
+            }
+        }
+        cnt_s = 0;
+        int idx;
+        for (i = 0; i < n; i++) {
+            if (!visited[i]) {
+                idx = i;
+                cnt_s++;
+            }
+        }
+        if (cnt_s == 1) {
+            master.guess(words[idx]);
+            return;
+        }
+    }
+}
+
+
+// LC3177
+int maximumLength(vector<int>& nums, int k)
+{
+    int i, j;
+    int n = nums.size();
+    int pos;
+    int ans = 1;
+
+    vector<vector<int>> dp(n, vector<int>(k + 1, -1));
+    vector<vector<int>> record(k + 1, vector<int>(2, 0)); // 记录改变k次得到最大长度的子序列和次大长度最后一个数字的下标
+    unordered_map<int, int> idx; // 记录上一个nums[i]的下标
+
+    idx[nums[0]] = 0;
+    dp[0][0] = 1;
+    for (i = 1; i < n; i++) {
+        if (idx.count(nums[i])) {
+            dp[i][0] = dp[idx[nums[i]]][0] + 1;
+            for (j = 1; j <= k; j++) {
+                if (record[j - 1][0] == idx[nums[i]]) {
+                    pos = record[j - 1][1];
+                } else {
+                    pos = record[j - 1][0];
+                }
+                dp[i][j] = max(dp[idx[nums[i]]][j] + 1, dp[pos][j - 1] + 1);
+            }
+        } else {
+            dp[i][0] = 1;
+            for (j = 1; j <= k; j++) {
+                pos = record[j - 1][0];
+                dp[i][j] = dp[pos][j - 1] + 1;
+            }
+        }
+        // 更新record的值
+        for (j = 0; j <= k; j++) {
+            if (dp[record[j][0]][j] <= dp[i][j]) {
+                record[j][1] = record[j][0];
+                record[j][0] = i;
+            } else if (dp[record[j][1]][j] <= dp[i][j]) {
+                record[j][1] = i;
+            }
+            ans = max(ans, dp[i][j]);
+        }
+        idx[nums[i]] = i;
+    }
+    return ans;
+}
+
+
+// LC5
+string longestPalindrome_LC5(string s)
+{
+    int i, j;
+    int n = s.size();
+    int start, maxLen;
+    vector<vector<bool>> dp(n, vector<bool>(n, false));
+
+    maxLen = 0;
+    start = -1;
+    for (j = 0; j < n; j++) {
+        for (i = j; i >= 0; i--) {
+            if (s[i] != s[j]) {
+                continue;
+            }
+            if (i == j || i + 1 == j) {
+                dp[i][j] = true;
+            } else if (dp[i + 1][j - 1]) {
+                dp[i][j] = true;
+            }
+            if (dp[i][j] && j - i + 1 > maxLen) {
+                start = i;
+                maxLen = j - i + 1;
+            }
+        }
+    }
+    string ans = s.substr(start, maxLen);
+    return ans;
+}
+
+
+// LC3102
+int minimumDistance_LC3102(vector<vector<int>>& points)
+{
+    int i;
+    int n = points.size();
+    /*
+    |x1-x2|+|y1-y2|=max((x1-x2),(x2-x1))+max((y1-y2),(y2-y1))
+
+    max(x1-x2+y1-y2， x1-x2+y2-y1， x2-x1+y1-y2， x2-x1+y2-y1)
+
+    =max( (x1+y1)-(x2+y2)， x1-y1-(x2-y2)， -(x1-y1)+(x2-y2)， -(x1+y1)+(x2+y2))
+
+    令 x1+y1=X1，x1-y1=X2,
+    x2+y2=Y1, x2-y2=Y2,
+    则上式
+    = max(X1-Y1， X2-Y2， -X2+Y2， -X1+Y1) = max(|X1-Y1|,|X2-Y2|)  
+    */
+    int ans = INT_MAX;
+    vector<pair<int, int>> vp, vpt;
+    for (i = 0; i < n; i++) {
+        vp.push_back({points[i][0] + points[i][1], points[i][0] - points[i][1]});
+    }
+    auto t = vp;
+    sort (t.begin(), t.end());
+
+    // 分情况讨论
+    // 看pair.first
+    // 去掉第一项
+    auto dist1 = t[n - 1].first - t[1].first;
+    for (i = 1; i < n; i++) {
+        vpt.emplace_back(t[i]);
+    }
+    sort(vpt.begin(), vpt.end(), [](const pair<int, int>& a, const pair<int, int>& b){
+        return a.second < b.second;
+    });
+    auto dist2 = vpt[vpt.size() - 1].second - vpt[0].second;
+    ans = min(ans, max(dist1, dist2));
+
+    // 去掉最后一项
+    vpt.clear();
+    dist1 = t[n - 2].first - t[0].first;
+    for (i = 0; i < n - 1; i++) {
+        vpt.emplace_back(t[i]);
+    }
+    sort(vpt.begin(), vpt.end(), [](const pair<int, int>& a, const pair<int, int>& b){
+        return a.second < b.second;
+    });
+    dist2 = vpt[vpt.size() - 1].second - vpt[0].second;
+    ans = min(ans, max(dist1, dist2));
+
+    // 看pair.second
+    sort(t.begin(), t.end(), [](const pair<int, int>& a, const pair<int, int>& b){
+        return a.second < b.second;
+    });
+    // 去掉第一项
+    vpt.clear();
+    dist1 = t[n - 1].second - t[1].second;
+    for (i = 1; i < n; i++) {
+        vpt.emplace_back(t[i]);
+    }
+    sort(vpt.begin(), vpt.end(), [](const pair<int, int>& a, const pair<int, int>& b){
+        return a.first < b.first;
+    });
+    dist2 = vpt[vpt.size() - 1].first - vpt[0].first;
+    ans = min(ans, max(dist1, dist2));
+
+    // 去掉最后一项
+    vpt.clear();
+    dist1 = t[n - 2].second - t[0].second;
+    for (i = 0; i < n - 1; i++) {
+        vpt.emplace_back(t[i]);
+    }
+    sort(vpt.begin(), vpt.end(), [](const pair<int, int>& a, const pair<int, int>& b){
+        return a.first < b.first;
+    });
+    dist2 = vpt[vpt.size() - 1].first - vpt[0].first;
+    ans = min(ans, max(dist1, dist2));
+
     return ans;
 }
