@@ -5938,7 +5938,7 @@ int findMaxFish(vector<vector<int>>& grid)
 }
 
 
-// LC2662
+// LC2662 (有问题)
 int minimumCost(vector<int>& start, vector<int>& target, vector<vector<int>>& specialRoads) // 超时
 {
     int i, j;
@@ -17441,16 +17441,16 @@ int minimumDistance_LC3102(vector<vector<int>>& points)
     int i;
     int n = points.size();
     /*
-    |x1-x2|+|y1-y2|=max((x1-x2),(x2-x1))+max((y1-y2),(y2-y1))
+    |x1 - x2| + |y1 - y2| = max((x1 - x2), (x2 - x1)) + max((y1 - y2), (y2 - y1))
 
-    max(x1-x2+y1-y2， x1-x2+y2-y1， x2-x1+y1-y2， x2-x1+y2-y1)
+    = max(x1 - x2 + y1 - y2, x1 - x2 + y2 - y1, x2 - x1 + y1 - y2, x2 - x1 + y2 - y1)
 
-    =max( (x1+y1)-(x2+y2)， x1-y1-(x2-y2)， -(x1-y1)+(x2-y2)， -(x1+y1)+(x2+y2))
+    = max((x1 + y1) - (x2 + y2), x1 - y1 - (x2 - y2), -(x1 - y1) + (x2 - y2), -(x1 + y1) + (x2 + y2))
 
-    令 x1+y1=X1，x1-y1=X2,
-    x2+y2=Y1, x2-y2=Y2,
+    令 x1 + y1 = X1, x1 - y1 = X2,
+    x2 + y2 = Y1, x2 - y2 = Y2,
     则上式
-    = max(X1-Y1， X2-Y2， -X2+Y2， -X1+Y1) = max(|X1-Y1|,|X2-Y2|)  
+    = max(X1 - Y1, X2 - Y2, -X2 + Y2, -X1 + Y1) = max(|X1 - Y1|, |X2 - Y2|)
     */
     int ans = INT_MAX;
     vector<pair<int, int>> vp, vpt;
@@ -17514,4 +17514,116 @@ int minimumDistance_LC3102(vector<vector<int>>& points)
     ans = min(ans, max(dist1, dist2));
 
     return ans;
+}
+
+
+// LC721
+vector<vector<string>> accountsMerge(vector<vector<string>>& accounts)
+{
+    int i, j;
+    int n;
+    int area, cur, prev;
+    unordered_map<int, set<string>> mails;
+    unordered_map<int, string> user;
+    unordered_map<string, int> accountArea;
+
+    n = accounts.size();
+    area = 1;
+    for (i = 1; i < accounts[0].size(); i++) {
+        mails[area].emplace(accounts[0][i]);
+        accountArea[accounts[0][i]] = area;
+        user[area] = accounts[0][0];
+    }
+    area++;
+    for (i = 1; i < n; i++) {
+        cur = -1;
+        for (j = 1; j < accounts[i].size(); j++) {
+            if (accountArea.count(accounts[i][j])) {
+                if (cur == -1) {
+                    cur = accountArea[accounts[i][j]];
+                } else if (cur != accountArea[accounts[i][j]]) {
+                    prev = accountArea[accounts[i][j]];
+                    auto s = mails[prev];
+                    mails.erase(prev);
+                    for (auto it : s) {
+                        accountArea[it] = cur;
+                        mails[cur].emplace(it);
+                    }
+                }
+            }
+        }
+        if (cur == -1) {
+            for (j = 1; j < accounts[i].size(); j++) {
+                mails[area].emplace(accounts[i][j]);
+                accountArea[accounts[i][j]] = area;
+            }
+            user[area] = accounts[i][0];
+            area++;
+        } else {
+            for (j = 1; j < accounts[i].size(); j++) {
+                mails[cur].emplace(accounts[i][j]);
+                accountArea[accounts[i][j]] = cur;
+            }
+        }
+    }
+    vector<vector<string>> ans;
+    vector<string> t;
+    for (auto it : mails) {
+        t.clear();
+        t.emplace_back(user[it.first]);
+        for (auto mail : it.second) {
+            t.emplace_back(mail);
+        }
+        ans.emplace_back(t);
+    }
+    return ans;
+}
+
+
+// LC1163
+string lastSubstring(string s)
+{
+    int i, j;
+    int n = s.size();
+    int len;
+    string ans;
+
+    i = 0;
+    j = 1;
+    len = 0;
+    while (i + len < n && j + len < n) {
+        if (s[i + len] == s[j + len]) {
+            len++;
+        } else if (s[i + len] > s[j + len]) {
+            j = j + len + 1;
+            len = 0;
+        } else {
+            i = i + len + 1;
+            if (i >= j) {
+                j = i + 1;
+            }
+            len = 0;
+        }
+    }
+    ans = s.substr(i);
+    return ans;
+}
+
+
+// LC3196
+long long maximumTotalCost(vector<int>& nums)
+{
+    int i;
+    int n = nums.size();
+    vector<vector<long long>> dp(n, vector<long long>(2, 0)); // dp[i][0] 以i结尾且nums[i] 为正
+
+    dp[0][0] = nums[0];
+    dp[0][1] = -0x3f3f3f3f;
+
+    for (i = 1; i < n; i++) {
+        dp[i][0] = max(dp[i - 1][0] + nums[i], dp[i - 1][1] + nums[i]);
+        dp[i][1] = dp[i - 1][0] - nums[i];
+    }
+
+    return max(dp[n - 1][0], dp[n - 1][1]);
 }
