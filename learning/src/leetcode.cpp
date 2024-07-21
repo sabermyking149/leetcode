@@ -17692,3 +17692,45 @@ int maxFrequency(vector<int>& nums, int k)
 }
 
 
+// LC756
+void CreatePyramid(string& s, int idx, string& cur, unordered_map<string, vector<char>>& edge, bool& find)
+{
+    if (find) {
+        return;
+    }
+    if (idx == s.size()) {
+        if (cur.size() == 1) {
+            find = true;
+            return;
+        }
+        string newCur;
+        // 满足条件, 继续递归
+        CreatePyramid(cur, 1, newCur, edge, find);
+        return;
+    }
+    string t = s.substr(idx - 1, 2);
+    if (edge.count(t)) {
+        for (auto it : edge[t]) {
+            cur.push_back(it);
+            // 剪枝
+            if (cur.size() == 1 || (cur.size() > 1 && edge.count(cur.substr(cur.size() - 2)) == 1)) {
+                CreatePyramid(s, idx + 1, cur, edge, find);
+            }
+            cur.pop_back();
+        }
+    }
+}
+bool pyramidTransition(string bottom, vector<string>& allowed)
+{
+    unordered_map<string, vector<char>> edge;
+    for (auto a : allowed) {
+        edge[a.substr(0, 2)].emplace_back(a[2]);
+    }
+
+    string cur;
+    bool find = false;
+
+    CreatePyramid(bottom, 1, cur, edge, find);
+
+    return find;
+}
