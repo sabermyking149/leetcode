@@ -17627,3 +17627,68 @@ long long maximumTotalCost(vector<int>& nums)
 
     return max(dp[n - 1][0], dp[n - 1][1]);
 }
+
+
+// LC3221
+long long maxScore(vector<int>& nums)
+{
+    // i < k < j
+    // (k - i) * nums[k] + (j - k) * nums[j] > (j - i) * nums[j] =>
+    // (k - i) * (nums[k] - nums[j]) > 0
+
+    int i, idx;
+    int n = nums.size();
+    long long ans = 0;
+
+    idx = n - 1;
+    for (i = n - 2; i >= 0; i--) {
+        if (nums[i] > nums[idx]) {
+            ans += (idx - i) * static_cast<long long>(nums[idx]);
+            idx = i;
+        }
+    }
+    ans += (idx - 0) * static_cast<long long>(nums[idx]);
+    return ans;
+}
+
+
+// LC1838
+int maxFrequency(vector<int>& nums, int k)
+{
+    int i;
+    int n = nums.size();
+    int ans;
+    int left, right, mid;
+    long long need;
+    vector<long long> prefix(n);
+
+    sort(nums.begin(), nums.end());
+
+    prefix[0] = nums[0];
+    for (i = 1; i < n; i++) {
+        prefix[i] = prefix[i - 1] + nums[i];
+    }
+    ans = 1;
+    for (i = n - 1; i >= 0; i--) {
+        left = 0;
+        right = i;
+        // 所求left
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (mid == 0) {
+                need = nums[i] * static_cast<long long>(i - mid + 1) - prefix[i];
+            } else {
+                need = nums[i] * static_cast<long long>(i - mid + 1) - (prefix[i] - prefix[mid - 1]);
+            }
+            if (need <= k) {
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        ans = max(ans, i - left + 1);
+    }
+    return ans;
+}
+
+
