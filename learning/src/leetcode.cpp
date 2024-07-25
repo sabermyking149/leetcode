@@ -17734,3 +17734,85 @@ bool pyramidTransition(string bottom, vector<string>& allowed)
 
     return find;
 }
+
+
+// LC2547
+int minCost_LC2547(vector<int>& nums, int k)
+{
+    int i, j;
+    int n = nums.size();
+    int len;
+    vector<int> cnt(n, 0);
+    vector<long long> dp(n, LLONG_MAX);
+
+    dp[0] = k;
+    cnt[nums[0]] = 1;
+    len = 0;
+    for (i = 1; i < n; i++) {
+        cnt[nums[i]]++;
+        if (cnt[nums[i]] == 2) {
+            len += 2;
+        } else if (cnt[nums[i]] > 2) {
+            len++;
+        }
+        auto tCnt = cnt;
+        auto tLen = len;
+        dp[i] = k + len;
+        for (j = 0; j < i; j++) {
+            if (tCnt[nums[j]] == 2) {
+                tCnt[nums[j]]--;
+                tLen -= 2;
+            } else if (tCnt[nums[j]] > 2) {
+                tCnt[nums[j]]--;
+                tLen--;
+            }
+            dp[i] = min(dp[i], dp[j] + k + tLen);
+        }
+    }
+    return dp[n - 1];
+}
+
+
+// LC2318
+int distinctSequences(int n)
+{
+    // dp[i][p1][p2] - 第i次投, 其最后一个数是p1, 倒数第二个数是p2的总序列数
+    // 所求sum(dp[i]);
+    vector<vector<vector<long long>>> dp(n + 1, vector<vector<long long>>(7, vector<long long>(7 , 0)));
+    long long mod = 1e9 + 7;
+    int p, i, j, k;
+
+    if (n == 1) {
+        // dp[1][i][j] 无意义, 不存在
+        return 6;
+    }
+    for (i = 1; i <= 6; i++) {
+        for (j = 1; j <= 6; j++) {
+            if (i != j && gcd(i, j) == 1) {
+                dp[2][i][j]++;
+            }
+        }
+    }
+    for (p = 2; p <= n - 1; p++) {
+        for (i = 1; i <= 6; i++) {
+            for (j = 1; j <= 6; j++) {
+                if (i == j || gcd(i, j) != 1) {
+                    continue;
+                }
+                for (k = 1; k <= 6; k++) {
+                    if (i == k || j == k || gcd(j, k) != 1) {
+                        continue;
+                    }
+                    dp[p + 1][i][j] = (dp[p][j][k] + dp[p + 1][i][j]) % mod;
+                }
+            }
+        }
+    }
+    long long ans = 0;
+    for (i = 1; i <= 6; i++) {
+        for (j = 1; j <= 6; j++) {
+            ans = (ans + dp[n][i][j]) % mod;
+        }
+    }
+    return ans;
+}
