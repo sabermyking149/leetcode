@@ -17816,3 +17816,182 @@ int distinctSequences(int n)
     }
     return ans;
 }
+
+
+// LC2067
+int equalCountSubstrings(string s, int count)
+{
+    auto Check = [](vector<int>& alphabet, int count) {
+        int i;
+        int n = alphabet.size();
+        bool find = false;
+        for (i = 0; i < n; i++) {
+            if (alphabet[i] != 0) { 
+                if (alphabet[i] < count) {
+                    return -1;
+                } else if (alphabet[i] > count) {
+                    return 1;
+                }
+                find = true;
+            }
+        }
+        if (find) {
+            return 0;
+        }
+        return -2;
+    };
+
+    int i, k;
+    int n = s.size();
+    int len, ans;
+    vector<int> alphabet(26, 0);
+
+    k = 1;
+    ans = 0;
+    while (k <= 26) {
+        len = count * k;
+        if (len > n) {
+            break;
+        }
+        alphabet.assign(26, 0);
+        for (i = 0; i < n; i++) {
+            if (i < len) {
+                alphabet[s[i] - 'a']++;
+                if (i == len - 1 && Check(alphabet, count) == 0) {
+                    ans++;
+                }
+            } else {
+                alphabet[s[i] - 'a']++;
+                alphabet[s[i - len] - 'a']--;
+                if (Check(alphabet, count) == 0) {
+                    ans++;
+                }
+            }
+        }
+        k++;
+    }
+    return ans;
+}
+
+
+// LC2953 (类似LC2067)
+int countCompleteSubstrings(string word, int k)
+{
+    auto Check = [](vector<int>& alphabet, int count) {
+        int i;
+        int n = alphabet.size();
+        bool find = false;
+        for (i = 0; i < n; i++) {
+            if (alphabet[i] != 0) { 
+                if (alphabet[i] < count) {
+                    return -1;
+                } else if (alphabet[i] > count) {
+                    return 1;
+                }
+                find = true;
+            }
+        }
+        if (find) {
+            return 0;
+        }
+        return -2;
+    };
+
+    int i, j;
+    int n = word.size();
+    int len, ans;
+    int suit;
+    vector<int> alphabet(26, 0);
+
+    j = 1;
+    suit = ans = 0;
+    while (j <= 26) {
+        len = k * j;
+        if (len > n) {
+            break;
+        }
+        alphabet.assign(26, 0);
+        suit = 1;
+        for (i = 0; i < n; i++) {
+            if (i > 0) {
+                if (abs(word[i] - word[i - 1]) > 2) {
+                    suit--;
+                } else {
+                    suit++;
+                }
+            }
+            if (i < len) {
+                alphabet[word[i] - 'a']++;
+                if (i == len - 1 && Check(alphabet, k) == 0 && suit == len) {
+                    // cout << "(" << i - len + 1 << ", " << i << ")" << endl;
+                    ans++;
+                }
+            } else {
+                alphabet[word[i] - 'a']++;
+                alphabet[word[i - len] - 'a']--;
+                if (abs(word[i - len] - word[i - len + 1]) > 2) {
+                    suit++;
+                } else {
+                    suit--;
+                }
+                if (Check(alphabet, k) == 0 && suit == len) {
+                    // cout << "(" << i - len + 1 << ", " << i << ")" << endl;
+                    ans++;
+                }
+            }
+        }
+        j++;
+    }
+    return ans;
+}
+
+
+// LC2250
+vector<int> countRectangles(vector<vector<int>>& rectangles, vector<vector<int>>& points)
+{
+    sort(rectangles.begin(), rectangles.end());
+
+    int i, j;
+    int n = rectangles.size();
+    // 大于等于h的rectangles[x][1]的集合heightsIdx[h]
+    vector<vector<int>> heightsIdx(101); // h <= 100
+    for (j = 0; j <= 100; j++) {
+        for (i = 0; i < n; i++) {
+            if (j <= rectangles[i][1]) {
+                heightsIdx[j].emplace_back(i);
+            }
+        }
+    }
+
+    vector<int> ans;
+    int left, right, mid;
+    for (auto p : points) {
+        left = 0;
+        right = n - 1;
+        // 第一个大于等于p[0]的rectangles[x][0], 所求left
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (rectangles[mid][0] < p[0]) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        // cout << left << endl;
+        // 再在heightsIdx[p[1]]找符合[left, n - 1]的所有下标
+        auto target = left;
+        left = 0;
+        right = heightsIdx[p[1]].size() - 1;
+        // 所求left
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (heightsIdx[p[1]][mid] < target) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        ans.emplace_back(heightsIdx[p[1]].size() - left);
+    }
+    return ans;
+}
