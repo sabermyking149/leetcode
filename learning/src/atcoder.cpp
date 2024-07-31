@@ -746,3 +746,60 @@ void ABC_357_C()
         cout << ans[i] << endl;
     }
 }
+
+
+void ABC_364_E()
+{
+    int i, j, k;
+    int n;
+    int a, b;
+    int x, y;
+    int ans = 0;
+
+    cin >> n >> x >> y;
+
+    vector<vector<int>> dishes(n, vector<int>(2));
+    for (i = 0; i < n; i++) {
+        cin >> a >> b;
+        dishes[i] = {a, b};
+    }
+
+    // dp[i][j][k] - 前i个物品选j个的x值对应的最小y值
+    vector<vector<vector<int>>> dp(n + 1, vector<vector<int>>(n + 1, vector<int>(x + 1, 0x3f3f3f3f)));
+    dp[0][0][0] = 0;
+    for (i = 1; i <= n; i++) {
+        for (j = 0; j <= i; j++) {
+            if (j == 0) {
+                dp[i][j][0] = 0;
+                continue;
+            }
+            for (k = 1; k <= x; k++) {
+                // 全选完
+                if (j == i) {
+                    if (k >= dishes[i - 1][0]) {
+                        dp[i][j][k] = dp[i - 1][j - 1][k - dishes[i - 1][0]] + dishes[i - 1][1];
+                    }
+                    if (dp[i][j][k] <= y) {
+                        ans = max(ans, j);
+                    }
+                    continue;
+                }
+                // 不全选完, 2种情况, 不选第i个; 选第i个
+                dp[i][j][k] = min(dp[i][j][k], dp[i - 1][j][k]);
+                if (k >= dishes[i - 1][0]) {
+                    auto t = dp[i - 1][j - 1][k - dishes[i - 1][0]] + dishes[i - 1][1];
+                    if (t <= y) {
+                        dp[i][j][k] = min(dp[i][j][k], t);
+                    }
+                }
+                if (dp[i][j][k] <= y) {
+                    ans = max(ans, j);
+                }
+            }
+        }
+    }
+    if (ans != n) {
+        ans++;
+    }
+    cout << ans << endl;
+}
