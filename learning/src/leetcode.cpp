@@ -5938,88 +5938,109 @@ int findMaxFish(vector<vector<int>>& grid)
 }
 
 
-// LC2662 (有问题)
-int minimumCost(vector<int>& start, vector<int>& target, vector<vector<int>>& specialRoads) // 超时
+// LC2662
+template<typename T>
+void InsertMinVal(map<T, int>& m, T key, int val) {
+    if (m.count(key) == 0) {
+        m[key] = val;
+    } else {
+        m[key] = min(m[key], val);
+    }
+};
+int minimumCost(vector<int>& start, vector<int>& target, vector<vector<int>>& specialRoads)
 {
     int i, j;
     int m = specialRoads.size();
-    int r, c, nr, nc;
-    int cost, point, npoint;
-    int directions[4][2] = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
-    //int directions[4][2] = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
-    map<pair<int, int>, vector<tuple<int, int, int>>> trueRoads;
-    map<pair<int, int>, long long> costData;
-    queue<tuple<int, int, long long>> q;
+    int ans, cost;
+    long long base = 1e5;
 
+    unordered_map<long long, int> dist;
+    unordered_map<long long, unordered_set<long long>> edges;
+    map<pair<long long, long long>, int> weight;
+
+    auto cmp = [](pair<long long, int>& a, pair<long long, int>& b) {
+        return a.second > b.second;
+    };
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, decltype(cmp)> pq(cmp);
+    long long nodeStart = start[0] * base + start[1];
+    long long nodeTarget = target[0] * base + target[1];
+
+    // 对于每一条specialRoads, 它的出口都可以连接除它本身的其他specialRoads的入口, 还可以连接target
+    // 将二维坐标化为一维坐标
     for (i = 0; i < m; i++) {
-        cost = abs(specialRoads[i][0] - specialRoads[i][2]) +
-                abs(specialRoads[i][1] - specialRoads[i][3]);
-        if (cost > specialRoads[i][4]) {
-            trueRoads[{specialRoads[i][0], specialRoads[i][1]}].push_back(
-            {specialRoads[i][2], specialRoads[i][3], specialRoads[i][4]});
+        auto node1Entrance = specialRoads[i][0] * base + specialRoads[i][1];
+        auto node1Exit = specialRoads[i][2] * base + specialRoads[i][3];
+        // start到特殊通道入口
+        edges[nodeStart].emplace(node1Entrance);
+        InsertMinVal(weight, {nodeStart, node1Entrance}, abs(start[0] - specialRoads[i][0]) +
+            abs(start[1] - specialRoads[i][1]));
 
-            //trueRoads[{specialRoads[i][2], specialRoads[i][3]}].push_back(
-            //{specialRoads[i][0], specialRoads[i][1], specialRoads[i][4]});
+        // 特殊通道
+        cost = abs(specialRoads[i][0] - specialRoads[i][2]) +
+            abs(specialRoads[i][1] - specialRoads[i][3]);
+        if (cost >= specialRoads[i][4]) {
+            edges[node1Entrance].emplace(node1Exit);
+            InsertMinVal(weight, {node1Entrance, node1Exit}, specialRoads[i][4]);
         }
+        // 出口连target
+        cost = abs(target[0] - specialRoads[i][2]) +
+            abs(target[1] - specialRoads[i][3]);
+        edges[node1Exit].emplace(nodeTarget);
+        InsertMinVal(weight, {node1Exit, nodeTarget}, cost);
     }
-    int ans = INT_MAX;
-    q.push({start[0], start[1], 0});
-    while (q.size()) {
-        auto t = q.front();
-        q.pop();
-        r = get<0>(t);
-        c = get<1>(t);
-        point = get<2>(t);
-        //printf ("0: %d %d %d\n", r, c, point);
-        if (costData.count({r, c}) == 1 && costData[{r, c}] <= point) {
-            continue;
-        }
-        if (r == target[0] && c == target[1]) {
-            ans = min(point, ans);
-            continue;
-        }
-        
-        if (r == 1 && c == 2 && point == 1) {
-            int ndfd = 34;
-        }
-        costData[{r, c}] = point;
-        if (trueRoads.count({r, c}) == 1) {
-            for (auto it : trueRoads[{r, c}]) {
-                pair<int, int> p = {get<0>(it), get<1>(it)};
-                npoint = point + get<2>(it);
-                if (costData.count(p) == 0) {
-                    //printf ("1: %d %d %d\n", r, c, point);
-                    q.push({p.first, p.second, npoint});
-                    //printf ("1.1: %d %d %d\n", p.first, p.second, npoint);
-                } else {
-                    if (costData[p] > npoint) {
-                        // costData[p] = npoint;
-                        q.push({p.first, p.second, npoint});
-                        //printf ("2: %d %d %d\n", p.first, p.second, npoint);
-                    }
-                }
-            }
-        }
-        for (i = 0; i < 4; i++) {
-            nr = r + directions[i][0];
-            nc = c + directions[i][1];
-            if (nr < start[0] || nr > target[0] || nc < start[1] || nc > target[1]) {
+    // 特殊通道出口连其他通道入口
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < m; j++) {
+            if (i == j) {
                 continue;
             }
-            if (costData.count({nr, nc}) == 1) {
-                if (point + 1 >= costData[{nr, nc}]) {
+            cost = abs(specialRoads[i][2] - specialRoads[j][0]) +
+                abs(specialRoads[i][3] - specialRoads[j][1]);
+            auto node1Exit = specialRoads[i][2] * base + specialRoads[i][3];
+            auto node2Entrance = specialRoads[j][0] * base + specialRoads[j][1];
+
+            edges[node1Exit].emplace(node2Entrance);
+            InsertMinVal(weight, {node1Exit, node2Entrance}, cost);
+        }
+    }
+    // start直接到target
+    cost = abs(start[0] - target[0]) + abs(start[1] - target[1]);
+    edges[nodeStart].emplace(nodeTarget);
+    InsertMinVal(weight, {nodeStart, nodeTarget}, cost);
+    
+    ans = 0x3f3f3f3f;
+    pq.push({nodeStart, 0});
+    while (pq.size()) {
+        auto p = pq.top();
+        pq.pop();
+        if (dist.count(p.first) && dist[p.first] < p.second) {
+            continue;
+        }
+        dist[p.first] = p.second;
+        // printf ("%d %d %d\n", p.first / base, p.first % base, p.second);
+        if (p.first == nodeTarget) {
+            ans = min(ans, p.second);
+            break;
+        }
+        for (auto it : edges[p.first]) {
+            if (dist.count(it) == 0) {
+                dist[it] = p.second + weight[{p.first, it}];
+                pq.push({it, dist[it]});
+            } else {
+                if (dist[it] <= p.second + weight[{p.first, it}]) {
                     continue;
                 }
+                dist[it] = p.second + weight[{p.first, it}];
+                pq.push({it, dist[it]});
             }
-            //printf ("3: %d %d %d\n", nr, nc, point + 1);
-            q.push({nr, nc, point + 1});
         }
     }
     return ans;
 }
 
-// LC2659
-long long countOperationsToEmptyArray(vector<int>& nums) // 有问题
+
+// LC2659 (有问题)
+long long countOperationsToEmptyArray(vector<int>& nums)
 {
     int i;
     int n = nums.size();
@@ -17994,4 +18015,56 @@ vector<int> countRectangles(vector<vector<int>>& rectangles, vector<vector<int>>
         ans.emplace_back(heightsIdx[p[1]].size() - left);
     }
     return ans;
+}
+
+
+// LC1616
+bool checkPalindromeFormation(string a, string b)
+{
+    int i, j;
+    int n = a.size();
+    string t, s;
+
+    if (IsPalindrome(a) || IsPalindrome(b)) {
+        return true;
+    }
+
+    i = 0;
+    j = n - 1;
+    if (a[i] == b[j]) {
+        while (i < j) {
+            if (a[i] == b[j]) {
+                i++;
+                j--;
+            } else {
+                break;
+            }
+        }
+        t = a.substr(0, i) + b.substr(i);
+        s = a.substr(0, j + 1) + b.substr(j + 1);
+        // cout << t << " " << s << endl;
+        if (IsPalindrome(t) || IsPalindrome(s)) {
+            return true;
+        }
+    }
+
+    i = 0;
+    j = n - 1;
+    if (a[j] == b[i]) {
+        while (i < j) {
+            if (a[j] == b[i]) {
+                i++;
+                j--;
+            } else {
+                break;
+            }
+        }
+        t = b.substr(0, i) + a.substr(i);
+        s = b.substr(0, j + 1) + a.substr(j + 1);
+        // cout << t << " " << s << endl;
+        if (IsPalindrome(t) || IsPalindrome(s)) {
+            return true;
+        }
+    }
+    return false;
 }
