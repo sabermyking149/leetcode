@@ -18068,3 +18068,196 @@ bool checkPalindromeFormation(string a, string b)
     }
     return false;
 }
+
+
+// LC3244
+vector<int> shortestDistanceAfterQueries(int n, vector<vector<int>>& queries)
+{
+    int i;
+    int size;
+    unordered_map<int, set<int, greater<>>> edges;
+    set<pair<int, int>> specialRoads;
+
+    size = queries.size();
+    for (i = 0; i < size; i++) {
+        edges[queries[i][0]].emplace(queries[i][1]);
+    }
+
+    // 从后往前找
+    vector<int> ans(size);
+    int nextPos;
+    int pos = 0;
+    int cnt = 0;
+    while (pos != n - 1) {
+        if (edges.count(pos) != 0) {
+            nextPos = *edges[pos].begin();
+            specialRoads.insert({pos, nextPos});
+            pos = nextPos;
+        } else {
+            pos++;
+        }
+        cnt++;
+    }
+    ans[size - 1] = cnt;
+
+    for (i = size - 1; i >= 1; i--) {
+        if (edges[queries[i][0]].size() == 1) {
+            edges.erase(queries[i][0]);
+        } else {
+            edges[queries[i][0]].erase(queries[i][1]);
+        }
+        if (specialRoads.count({queries[i][0], queries[i][1]}) == 0) {
+            ans[i - 1] = cnt;
+            specialRoads.erase({queries[i][0], queries[i][1]});
+        } else {
+            specialRoads.erase({queries[i][0], queries[i][1]});
+            // 这条捷径不能走了cnt减一
+            cnt--;
+            pos = queries[i][0];
+            while (pos != queries[i][1]) {
+                if (edges.count(pos) != 0) {
+                    nextPos = *edges[pos].begin();
+                    specialRoads.insert({pos, nextPos});
+                    // cout << pos << " " << nextPos << endl;
+                    pos = nextPos;
+                } else {
+                    pos++;
+                }
+                cnt++;
+            }
+            ans[i - 1] = cnt;
+        }
+    }
+    return ans;
+}
+
+
+// LC3247
+int subsequenceCount(vector<int>& nums)
+{
+    // dp[i][0] - 第i位结尾和为偶数的子序列数量
+    int i;
+    int n = nums.size();
+    int mod = 1e9 + 7;
+    // 和为偶/奇的子序列个数
+    long long sum0, sum1;
+    vector<vector<long long>> dp(n, vector<long long>(2, 0));
+
+    if (nums[0] % 2 == 0) {
+        dp[0][0] = 1;
+        sum0 = 1;
+        sum1 = 0;
+    } else {
+        dp[0][1] = 1;
+        sum0 = 0;
+        sum1 = 1;
+    }
+    for (i = 1; i < n; i++) {
+        if (nums[i] % 2 == 0) {
+            dp[i][1] = sum1;
+            dp[i][0] = (sum0 + 1) % mod;
+            sum1 = (dp[i][1] + sum1) % mod;
+            sum0 = (sum0 + dp[i][0]) % mod;
+        } else {
+            dp[i][1] = (sum0 + 1) % mod;
+            dp[i][0] = sum1;
+            sum1 = (sum1 + dp[i][1]) % mod;
+            sum0 = (dp[i][0] + sum0) % mod;
+        }
+    }
+    return sum1;
+}
+
+
+// LC3249
+int countGoodNodes(vector<vector<int>>& edges)
+{
+    vector<vector<int>> e(edges.size() + 1);
+    // unordered_map<int, set<int>> e;
+    for (auto ed : edges) {
+        e[ed[0]].emplace_back(ed[1]);
+        e[ed[1]].emplace_back(ed[0]);
+    }
+    unordered_map<int, int> cnt;
+    int ans = 0;
+    function<int (int, int)> f = [&f, &e, &cnt, &ans](int node, int parent) {
+        if (e[node].size() == 1 && *e[node].begin() == parent) {
+            cnt[node] = 0;
+            ans++;
+            return 0;
+        }
+        int tol = 0;
+        int data = -1;
+        bool flag = true;
+        for (auto it : e[node]) {
+            if (it != parent) {
+                if (cnt.count(it) == 0) {
+                    cnt[it] = f(it, node) + 1;
+                }
+                tol += cnt[it];
+                if (data == -1) {
+                    data = cnt[it];
+                } else if (data != cnt[it]) {
+                    flag = false;
+                }
+            }
+        }
+        if (flag) {
+            ans++;
+        }
+        cnt[node] = tol;
+        return tol;
+    };
+    f(0, -1);
+    // for (auto it : cnt) printf("%d %d\n", it.first, it.second);
+    return ans;
+}
+
+
+// LC3251
+int countOfPairs(vector<int>& nums)
+{
+    int i, j, k;
+    int n = nums.size();
+    int mod = 1e9 + 7;
+    int maxVal;
+    size_t len = *max_element(nums.begin(), nums.end()) + 1;
+    // dp[i][j] - arr1在i处取j的pair数
+    vector<vector<long long>> dp(n, vector<long long>(len, 0));
+    // prefix[i][j] - arr1在i处取0 - j的pair数前缀和
+    vector<vector<long long>> prefix(n, vector<long long>(len, 0));
+
+    dp[0][0] = 1;
+    prefix[0][0] = 1;
+    for (i = 1; i <= nums[0]; i++) {
+        dp[0][i] = 1;
+        prefix[0][i] = prefix[0][i - 1] + 1;
+    }
+    for (i = 1; i < n; i++) {
+        for (j = 0; j <= nums[i]; j++) {
+            // i位arr2的值
+            k = nums[i] - j;
+            // k要小于等于nums[i - 1] - j' (0 <= j' <= j) 且 nums[i - 1] - j' >= 0 => j' <= nums[i - 1]
+            // k <= nums[i - 1] - j' => j' <= nums[i - 1] - k
+            // j'能取的最大值maxVal
+            maxVal = min(nums[i - 1], nums[i - 1] - k);
+            if (maxVal < 0) {
+                continue;
+            } else if (maxVal > j) {
+                maxVal = j;
+            }
+            dp[i][j] = (dp[i][j] + prefix[i - 1][maxVal]) % mod;
+            if (j == 0) {
+                prefix[i][j] = dp[i][j];
+            } else {
+                prefix[i][j] = (prefix[i][j - 1] + dp[i][j]) % mod;
+            }
+        }
+    }
+
+    long long ans = 0;
+    for (k = 0; k < len; k++) {
+        ans = (ans + dp[n - 1][k]) % mod;
+    }
+    return ans;
+}

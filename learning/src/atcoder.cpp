@@ -803,3 +803,68 @@ void ABC_364_E()
     }
     cout << ans << endl;
 }
+
+
+void ABC_365_E()
+{
+    int i;
+    int n;
+
+    cin >> n;
+
+    vector<int> a(n);
+    for (i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+}
+
+
+// 三维前缀和
+void ABC_366_D()
+{
+    int i, j, k;
+    int n;
+
+    cin >> n;
+
+    int cube[101][101][101] = {0};
+    int prefix[101][101][101] = {0};
+    for (i = 1; i <= n; i++) {
+        for (j = 1; j <= n; j++) {
+            for (k = 1; k <= n; k++) {
+                cin >> cube[i][j][k];
+                prefix[i][j][k] = cube[i][j][k] + 
+                                  prefix[i - 1][j][k] +
+                                  prefix[i][j - 1][k] -
+                                  prefix[i - 1][j - 1][k] +
+                                  prefix[i][j][k - 1] -
+                                  prefix[i - 1][j][k - 1] -
+                                  prefix[i][j - 1][k - 1] +
+                                  prefix[i - 1][j - 1][k - 1];
+            }
+        }
+    }
+
+    int q;
+
+    cin >> q;
+
+    int Lx, Rx, Ly, Ry, Lz, Rz;
+    int ret;
+    vector<int> ans;
+    for (i = 0; i < q; i++) {
+        cin >> Lx >> Rx >> Ly >> Ry >> Lz >> Rz;
+        ret = prefix[Rx][Ry][Rz] -
+              prefix[Lx - 1][Ry][Rz] -
+              prefix[Rx][Ly - 1][Rz] +
+              prefix[Lx - 1][Ly - 1][Rz] -
+              prefix[Rx][Ry][Lz - 1] +
+              prefix[Lx - 1][Ry][Lz - 1] +
+              prefix[Rx][Ly - 1][Lz - 1] -
+              prefix[Lx - 1][Ly - 1][Lz - 1];
+        ans.emplace_back(ret);
+    }
+    for (auto a : ans) {
+        cout << a << endl;
+    }
+}
