@@ -18261,3 +18261,26 @@ int countOfPairs(vector<int>& nums)
     }
     return ans;
 }
+
+
+// LC1842
+string nextPalindrome(string num)
+{
+    int n = num.size();
+
+    string s = num.substr(0, n / 2);
+    string t = s;
+
+    // 偷懒用stl
+    next_permutation(t.begin(), t.end());
+    if (t <= s) {
+        return "";
+    } 
+    string ans = t;
+    if (n % 2 == 1) {
+        ans += num[n / 2];
+    }
+    reverse(t.begin(), t.end());
+    ans += t;
+    return ans;
+}
