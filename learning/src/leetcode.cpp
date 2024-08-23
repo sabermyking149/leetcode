@@ -18307,14 +18307,14 @@ int minimumCost(string target, vector<string>& words, vector<int>& costs)
 }
 
 
-// LC3209 (有问题)
+// LC3209
 long long countSubarrays_LC3209(vector<int>& nums, int k)
 {
     int i, j, idx;
     int t;
     int n = nums.size();
-    vector<int> base(32);
-    vector<vector<int>> prefix(n, vector<int>(32, 0));
+    vector<int> base(30);
+    vector<vector<int>> prefix(n, vector<int>(30, 0));
 
     idx = 0;
     t = k;
@@ -18325,61 +18325,94 @@ long long countSubarrays_LC3209(vector<int>& nums, int k)
     }
     vector<int> v;
     for (i = 0; i < n; i++) {
-        v.assign(32, 0);
         idx = 0;
         t = nums[i];
-        while (t) {
-            v[idx] = t % 2;
+        while (idx < 30) {
+            if (i == 0) {
+                prefix[i][idx] = t % 2;
+            } else {
+                prefix[i][idx] = prefix[i - 1][idx] + t % 2;
+            }
             t /= 2;
             idx++;
-        }
-        if (i == 0) {
-            prefix[i] = v;
-        } else {
-            for (j = 0; j < 32; j++) {
-                prefix[i][j] = prefix[i - 1][j] + v[j];
-            }
         }
     }
 
     long long ans = 0;
     int left, right, mid;
+    int a, b;
     for (i = 0; i < n; i++) {
         if (nums[i] < k) {
             continue;
         }
-        left = 0;
-        right = i;
+        // 找两个区间 a 和 b [l, a]的按位与和[l, b]的按位与都为k则a到b之间的子数组都符合要求
+        // 右边界
+        left = i;
+        right = n - 1;
         while (left <= right) {
             mid = (right - left) / 2 + left;
-            if (mid == 0) {
-                v = prefix[i];
+            if (nums[mid] < k) {
+                right = mid - 1;
+                continue;
+            }
+            if (i == 0) {
+                for (j = 0; j < 30; j++) {
+                    if (mid - i + 1 != prefix[mid][j] && base[j] == 1) {
+                        right = mid - 1;
+                        break;
+                    }
+                }
             } else {
-                v.assign(32, 0);
-                for (j = 0; j < 32; j++) {
-                    v[j] = prefix[i][j] - prefix[mid - 1][j];
-                }
-            }
-            for (j = 0; j < 32; j++) {
-                if (i - mid + 1 == v[j]) { // 没有0
-                    if (base[j] != 1) {
-                        left = mid + 1;
-                        break;
-                    }
-                } else {
-                    if (base[j] == 1) { // 有0
-                        left = mid + 1;
+                for (j = 0; j < 30; j++) {
+                    if (mid - i + 1 != prefix[mid][j] - prefix[i - 1][j] && base[j] == 1) {
+                        right = mid - 1;
                         break;
                     }
                 }
             }
-            if (j == 32) {
+            if (j == 30) {
+                left = mid + 1;
+            }
+        }
+        b = right;
+        if (right < i) { // 没有一个符合
+            continue;
+        }
+        // 左边界
+        if (nums[i] == k) {
+            a = i;
+            ans += static_cast<long long>(b - a + 1);
+            continue;
+        }
+        left = i;
+        right = b;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (i == 0) {
+                for (j = 0; j < 30; j++) {
+                    if ((mid - i + 1 != prefix[mid][j] && base[j] == 1) || 
+                        (mid - i + 1 == prefix[mid][j] && base[j] == 0)) {
+                        left = mid + 1;
+                        break;
+                    }
+                }
+            } else {
+                for (j = 0; j < 30; j++) {
+                    if ((mid - i + 1 != prefix[mid][j] - prefix[i - 1][j] && base[j] == 1) || 
+                        (mid - i + 1 == prefix[mid][j] - prefix[i - 1][j] && base[j] == 0)) {
+                        left = mid + 1;
+                        break;
+                    }
+                }
+            }
+            if (j == 30) {
                 right = mid - 1;
             }
         }
-        ans += static_cast<long long>(i - left + 1);
+        a = left;
+        // cout << a << " " << b << endl;
+        ans += static_cast<long long>(b - a + 1);
     }
-
     return ans;
 }
 
@@ -18567,4 +18600,42 @@ string largestPalindrome(int n, int k)
         }
     }
     return ans;
+}
+
+
+// LC3007
+long long CountBitSum(long long num, int x)
+{
+    int base;
+    long long t;
+    long long ans;
+
+    ans = 0;
+    base = 1;
+
+    while (1) {
+        t = 1ll << x * base;
+        if (num * 2 < t) {
+            break;
+        }
+        ans += (num + 1) / t * (t >> 1) + ((num + 1) % t > (t >> 1) ? (num + 1) % t - (t >> 1) : 0);
+        base++;
+    }
+    return ans;
+}
+long long findMaximumNumber(long long k, int x)
+{
+    long long left, right, mid;
+
+    left = 0;
+    right = 1e16;
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        if (CountBitSum(mid, x) <= k) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    return right;
 }
