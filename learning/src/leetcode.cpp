@@ -18284,3 +18284,287 @@ string nextPalindrome(string num)
     ans += t;
     return ans;
 }
+
+
+// LC3253
+int minimumCost(string target, vector<string>& words, vector<int>& costs) 
+{
+    int i, j;
+    int n = target.size();
+    int m = costs.size();
+    vector<int> dp(n + 1, INT_MAX);
+
+    dp[0] = 0;
+    for (i = 1; i <= n; i++) {
+        for (j = 0; j < m; j++) {
+            if (i >= words[j].size() && words[j] == target.substr(i - words[j].size(), words[j].size()) &&
+                dp[i - words[j].size()] != INT_MAX) {
+                dp[i] = min({dp[i], dp[i - words[j].size()] + costs[j]});
+            }
+        }
+    }
+    return dp[n] == INT_MAX ? -1 : dp[n];
+}
+
+
+// LC3209 (有问题)
+long long countSubarrays_LC3209(vector<int>& nums, int k)
+{
+    int i, j, idx;
+    int t;
+    int n = nums.size();
+    vector<int> base(32);
+    vector<vector<int>> prefix(n, vector<int>(32, 0));
+
+    idx = 0;
+    t = k;
+    while (t) {
+        base[idx] = t % 2;
+        t /= 2;
+        idx++;
+    }
+    vector<int> v;
+    for (i = 0; i < n; i++) {
+        v.assign(32, 0);
+        idx = 0;
+        t = nums[i];
+        while (t) {
+            v[idx] = t % 2;
+            t /= 2;
+            idx++;
+        }
+        if (i == 0) {
+            prefix[i] = v;
+        } else {
+            for (j = 0; j < 32; j++) {
+                prefix[i][j] = prefix[i - 1][j] + v[j];
+            }
+        }
+    }
+
+    long long ans = 0;
+    int left, right, mid;
+    for (i = 0; i < n; i++) {
+        if (nums[i] < k) {
+            continue;
+        }
+        left = 0;
+        right = i;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (mid == 0) {
+                v = prefix[i];
+            } else {
+                v.assign(32, 0);
+                for (j = 0; j < 32; j++) {
+                    v[j] = prefix[i][j] - prefix[mid - 1][j];
+                }
+            }
+            for (j = 0; j < 32; j++) {
+                if (i - mid + 1 == v[j]) { // 没有0
+                    if (base[j] != 1) {
+                        left = mid + 1;
+                        break;
+                    }
+                } else {
+                    if (base[j] == 1) { // 有0
+                        left = mid + 1;
+                        break;
+                    }
+                }
+            }
+            if (j == 32) {
+                right = mid - 1;
+            }
+        }
+        ans += static_cast<long long>(i - left + 1);
+    }
+
+    return ans;
+}
+
+
+// LC3256
+long long maximumValueSum(vector<vector<int>>& board)
+{
+    int i, j, k;
+    int m = board.size();
+    int n = board[0].size();
+    long long ans, cur;
+    vector<vector<pair<long long, int>>> max3OfRow(m, vector<pair<long long, int>>(3, {-1, -1}));
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            if (max3OfRow[i][0].second == -1) {
+                max3OfRow[i][0] = {board[i][j], j};
+            } else if (max3OfRow[i][1].second == -1) {
+                if (max3OfRow[i][0].first < board[i][j]) {
+                    max3OfRow[i][1] = max3OfRow[i][0];
+                    max3OfRow[i][0] = {board[i][j], j};
+                } else {
+                    max3OfRow[i][1] = {board[i][j], j};
+                }
+            } else if (max3OfRow[i][2].second == -1) {
+                if (max3OfRow[i][0].first < board[i][j]) {
+                    max3OfRow[i][2] = max3OfRow[i][1];
+                    max3OfRow[i][1] = max3OfRow[i][0];
+                    max3OfRow[i][0] = {board[i][j], j};
+                } else if (max3OfRow[i][1].first < board[i][j]) {
+                    max3OfRow[i][2] = max3OfRow[i][1];
+                    max3OfRow[i][1] = {board[i][j], j};
+                } else {
+                    max3OfRow[i][2] = {board[i][j], j};
+                }
+            } else {
+                if (max3OfRow[i][0].first < board[i][j]) {
+                    max3OfRow[i][2] = max3OfRow[i][1];
+                    max3OfRow[i][1] = max3OfRow[i][0];
+                    max3OfRow[i][0] = {board[i][j], j};
+                } else if (max3OfRow[i][1].first < board[i][j]) {
+                    max3OfRow[i][2] = max3OfRow[i][1];
+                    max3OfRow[i][1] = {board[i][j], j};
+                } else if (max3OfRow[i][2].first < board[i][j]) {
+                    max3OfRow[i][2] = {board[i][j], j};
+                }
+            }
+        }
+    }
+    ans = -3000000001ll;
+    int c1, c2;
+    long long t1, t2, t;
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < m; j++) {
+            if (i == j) {
+                continue;
+            }
+            if (max3OfRow[i][0].second != max3OfRow[j][0].second) {
+                cur = max3OfRow[i][0].first + max3OfRow[j][0].first;
+                c1 = max3OfRow[i][0].second;
+                c2 = max3OfRow[j][0].second;
+            } else {
+                t1 = max3OfRow[i][0].first + max3OfRow[j][1].first;
+                t2 = max3OfRow[i][1].first + max3OfRow[j][0].first;
+                if (t1 > t2) {
+                    cur = t1;
+                    c1 = max3OfRow[i][0].second;
+                    c2 = max3OfRow[j][1].second;
+                } else {
+                    cur = t2;
+                    c1 = max3OfRow[i][1].second;
+                    c2 = max3OfRow[j][0].second;
+                }
+            }
+            t = cur;
+            for (k = 0; k < m; k++) {
+                cur = t;
+                if (k == i || k == j) {
+                    continue;
+                }
+                if (max3OfRow[k][0].second == c1 || max3OfRow[k][0].second == c2) {
+                    if (max3OfRow[k][1].second == c1 || max3OfRow[k][1].second == c2) {
+                        cur += max3OfRow[k][2].first;
+                    } else {
+                        cur += max3OfRow[k][1].first;
+                    }
+                } else {
+                    cur += max3OfRow[k][0].first;
+                }
+                ans = max(ans, cur);
+            }
+            
+        }
+    }
+    return ans;
+}
+
+
+// LC3260
+bool CanDivide(string& num, int digit)
+{
+    int remainder = 0;
+    string reversedNum = num;
+
+    reverse(reversedNum.begin(), reversedNum.end());
+
+    for (auto c : reversedNum) {
+        int currentDigit = (c - '0') + remainder * 10;
+        remainder = currentDigit % digit;
+    }
+    return remainder == 0;
+}
+string largestPalindrome(int n, int k)
+{
+    int i;
+    string ans;
+
+    if (k == 1 || k == 3 || k == 9) {
+        ans.assign(n, '9');
+    }
+    if (k == 2) {
+        ans.assign(n, '9');
+        ans[0] = '8';
+        ans[n - 1] = '8';
+    }
+    if (k == 4) {
+        if (n <= 4) {
+            ans.assign(n, '8');
+        } else {
+            ans.assign(n, '9');
+            ans[0] = '8';
+            ans[1] = '8';
+            ans[n - 1] = '8';
+            ans[n - 2] = '8';
+        }
+    }
+    if (k == 5) {
+        ans.assign(n, '9');
+        ans[0] = '5';
+        ans[1] = '5';
+    }
+    if (k == 6) {
+        if (n <= 2) {
+            ans.assign(n, '6');
+        } else {
+            ans.assign(n, '9');
+            ans[0] = '8';
+            ans[n - 1] = '8';
+            if (n % 2 == 1) {
+                ans[n / 2] = '8';
+            } else {
+                ans[n / 2 - 1] = '7';
+                ans[n / 2] = '7';
+            }
+        }
+    }
+    if (k == 7) {
+        if (n <= 2) {
+            ans.assign(n, '7');
+        } else {
+            ans.assign(n, '9');
+            for (i = 9; i >= 1; i--) {
+                if (n % 2 == 1) {
+                    ans[n / 2] = i + '0';
+                } else {
+                    ans[n / 2 - 1] = i + '0';
+                    ans[n / 2] = i + '0';
+                }
+                if (CanDivide(ans, 7)) {
+                    break;
+                }
+            }
+        }
+    }
+    if (k == 8) {
+        if (n <= 6) {
+            ans.assign(n, '8');
+        } else {
+            ans.assign(n, '9');
+            ans[0] = '8';
+            ans[1] = '8';
+            ans[2] = '8';
+            ans[n - 1] = '8';
+            ans[n - 2] = '8';
+            ans[n - 3] = '8';
+        }
+    }
+    return ans;
+}
