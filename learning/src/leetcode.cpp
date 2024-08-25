@@ -18639,3 +18639,109 @@ long long findMaximumNumber(long long k, int x)
     }
     return right;
 }
+
+
+// LC1335
+int minDifficulty(vector<int>& jobDifficulty, int d)
+{
+    int i, j, k;
+    int curMax;
+    int n = jobDifficulty.size();
+    vector<vector<int>> dp(n, vector<int>(d + 1, 0x3f3f3f3f));
+
+    if (d > n) {
+        return -1;
+    }
+    dp[0][1] = jobDifficulty[0];
+    for (i = 1; i < n; i++) {
+        for (k = 1; k <= d; k++) {
+            if (k > i + 1) {
+                break;
+            }
+            curMax = jobDifficulty[i];
+            for (j = i; j >= 1; j--) {
+                if (k - 1 > j + 1) {
+                    continue;
+                }
+                curMax = max(jobDifficulty[j], curMax);
+                // dp[i][k] = min(dp[j][k], curMax);
+                if (k > 1) {
+                    dp[i][k] = min(dp[i][k], dp[j - 1][k - 1] + curMax);
+                } else {
+                    dp[i][k] = max(dp[j - 1][k], curMax);
+                }
+            }
+        }
+    }
+    return dp[n - 1][d];
+}
+
+
+// LC2741
+int specialPerm(vector<int>& nums)
+{
+    int mod = 1e9 + 7;
+    int i, j, k, p;
+    int n = nums.size();
+
+    int size = pow(2, n);
+    // dp[i][j][k] - 第i位前一个数的下标为j且当前nums的使用情况为k(二进制表示)的排列数
+    vector<vector<vector<long long>>> dp(n, vector<vector<long long>>(n, vector<long long>(size, 0)));
+
+    for (i = 0; i < n; i++) {
+        dp[0][i][1 << i] = 1;
+    }
+    for (p = 1; p < n; p++) {
+        for (j = 0; j < n; j++) {
+            for (k = 0; k < size; k++) {
+                if (dp[p - 1][j][k] == 0) {
+                    continue;
+                }
+                for (i = 0; i < n; i++) {
+                    if (i == j || (nums[j] % nums[i] != 0 && nums[i] % nums[j] != 0) || (k & 1 << i) == 1) {
+                        continue;
+                    }
+                    dp[p][i][k | 1 << i] += dp[p - 1][j][k];
+                }
+            }
+        }
+    }
+    long long ans = 0;
+    for (i = 0; i < n; i++) {
+        ans += dp[n - 1][i][size - 1];
+    }
+    return ans % mod;
+}
+int specialPerm_1(vector<int>& nums) // 更低的时间复杂度
+{
+    int mod = 1e9 + 7;
+    int i, j, k;
+    int n = nums.size();
+
+    int size = pow(2, n);
+    // dp[j][k] - 前一个数的下标为j且当前nums的使用情况为k(二进制表示)的排列数
+    vector<vector<long long>> dp(n, vector<long long>(size, 0));
+
+    for (i = 0; i < n; i++) {
+        dp[i][1 << i] = 1;
+    }
+
+    for (k = 0; k < size; k++) {
+        for (j = 0; j < n; j++) {
+            if ((k & 1 << j) == 0) {
+                continue;
+            }
+            for (i = 0; i < n; i++) {
+                if (i == j || (nums[j] % nums[i] != 0 && nums[i] % nums[j] != 0) || (k & 1 << i) == 0) {
+                    continue;
+                }
+                dp[j][k] += dp[i][k ^ (1 << j)];
+            }
+        }
+    }
+    long long ans = 0;
+    for (i = 0; i < n; i++) {
+        ans += dp[i][size - 1];
+    }
+    return ans % mod;
+}
