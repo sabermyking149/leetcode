@@ -18745,3 +18745,201 @@ int specialPerm_1(vector<int>& nums) // 更低的时间复杂度
     }
     return ans % mod;
 }
+
+
+// LC37
+void solveSudoku(vector<vector<char>>& board)
+{
+    vector<vector<char>> ans;
+    auto Check = [](vector<vector<char>>& board, int row, int col, char val) {
+        int i, j;
+        int n = board.size();
+        for (i = 0; i < n; i++) {
+            if (i != row && board[i][col] == val) {
+                return false;
+            }
+        }
+        for (j = 0; j < n; j++) {
+            if (j != col && board[row][j] == val) {
+                return false;
+            }
+        }
+        int r = (row / 3) * 3;
+        int c = (col / 3) * 3;
+        for (i = r; i < r + 3; i++) {
+            for (j = c; j < c + 3; j++) {
+                if ((i != row || j != col) && board[i][j] == val) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    };
+    function<void (int, int, bool&)> FillSudoku = [&FillSudoku, &board, &Check, &ans](int row, int col, bool& find) {
+        char i;
+        int n = board.size();
+
+        if (find) {
+            return;
+        }
+        if (row == n) {
+            ans = board;
+            find = true;
+            return;
+        }
+        if (board[row][col] != '.') {
+            if (col + 1 < n) {
+                FillSudoku(row, col + 1, find);
+            } else {
+                FillSudoku(row + 1, 0, find);
+            }
+        } else {
+            for (i = '1'; i <= '9'; i++) {
+                if (Check(board, row, col, i)) {
+                    board[row][col] = i;
+                    
+                    if (col + 1 < n) {
+                        FillSudoku(row, col + 1, find);
+                    } else {
+                        FillSudoku(row + 1, 0, find);
+                    }
+                    board[row][col] = '.';
+                }
+            }
+        }
+    };
+    bool find = false;
+    FillSudoku(0, 0, find);
+    board = ans;
+}
+
+
+// LC3267
+int countPairs(vector<int>& nums)
+{
+    int i, j, k, p;
+    int n, len;
+    string t;
+    unordered_map<int, int> cnt;
+    unordered_set<int> data;
+    unordered_set<int> usedNums;
+
+    sort(nums.rbegin(), nums.rend());
+    for (auto num : nums) {
+        cnt[num]++;
+    }
+    queue<string> q;
+    int ans = 0;
+    for (auto num : nums) {
+        if (usedNums.count(num)) {
+            continue;
+        }
+        while (q.size()) {
+            q.pop();
+        }
+        data.clear();
+        q.push(to_string(num));
+        k = 0;
+        while (q.size()) {
+            n = q.size();
+            for (p = 0; p < n; p++) {
+                auto front = q.front();
+                q.pop();
+                len = front.size();
+                for (i = 0; i < len - 1; i++) {
+                    for (j = i + 1; j < len; j++) {
+                        t = front;
+                        swap(t[i], t[j]);
+                        data.emplace(atoi(t.c_str()));
+                        q.push(t);
+                    }
+                }
+            }
+            k++;
+            if (k == 2) {
+                break;
+            }
+        }
+        // for (auto d : data) cout << d << " "; cout << endl;
+        // 自身两两成一对
+        if (cnt[num] > 1) {
+            ans += (cnt[num] - 1) * cnt[num] / 2;
+        }
+        k = cnt[num];
+        data.erase(num);
+        usedNums.emplace(num);
+        for (auto it : data) {
+            if (cnt.count(it) && usedNums.count(it) == 0) {
+                ans += k * cnt[it];
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LC3272
+long long countGoodIntegers(int n, int k)
+{
+    int i;
+    long long ans = 0;
+    vector<long long> factor(11, 1);
+    vector<long long> base(10);
+    vector<int> bitsCnt(10);
+
+    base[0] = 1;
+    for (i = 2; i <= 10; i++) {
+        factor[i] = i * factor[i - 1];
+        base[i - 1] = base[i - 2] * 10;
+    }
+    set<vector<int>> dataSets;
+    function<void (int, long long)> CreatePalindrome = 
+        [&CreatePalindrome, &ans, &k, &n, &factor, &dataSets, &bitsCnt, &base](int idx, long long cur) {
+        long long tt;
+        int i;
+        if ((n % 2 == 0 && idx >= n / 2) || (n % 2 == 1 && idx > n / 2)) {
+            // cout << cur << endl;
+            if (cur % k == 0) {
+                if (dataSets.count(bitsCnt)) {
+                    return;
+                }
+                dataSets.insert(bitsCnt);
+                if (bitsCnt[0] > 0) {
+                    tt = factor[n - bitsCnt[0]];
+                    for (i = 1; i <= 9; i++) {
+                        if (bitsCnt[i] != 0) {
+                            tt /= factor[bitsCnt[i]];
+                        }
+                    }
+                    tt *= factor[n - 1] / factor[bitsCnt[0]] / factor[n - 1 - bitsCnt[0]];
+                } else {
+                    tt = factor[n];
+                    for (i = 1; i <= 9; i++) {
+                        if (bitsCnt[i] != 0) {
+                            tt /= factor[bitsCnt[i]];
+                        }
+                    }
+                }
+                ans += tt;
+            }
+            return;
+        }
+        for (i = 0; i <= 9; i++) {
+            if (idx == 0 && i == 0) {
+                continue;
+            }
+            if (idx != n - 1 - idx) {
+                bitsCnt[i] += 2;
+                CreatePalindrome(idx + 1, cur + base[idx] * i + base[n - 1 - idx] * i);
+                bitsCnt[i] -= 2;
+            } else {
+                bitsCnt[i]++;
+                CreatePalindrome(idx + 1, cur + base[idx] * i);
+                bitsCnt[i]--;
+            }
+        }
+    };
+
+    CreatePalindrome(0, 0);
+    return ans;
+}
