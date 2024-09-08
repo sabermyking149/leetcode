@@ -868,3 +868,86 @@ void ABC_366_D()
         cout << a << endl;
     }
 }
+
+
+void ABC_370_D()
+{
+    int i, j, k;
+    int h, w, q;
+
+    cin >> h >> w >> q;
+
+    int remain = h * w;
+    //vector<int> walls(remain, 1);
+    vector<int> walls;
+    vector<set<int>> rows(h);
+    vector<set<int, greater<int>>> rows_r(h);
+    vector<set<int>> cols(w);
+    vector<set<int, greater<int>>> cols_r(w);
+
+    walls.assign(remain, 1);
+    for (i = 0; i < h; i++) {
+        for (j = 0; j < w; j++) {
+            rows[i].emplace(j);
+            rows_r[i].emplace(j);
+            cols[j].emplace(i);
+            cols_r[j].emplace(i);
+        }
+    }
+
+    int r, c;
+
+    for (k = 0; k < q; k++) {
+        cin >> r >> c;
+        if (walls[(r - 1) * w + c - 1]) {
+            remain--;
+            walls[(r - 1) * w + c - 1] = 0;
+            rows[r - 1].erase(c - 1);
+            rows_r[r - 1].erase(c - 1);
+            cols[c - 1].erase(r - 1);
+            cols_r[c - 1].erase(r - 1);
+        } else {
+            auto it = rows[r - 1].upper_bound(c - 1);
+            if (it != rows[r - 1].end()) {
+                walls[(r - 1) * w + *it] = 0;
+                rows[r - 1].erase(*it);
+                rows_r[r - 1].erase(*it);
+                cols[*it].erase(r - 1);
+                cols_r[*it].erase(r - 1);
+                remain--;
+            }
+
+            it = rows_r[r - 1].upper_bound(c - 1);
+            if (it != rows_r[r - 1].end()) {
+                walls[(r - 1) * w + *it] = 0;
+                rows[r - 1].erase(*it);
+                rows_r[r - 1].erase(*it);
+                cols[*it].erase(r - 1);
+                cols_r[*it].erase(r - 1);
+                remain--;
+            }
+
+            it = cols[c - 1].upper_bound(r - 1);
+            if (it != cols[c - 1].end()) {
+                walls[*it * w + c - 1] = 0;
+                cols[c - 1].erase(*it);
+                cols_r[c - 1].erase(*it);
+                rows[*it].erase(c - 1);
+                rows_r[*it].erase(c - 1);
+                remain--;
+            }
+
+            it = cols_r[c - 1].upper_bound(r - 1);
+            if (it != cols_r[c - 1].end()) {
+                walls[*it * w + c - 1] = 0;
+                cols[c - 1].erase(*it);
+                cols_r[c - 1].erase(*it);
+                rows[*it].erase(c - 1);
+                rows_r[*it].erase(c - 1);
+                remain--;
+            }
+        }
+        // cout << remain << endl;
+    }
+    cout << remain << endl;
+}
