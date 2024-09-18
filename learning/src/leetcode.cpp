@@ -18943,3 +18943,274 @@ long long countGoodIntegers(int n, int k)
     CreatePalindrome(0, 0);
     return ans;
 }
+
+
+// LC2555
+int maximizeWin(vector<int>& prizePositions, int k)
+{
+    map<int, int> prefix;
+    int i;
+    int n = prizePositions.size();
+    map<int, int> pos;
+
+    for (i = 0; i < n; i++) {
+        if (pos.count(prizePositions[i]) == 0) {
+            pos[prizePositions[i]] = i;
+        }
+    }
+
+    auto cmp = [](pair<int, int>& a, pair<int, int>& b) {
+        if (a.second != b.second) {
+            return a.second < b.second;
+        }
+        return a.first > b.first;
+    };
+    priority_queue<pair<int, int>, vector<pair<int, int>>, decltype(cmp)> pq(cmp);
+
+    int left, right, mid;
+    map<int, int> cnt;
+    for (auto it : pos) {
+        left = it.second;
+        right = n - 1;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (prizePositions[mid] > it.first + k) {
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        cnt[it.first] = right - it.second + 1;
+        pq.push({it.first, right - it.second + 1});
+    }
+
+    // for (auto it : cnt) cout << it.first << " " << it.second << endl;
+    int ans = 0;
+    int cur;
+    for (auto it : cnt) {
+        cur = it.second;
+        while (pq.size()) {
+            auto t = pq.top();
+            if (it.first + k >= t.first) {
+                pq.pop();
+                continue;
+            }
+            cur += t.second;
+            break;
+        }
+        ans = max(ans, cur);
+    }
+    return ans;
+}
+
+
+// LC2925
+long long maximumScoreAfterOperations(vector<vector<int>>& edges, vector<int>& values)
+{
+    int i;
+    int n = values.size();
+    unordered_map<int, unordered_set<int>> edge;
+
+    for (auto e : edges) {
+        edge[e[0]].emplace(e[1]);
+        edge[e[1]].emplace(e[0]);
+    }
+
+    vector<long long> treeSum(n, -1);
+    function<long long (int, int)> dfs = [&dfs, &treeSum, &edge, &values](int node, int parent) {
+        if (treeSum[node] != -1) {
+            return treeSum[node];
+        }
+        long long sum = values[node];
+        for (auto it : edge[node]) {
+            if (it != parent) {
+                sum += dfs(it, node);
+            }
+        }
+        treeSum[node] = sum;
+        return sum;
+    };
+
+    dfs(0, -1);
+    // for (auto it : treeSum) cout << it << endl;
+
+    vector<long long> maxTreeSum(n, -1);
+    function<long long (int, int)> maxPoint = [&maxPoint, &treeSum, &edge, &values, &maxTreeSum](int node, int parent) {
+        if (edge[node].size() == 1 && *edge[node].begin() == parent) { // 叶子节点
+            maxTreeSum[node] = 0;
+            return maxTreeSum[node];
+        }
+        if (maxTreeSum[node] != -1) {
+            return maxTreeSum[node];
+        }
+        long long sum1 = treeSum[node] - values[node];
+        long long sum2 = values[node];
+        for (auto it : edge[node]) {
+            if (it != parent) {
+                sum2 += maxPoint(it, node);
+            }
+        }
+        maxTreeSum[node] = max(sum1, sum2);
+        return maxTreeSum[node];
+    };
+    maxPoint(0, -1);
+
+    return maxTreeSum[0];
+}
+
+
+// LC2792
+/*int countGreatEnoughNodes(TreeNode* root, int k)
+{
+    // 比当前节点的值小的子节点个数
+    unordered_map<TreeNode *, int> cnt;
+    function<int (TreeNode *)> dfs = [&k, &cnt](TreeNode *node) {
+        if (cnt.count(node)) {
+            return cnt[node];
+        }
+        if (node->left == nullptr && node->right == nullptr) {
+            cnt[node] = 0;
+            return 0;
+        }
+        int num = 0;
+        if (node->left) {
+            if (node->left->val < node->val) {
+                num += dfs(node->left);
+            }
+        }
+    }
+    return cnt;
+}*/
+
+
+// LC3288
+vector<int> longestIncreasingSeq_2D(vector<vector<int>>& points)
+{
+    int i;
+    int n = points.size();
+    int m;
+    int left, right, mid;
+    vector<int> low;
+    vector<int> ans(n, 0);
+    low.emplace_back(points[0][1]);
+    ans[0] = 1;
+    for (i = 1; i < n; i++) {
+        m = low.size();
+        if (points[i][1] > low[m - 1]) {
+            low.emplace_back(points[i][1]);
+            ans[i] = low.size();
+            continue;
+        }
+        left = 0;
+        right = m - 1;
+        while (left <= right) { // 所求为left
+            mid = ((right - left) >> 1) + left;
+            if (low[mid] < points[i][1]) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        low[left] = points[i][1];
+        ans[i] = left + 1;
+    }
+    return ans;
+}
+int maxPathLength(vector<vector<int>>& coordinates, int k)
+{
+    vector<vector<int>> co;
+    int i;
+    int n = coordinates.size();
+    int maxVal;
+
+    if (n == 1) {
+        return 1;
+    }
+
+    // 小于coordinates[k]的最长上升子序列
+    for (i = 0; i < n; i++) {
+        if (coordinates[i][0] < coordinates[k][0] && coordinates[i][1] < coordinates[k][1]) {
+            co.emplace_back(coordinates[i]);
+        }
+    }
+    sort(co.begin(), co.end(), [](vector<int>& a, vector<int>& b) {
+        if (a[0] != b[0]) {
+            return a[0] < b[0];
+        }
+        return a[1] > b[1];
+    });
+
+    int ans;
+    vector<int> a;
+
+    if (co.empty()) {
+        ans = 1;
+    } else {
+        a = longestIncreasingSeq_2D(co);
+        maxVal = 0;
+        for (auto c : a) {
+            maxVal = max(maxVal, c);
+        }
+        ans = maxVal + 1;
+    }
+
+    // 大于coordinates[k]的最长上升子序列
+    co.clear();
+    for (i = 0; i < n; i++) {
+        if (coordinates[i][0] > coordinates[k][0] && coordinates[i][1] > coordinates[k][1]) {
+            co.emplace_back(coordinates[i]);
+        }
+    }
+    sort(co.begin(), co.end(), [](vector<int>& a, vector<int>& b) {
+        if (a[0] != b[0]) {
+            return a[0] < b[0];
+        }
+        return a[1] > b[1];
+    });
+
+    if (!co.empty()) {
+        a = longestIncreasingSeq_2D(co);
+        maxVal = 0;
+        for (auto c : a) {
+            maxVal = max(maxVal, c);
+        }
+        ans += maxVal;
+    }
+    return ans;
+}
+
+
+// LC3291
+int minValidStrings(vector<string>& words, string target)
+{
+    // 注意此处CreateWordTrie函数中的root->IsEnd = true应该放在循环内, 为了不破坏CreateWordTrie的普适性这里特此说明
+    Trie<char> *root = new Trie<char>('/');
+    for (auto w : words) {
+        Trie<char>::CreateWordTrie(root, w);
+    }
+
+    int i, j, k, kk;
+    int n = target.size();
+    vector<int> dp(n + 1, 0x3f3f3f3f);
+
+    dp[0] = 0;
+    for (i = 0; i < n; i++) {
+        auto node = root;
+        for (j = i; j < n; j++) {
+            kk = node->children.size();
+            for (k = 0; k < kk; k++) {
+                if (node->children[k]->val == target[j]) {
+                    node = node->children[k];
+                    break;
+                }
+            }
+            if (k == kk) {
+                break;
+            }
+            if (node->IsEnd) {
+                dp[j + 1] = min(dp[j + 1], dp[i] + 1);
+            }
+        }
+    }
+    return dp[n] == 0x3f3f3f3f ? -1 : dp[n];
+}

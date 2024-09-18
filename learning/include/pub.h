@@ -41,9 +41,16 @@ public:
     T val;
     int timestamp; // 单词时间戳
     bool IsEnd;
-    vector<Trie *> children;
+    vector<Trie<T> *> children;
     Trie() : IsEnd(false) {}
     Trie(T t) : val(t), IsEnd(false) {}
+
+    // 此处其实是递归删除
+    ~Trie() {
+        for (auto child : children) {
+            delete child;
+        }
+    }
 
     static void CreateWordTrie(Trie<char> *root, string& word);
     static void CreateWordTrie(Trie<char> *root, string& word, int timestamp);
