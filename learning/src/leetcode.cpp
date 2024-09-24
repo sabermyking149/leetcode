@@ -19060,27 +19060,67 @@ long long maximumScoreAfterOperations(vector<vector<int>>& edges, vector<int>& v
 
 
 // LC2792
-/*int countGreatEnoughNodes(TreeNode* root, int k)
+int countGreatEnoughNodes(TreeNode* root, int k)
 {
-    // 比当前节点的值小的子节点个数
-    unordered_map<TreeNode *, int> cnt;
-    function<int (TreeNode *)> dfs = [&k, &cnt](TreeNode *node) {
-        if (cnt.count(node)) {
-            return cnt[node];
+    int cnt;
+    // vector<int> t = dfs(node), t - 以node为树根节点，最小的k个子节点的值集合
+    cnt = 0;
+    function<vector<int> (TreeNode *)> dfs = [&k, &cnt, &dfs](TreeNode *node) {
+        if (node == nullptr) {
+            return vector<int>();
         }
-        if (node->left == nullptr && node->right == nullptr) {
-            cnt[node] = 0;
-            return 0;
-        }
-        int num = 0;
-        if (node->left) {
-            if (node->left->val < node->val) {
-                num += dfs(node->left);
+        vector<int> merge;
+        vector<int> left = dfs(node->left);
+        vector<int> right = dfs(node->right);
+
+        // sort(left.begin(), left.end());
+        // sort(right.begin(), right.end());
+
+        int i, j, p;
+        int m = left.size();
+        int n = right.size();
+
+        i = j = 0;
+        while (i < m && j < n) {
+            if (left[i] <= right[j]) {
+                merge.emplace_back(left[i]);
+                i++;
+            } else {
+                merge.emplace_back(right[j]);
+                j++;
+            }
+            if (merge.size() == k) {
+                break;
             }
         }
-    }
+        if (merge.size() < k) {
+            if (i < m) {
+                for (p = i; p < m; p++) {
+                    merge.emplace_back(left[p]);
+                    if (merge.size() == k) {
+                        break;
+                    }
+                }
+            }
+            if (j < n) {
+                for (p = j; p < n; p++) {
+                    merge.emplace_back(right[p]);
+                    if (merge.size() == k) {
+                        break;
+                    }
+                }
+            }
+        }
+        if (merge.size() == k && node->val > merge[k - 1]) {
+            cnt++;
+        }
+        merge.emplace_back(node->val);
+        sort(merge.begin(), merge.end());
+        return merge;
+    };
+    dfs(root);
     return cnt;
-}*/
+}
 
 
 // LC3288
@@ -19212,5 +19252,110 @@ int minValidStrings(vector<string>& words, string target)
             }
         }
     }
+    delete(root);
     return dp[n] == 0x3f3f3f3f ? -1 : dp[n];
+}
+
+
+// LC3229
+long long minimumOperations(vector<int>& nums, vector<int>& target)
+{
+    int i;
+    int n = nums.size();
+    int diff, canDecrease, canAdd;
+    long long ans;
+
+    canDecrease = canAdd = 0;
+    ans = 0;
+    // 贪心
+    for (i = 0; i < n; i++) {
+        diff = nums[i] - target[i];
+        if (diff > 0) {
+            canAdd = 0;
+            if (canDecrease == 0) {
+                canDecrease = diff;
+                ans += diff;
+            } else if (canDecrease >= diff) {
+                canDecrease = diff;
+            } else {
+                ans += diff - canDecrease;
+                canDecrease = diff;
+            }
+        } else if (diff < 0) {
+            canDecrease = 0;
+            if (canAdd == 0) {
+                canAdd = -diff;
+                ans += -diff;
+            } else if (canAdd >= -diff) {
+                canAdd = -diff;
+            } else {
+                ans += -diff - canAdd;
+                canAdd = -diff;
+            }
+        } else {
+            canDecrease = canAdd = 0;
+        }
+    }
+    return ans;
+}
+
+
+// LC3284
+int getSum(vector<int>& nums)
+{
+    int i;
+    int n = nums.size();
+    long long ans, sum;
+    vector<long long> prefixSubArrSum(n, 0);
+    vector<long long> prefix(n, 0);
+    vector<int> visited(n, 1);
+
+    prefixSubArrSum[0] = nums[0];
+    prefix[0] = nums[0];
+    sum = nums[0];
+    for (i = 1; i < n; i++) {
+        prefixSubArrSum[i] = prefixSubArrSum[i - 1] + static_cast<long long>(i + 1) * nums[i];
+        prefix[i] = prefix[i - 1] + nums[i];
+        sum += nums[i];
+    }
+
+    ans = 0;
+    // 递增区间
+    for (i = 1; i < n; i++) {
+        if (nums[i] == nums[i - 1] + 1) {
+            visited[i] = visited[i - 1] + 1;
+        }
+    }
+    for (i = 0; i < n; i++) {
+        if (visited[i] == 1) {
+            continue;
+        }
+        if (i + 1 == visited[i]) {
+            ans += prefixSubArrSum[i] - nums[i];
+        } else {
+            ans += prefixSubArrSum[i] - prefixSubArrSum[i - visited[i]] - 
+                (prefix[i] - prefix[i - visited[i]]) * (i - visited[i] + 1) - nums[i]; 
+        }
+    }
+
+    // 递减区间
+    visited.assign(n, 1);
+    for (i = 1; i < n; i++) {
+        if (nums[i] == nums[i - 1] - 1) {
+            visited[i] = visited[i - 1] + 1;
+        }
+    }
+    for (i = 0; i < n; i++) {
+        if (visited[i] == 1) {
+            continue;
+        }
+        if (i + 1 == visited[i]) {
+            ans += prefixSubArrSum[i] - nums[i];
+        } else {
+            ans += prefixSubArrSum[i] - prefixSubArrSum[i - visited[i]] - 
+                (prefix[i] - prefix[i - visited[i]]) * (i - visited[i] + 1) - nums[i]; 
+        }
+    }
+    int mod = 1e9 + 7;
+    return (ans + sum) % mod;
 }

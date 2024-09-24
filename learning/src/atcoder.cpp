@@ -9,6 +9,7 @@
 #include <unordered_set>
 #include <queue>
 #include <tuple>
+#include <stack>
 #include <functional>
 using namespace std;
 
@@ -950,4 +951,46 @@ void ABC_370_D()
         // cout << remain << endl;
     }
     cout << remain << endl;
+}
+
+
+// 从后往前单调递减栈
+void ABC_372_D()
+{
+    int i;
+    int n;
+    stack<int> st;
+    vector<int> ans;
+
+    cin >> n;
+
+    vector<int> h(n);
+    for (i = 0; i < n; i++) {
+        cin >> h[i];
+    }
+    for (i = n - 1; i >= 0; i--) {
+        if (st.empty()) {
+            ans.emplace_back(0);
+            st.push(i);
+            continue;
+        }
+        auto idx = st.top();
+        ans.emplace_back(st.size());
+        if (h[idx] > h[i]) {
+            st.push(i);
+            continue;
+        }
+        while (h[idx] <= h[i]) {
+            st.pop();
+            if (st.empty()) {
+                break;
+            }
+            idx = st.top();
+        }
+        st.push(i);
+    }
+    reverse(ans.begin(), ans.end());
+    for (i = 0; i < ans.size(); i++) {
+        cout << ans[i] << (i == n - 1 ? "\n" : " ");
+    }
 }
