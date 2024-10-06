@@ -11,6 +11,8 @@
 #include <tuple>
 #include <stack>
 #include <functional>
+#include <climits>
+#include <iomanip>
 using namespace std;
 
 void ABC_346_D()
@@ -993,4 +995,149 @@ void ABC_372_D()
     for (i = 0; i < ans.size(); i++) {
         cout << ans[i] << (i == n - 1 ? "\n" : " ");
     }
+}
+
+
+// 有问题
+void ABC_373_D()
+{
+    int i;
+    int n, m;
+    int node1, node2;
+    long long w;
+
+    cin >> n >> m;
+
+    unordered_map<int, unordered_map<int, long long>> edges;
+    unordered_map<int, int> degree;
+    vector<long long> ans(n + 1, LLONG_MIN);
+    for (i = 0; i < m; i++) {
+        cin >> node1 >> node2 >> w;
+        edges[node2][node1] = w;
+        degree[node1]++;
+    }
+
+    queue<int> q;
+    for (i = 1; i <= n; i++) {
+        if (degree.count(i) == 0) {
+            q.push(i);
+        }
+    }
+    while (!q.empty()) {
+        auto node = q.front();
+        q.pop();
+        // cout << node << endl;
+        if (edges.count(node)) {
+            for (auto it : edges[node]) {
+                if (ans[node] == LLONG_MIN) {
+                    if (ans[it.first] == LLONG_MIN) {
+                        ans[node] = it.second;
+                        ans[it.first] = 0ll;
+                    } else {
+                        ans[node] = ans[it.first] + it.second;
+                    }
+                } else {
+                    if (ans[it.first] == LLONG_MIN) {
+                        ans[it.first] = ans[node] - it.second;
+                    }
+                }
+                // for (auto a : ans) cout << a << " "; cout << endl;
+                if (degree.count(it.first)) {
+                    if (degree[it.first] > 1) { 
+                        degree[it.first]--;
+                    } else {
+                        q.push(it.first);
+                        degree.erase(it.first);
+                    }
+                }
+            }
+        }
+    }
+
+    for (i = 1; i <= n; i++) {
+        if (ans[i] == LLONG_MIN) {
+            ans[i] = 0;
+        }
+        cout << ans[i] << (i == n ? "\n" : " ");
+    }
+}
+
+
+void ABC_374_D()
+{
+    int i, j, k;
+    int N;
+    double S, T;
+
+    cin >> N >> S >> T;
+    vector<vector<double>> pos(N, vector<double>(4));
+
+    for (i = 0; i < N; i++) {
+        for (j = 0; j < 4; j++) {
+            cin >> pos[i][j];
+        }
+    }
+    vector<vector<int>> permutation;
+    vector<int> record(N);
+    vector<int> visited(N, false);
+    function <void (int)> GeneratePermutation = [&GeneratePermutation, &record, &permutation, &visited](int idx) {
+        if (idx == record.size()) {
+            permutation.emplace_back(record);
+            return;
+        }
+        int i;
+        for (i = 0; i < record.size(); i++) {
+            if (visited[i] == false) {
+                visited[i] = true;
+                record[idx] = i + 1;
+                GeneratePermutation(idx + 1);
+                visited[i] = false;
+            }
+        }
+    };
+    GeneratePermutation(0);
+    /*for (auto per : permutation) {
+        for (auto p : per) cout << p << " ";
+        cout << endl;
+    }*/
+
+    auto getDist = [](double a, double b, double c , double d) {
+        return sqrt((c - a) * (c - a) + (d - b) * (d - b));
+    };
+
+    double emittingTime = 0;
+    for (auto p : pos) {
+        emittingTime += getDist(p[0], p[1], p[2], p[3]) / T;
+    }
+    double ans = 0x3f3f3f3f * 1.0;
+    double notEmittingTime;
+    vector<int> bits(N);
+    vector<double> curPos(2);
+    for (i = 0; i < permutation.size(); i++) {
+        for (k = 0; k < (1 << N); k++) {
+            auto t = k;
+            j = 0;
+            bits.assign(N, 0);
+            while (t) {
+                bits[j] = t % 2;
+                t /= 2;
+                j++;
+            }
+            notEmittingTime = 0;
+            curPos.assign(2, 0.0);
+            for (j = 0; j < N; j++) {
+                if (bits[j] == 0) {
+                    notEmittingTime += getDist(curPos[0], curPos[1], pos[permutation[i][j] - 1][0], pos[permutation[i][j] - 1][1]) / S;
+                    curPos[0] = pos[permutation[i][j] - 1][2];
+                    curPos[1] = pos[permutation[i][j] - 1][3];
+                } else {
+                    notEmittingTime += getDist(curPos[0], curPos[1], pos[permutation[i][j] - 1][2], pos[permutation[i][j] - 1][3]) / S;
+                    curPos[0] = pos[permutation[i][j] - 1][0];
+                    curPos[1] = pos[permutation[i][j] - 1][1];
+                }
+            }
+            ans = min(ans, emittingTime + notEmittingTime);
+        }
+    }
+    cout << setprecision(16) << ans << endl;
 }

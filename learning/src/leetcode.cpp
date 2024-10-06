@@ -19359,3 +19359,172 @@ int getSum(vector<int>& nums)
     int mod = 1e9 + 7;
     return (ans + sum) % mod;
 }
+
+
+// LC84
+int largestRectangleArea(vector<int>& heights)
+{
+    int i;
+    int n = heights.size();
+    vector<int> l(n), r(n);
+
+    // l[i] - 左侧第一个比heights[i]小的下标
+    // r[i] - 右侧第一个比heights[i]小的下标
+    // 单调递增栈
+
+    stack<int> st;
+    for (i = 0; i < n; i++) {
+        if (st.empty()) {
+            st.push(i);
+            continue;
+        }
+        auto idx = st.top();
+        while (heights[idx] > heights[i]) {
+            r[idx] = i;
+            st.pop();
+            if (st.empty()) {
+                break;
+            }
+            idx = st.top();
+        }
+        st.push(i);
+    }
+    while (!st.empty()) {
+        r[st.top()] = n;
+        st.pop();
+    }
+
+    // 同理从右到左求l[i];
+    for (i = n - 1; i >= 0; i--) {
+        if (st.empty()) {
+            st.push(i);
+            continue;
+        }
+        auto idx = st.top();
+        while (heights[idx] > heights[i]) {
+            l[idx] = i;
+            st.pop();
+            if (st.empty()) {
+                break;
+            }
+            idx = st.top();
+        }
+        st.push(i);
+    }
+    while (!st.empty()) {
+        l[st.top()] = -1;
+        st.pop();
+    }
+
+    // for (auto it : r) cout << it << " "; cout << endl;
+    // for (auto it : l) cout << it << " "; cout << endl;
+
+    int ans = 0;
+    for (i = 0; i < n; i++) {
+        ans = max(ans, heights[i] * (r[i] - l[i] - 1));
+    }
+    return ans;
+}
+
+
+// LC85
+int maximalRectangle(vector<vector<char>>& matrix)
+{
+    // 将matrix的每一行转化为类似LC84的高度数组, 第i行是第0 到 i - 1行的前缀和
+    int i, j;
+    int m, n;
+
+    m = matrix.size();
+    n = matrix[0].size();
+    vector<vector<int>> heights(m, vector<int>(n, 0));
+
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            if (i == 0) {
+                heights[i][j] = matrix[i][j] - '0';
+            } else {
+                if (matrix[i][j] == '0') {
+                    heights[i][j] = 0;
+                } else {
+                    heights[i][j] = heights[i - 1][j] + 1;
+                }
+            }
+        }
+    }
+
+    int ans = 0;
+    for (auto h : heights) {
+        ans = max(ans, largestRectangleArea(h));
+    }
+    return ans;
+}
+
+
+// LC3310
+vector<int> remainingMethods(int n, int k, vector<vector<int>>& invocations)
+{
+    int i;
+    unordered_map<int, vector<int>> edges;
+    vector<vector<int>> edges1(n);
+    // 注意当数据量增大时开多个vector也会极大增加时间开销
+    for (auto in : invocations) {
+        edges[in[0]].emplace_back(in[1]);
+    }
+    vector<bool> visited(n, false);
+    unordered_set<int> nodes;
+    int cnt = 0;
+    function<void (int)> dfs = [&visited, &dfs, &edges, &nodes](int cur) {
+        visited[cur] = true;
+        nodes.emplace(cur);
+        if (edges.count(cur)) {
+            for (auto it : edges[cur]) {
+                if (visited[it] == false) {
+                    dfs(it);
+                }
+            }
+        }
+    };
+    dfs(k);
+
+    bool f = false;
+    function<void (int, bool&)> dfs1 = [&visited, &dfs1, &edges, &nodes](int cur, bool& f) {
+        if (f) {
+            return;
+        }
+        visited[cur] = true;
+        if (edges.count(cur)) {
+            for (auto it : edges[cur]) {
+                if (visited[it] == true) {
+                    if (nodes.count(it)) {
+                        f = true;
+                        return;
+                    }
+                } else {
+                    dfs1(it, f);
+                }
+            }
+        }
+    };
+    vector<int> ori(n);
+    for (i = 0; i < n; i++) {
+        ori[i] = i;
+    }
+    vector<int> ans;
+    for (i = 0; i < n; i++) {
+        if (visited[i] == false) {
+            ans.emplace_back(i);
+        }
+    }
+    for (i = 0; i < n; i++) {
+        if (visited[i]) {
+            continue;
+        }
+        f = false;
+        dfs1(i, f);
+        if (f) {
+            return ori;
+        }
+    }
+
+    return ans;
+}
