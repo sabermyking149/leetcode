@@ -19528,3 +19528,194 @@ vector<int> remainingMethods(int n, int k, vector<vector<int>>& invocations)
 
     return ans;
 }
+
+
+// LC416
+bool canPartition(vector<int>& nums)
+{
+    int i, j;
+    int n = nums.size();
+    int sum = accumulate(nums.begin(), nums.end(), 0);
+
+    if (sum % 2 == 1) {
+        return false;
+    }
+
+    int target = sum / 2;
+    // dp[i][j] - 前i个数能否组成j
+    vector<vector<bool>> dp(n + 1, vector<bool>(target + 1, false));
+
+    for (i = 0; i <= n; i++) {
+        dp[i][0] = true;
+    }
+    for (i = 1; i <= n; i++) {
+        for (j = 1; j <= target; j++) {
+            if (dp[i - 1][j]) {
+                dp[i][j] = true;
+            } else if (j - nums[i - 1] >= 0) {
+                dp[i][j] = dp[i - 1][j - nums[i - 1]];
+            }
+        }
+    }
+    return dp[n][target];
+}
+
+
+// LC3320
+int countWinningSequences(string s)
+{
+    int mod = 1e9 + 7;
+    int i, j;
+    int n = s.size();
+
+    if (n == 1) {
+        return 1;
+    }
+    // dp[i][j][k] - 第i轮召唤j(F, W, E)最后的分为k-n (数组下标不能为负)的方案数
+    vector<vector<vector<long long>>> dp(n, vector<vector<long long>>(3, vector<long long>(n * 2 + 1, -1)));
+
+    if (s[0] == 'F') {
+        dp[0][0][n] = 1;
+        dp[0][1][n + 1] = 1;
+        dp[0][2][n - 1] = 1;
+    } else if (s[0] == 'W') {
+        dp[0][0][n - 1] = 1;
+        dp[0][1][n] = 1;
+        dp[0][2][n + 1] = 1;
+    } else {
+        dp[0][0][n + 1] = 1;
+        dp[0][1][n - 1] = 1;
+        dp[0][2][n] = 1;
+    }
+    for (i = 1; i < n; i++) {
+        for (j = 0; j < n * 2 + 1; j++) {
+            if (s[i] == 'F') {
+                if (dp[i - 1][0][j] != -1) {
+                    if (j + 1 < n * 2 + 1) {
+                        if (dp[i][1][j + 1] == -1) {
+                            dp[i][1][j + 1] = 0;
+                        }
+                        dp[i][1][j + 1] = (dp[i][1][j + 1] + dp[i - 1][0][j]) % mod;
+                    }
+                    if (j - 1 >= 0) {
+                        if (dp[i][2][j - 1] == -1) {
+                            dp[i][2][j - 1] = 0;
+                        }
+                        dp[i][2][j - 1] = (dp[i][2][j - 1] + dp[i - 1][0][j]) % mod;
+                    }
+                }
+                if (dp[i - 1][1][j] != -1) {
+                    if (j - 1 >= 0) {
+                        if (dp[i][2][j - 1] == -1) {
+                            dp[i][2][j - 1] = 0;
+                        }
+                        dp[i][2][j - 1] = (dp[i][2][j - 1] + dp[i - 1][1][j]) % mod;
+                    }
+                    if (dp[i][0][j] == -1) {
+                        dp[i][0][j] = 0;
+                    }
+                    dp[i][0][j] = (dp[i][0][j] + dp[i - 1][1][j]) % mod;
+                }
+                if (dp[i - 1][2][j] != -1) {
+                    if (dp[i][0][j] == -1) {
+                        dp[i][0][j] = 0;
+                    }
+                    dp[i][0][j] = (dp[i][0][j] + dp[i - 1][2][j]) % mod;
+                    if (j + 1 < n * 2 + 1) {
+                        if (dp[i][1][j + 1] == -1) {
+                            dp[i][1][j + 1] = 0;
+                        }
+                        dp[i][1][j + 1] = (dp[i][1][j + 1] + dp[i - 1][2][j]) % mod;
+                    }
+                }
+            } else if (s[i] == 'W') {
+                if (dp[i - 1][0][j] != -1) {
+                    if (dp[i][1][j] == -1) {
+                        dp[i][1][j] = 0;
+                    }
+                    dp[i][1][j] = (dp[i][1][j] + dp[i - 1][0][j]) % mod;
+                    if (j + 1 < n * 2 + 1) {
+                        if (dp[i][2][j + 1] == -1) {
+                            dp[i][2][j + 1] = 0;
+                        }
+                        dp[i][2][j + 1] = (dp[i][2][j + 1] + dp[i - 1][0][j]) % mod;
+                    }
+                }
+                if (dp[i - 1][1][j] != -1) {
+                    if (j + 1 < n * 2 + 1) {
+                        if (dp[i][2][j + 1] == -1) {
+                            dp[i][2][j + 1] = 0;
+                        }
+                        dp[i][2][j + 1] = (dp[i][2][j + 1] + dp[i - 1][1][j]) % mod;
+                    }
+                    if (j - 1 >= 0) {
+                        if (dp[i][0][j - 1] == -1) {
+                            dp[i][0][j - 1] = 0;
+                        }
+                        dp[i][0][j - 1] = (dp[i][0][j - 1] + dp[i - 1][1][j]) % mod;
+                    }
+                }
+                if (dp[i - 1][2][j] != -1) {
+                    if (j - 1 >= 0) {
+                        if (dp[i][0][j - 1] == -1) {
+                            dp[i][0][j - 1] = 0;
+                        }
+                        dp[i][0][j - 1] = (dp[i][0][j - 1] + dp[i - 1][2][j]) % mod;
+                    }
+                    if (dp[i][1][j] == -1) {
+                        dp[i][1][j] = 0;
+                    }
+                    dp[i][1][j] = (dp[i][1][j] + dp[i - 1][2][j]) % mod;
+                }
+            } else {
+                if (dp[i - 1][0][j] != -1) {
+                    if (j - 1 >= 0) {
+                        if (dp[i][1][j - 1] == -1) {
+                            dp[i][1][j - 1] = 0;
+                        }
+                        dp[i][1][j - 1] = (dp[i][1][j - 1] + dp[i - 1][0][j]) % mod;
+                    }
+                    if (dp[i][2][j] == -1) {
+                        dp[i][2][j] = 0;
+                    }
+                    dp[i][2][j] = (dp[i][2][j] + dp[i - 1][0][j]) % mod;
+                }
+                if (dp[i - 1][1][j] != -1) {
+                    if (dp[i][2][j] == -1) {
+                        dp[i][2][j] = 0;
+                    }
+                    dp[i][2][j] = (dp[i][2][j] + dp[i - 1][1][j]) % mod;
+                    if (j + 1 < n * 2 + 1) {
+                        if (dp[i][0][j + 1] == -1) {
+                            dp[i][0][j + 1] = 0;
+                        }
+                        dp[i][0][j + 1] = (dp[i][0][j + 1] + dp[i - 1][1][j]) % mod;
+                    }
+                }
+                if (dp[i - 1][2][j] != -1) {
+                    if (j + 1 < n * 2 + 1) {
+                        if (dp[i][0][j + 1] == -1) {
+                            dp[i][0][j + 1] = 0;
+                        }
+                        dp[i][0][j + 1] = (dp[i][0][j + 1] + dp[i - 1][2][j]) % mod;
+                    }
+                    if (j - 1 >= 0) {
+                        if (dp[i][1][j - 1] == -1) {
+                            dp[i][1][j - 1] = 0;
+                        }
+                        dp[i][1][j - 1] = (dp[i][1][j - 1] + dp[i - 1][2][j]) % mod;
+                    }
+                }
+            }
+        }
+    }
+    long long ans = 0;
+    for (i = n + 1; i <= n * 2; i++) {
+        for (j = 0; j < 3; j++) {
+            if (dp[n - 1][j][i] != -1) {
+                ans = (ans + dp[n - 1][j][i]) % mod;
+            }
+        }
+    }
+    return ans;
+}

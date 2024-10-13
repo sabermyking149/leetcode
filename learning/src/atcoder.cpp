@@ -1141,3 +1141,75 @@ void ABC_374_D()
     }
     cout << setprecision(16) << ans << endl;
 }
+
+
+void ABC_375_C()
+{
+    int i;
+    int n;
+
+    cin >> n;
+    vector<string> grid(n);
+
+    for (i = 0; i < n; i++) {
+        cin >> grid[i];
+    }
+
+    // 坐标变换 [x, y] -> [y, N - 1 - x] -> [N - 1 - x, N - 1 - y] -> [N - 1 - y, x]
+    auto rotateEdge = [&grid](int r, int cnt) {
+        cnt %= 4;
+        if (cnt == 0) {
+            return;
+        }
+
+        int j;
+        int n = grid.size();
+
+        while (cnt) {
+            for (j = r; j < n - 1 - r; j++) {
+                auto top = grid[r][j];
+                grid[r][j] = grid[n - 1 - j][r];
+                grid[n - 1 - j][r] = grid[n - 1 - r][n - 1 - j];
+                grid[n - 1 - r][n - 1 - j] = grid[j][n - 1 - r];
+                grid[j][n - 1 - r] = top;
+            }
+            cnt--;
+        }
+    };
+
+    for (i = 0; i < n / 2; i++) {
+        rotateEdge(i, i + 1);
+    }
+    for (auto g : grid) {
+        cout << g << endl;
+    }
+}
+
+
+void ABC_375_D()
+{
+    int i;
+    int n;
+    string s;
+
+    cin >> s;
+
+    n = s.size();
+    vector<int> chIdx(26, -1);
+    vector<int> cnt(26, 0);
+    vector<long long> sum(26, 0);
+    long long ans = 0;
+    for (i = 0; i < n; i++) {
+        if (chIdx[s[i] - 'A'] == -1) {
+            chIdx[s[i] - 'A'] = i;
+            cnt[s[i] - 'A']++;
+        } else {
+            auto idx = chIdx[s[i] - 'A'];
+            sum[s[i] - 'A'] += (i - idx) * static_cast<long long>(cnt[s[i] - 'A']);  
+            ans += sum[s[i] - 'A'] - cnt[s[i] - 'A'];
+            cnt[s[i] - 'A']++;
+            chIdx[s[i] - 'A'] = i;
+        }
+    }
+    cout << ans << endl;
+}
