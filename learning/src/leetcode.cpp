@@ -19719,3 +19719,79 @@ int countWinningSequences(string s)
     }
     return ans;
 }
+
+
+// LC214
+string shortestPalindrome(string s)
+{
+    if (IsPalindrome(s)) {
+        return s;
+    }
+
+    int i, idx;
+    int n;
+    string t = s;
+    string str;
+    reverse(t.begin(), t.end());
+
+    vector<int> next;
+
+    str = s + "#" + t;
+    GenerateNextArr(str, next);
+
+    int k = next.back();
+    n = str.size();
+    string midStr = str.substr(k, n - 2 * k);
+
+    cout << midStr << endl;
+
+    n = midStr.size();
+    for (i = 0; i < n; i++) {
+        if (midStr[i] == '#') {
+            idx = i + 1;
+            break;
+        }
+    }
+    return midStr.substr(idx) + s;
+}
+
+
+// LC3316
+int maxRemovals(string source, string pattern, vector<int>& targetIndices)
+{
+    int i, j;
+    int n = source.size();
+    int m = pattern.size();
+
+    unordered_set<int> idx(targetIndices.begin(), targetIndices.end());
+
+    // dp[i][j] - source前i位匹配 pattern前j位最大可删除数
+    vector<vector<int>> dp(n + 1, vector<int>(m + 1, -1));
+
+    dp[0][0] = 0;
+    // dp[i][0] - 只要把前i位在targetIndices满足的都删了, 剩下的一定匹配, 此时pattern可看做空串, 一定是删除后source的子序列
+    for (i = 1; i <= n; i++) {
+        if (idx.count(i - 1)) {
+            dp[i][0] = dp[i - 1][0] + 1;
+        } else {
+            dp[i][0] = dp[i - 1][0];
+        }
+    }
+    for (i = 1; i <= n; i++) {
+        for (j = 1; j <= m; j++) {
+            if (j > i) {
+                break;
+            }
+            // 不选择匹配source[i - 1]
+            dp[i][j] = dp[i - 1][j];
+            if (idx.count(i - 1) && dp[i - 1][j] != -1) {
+                dp[i][j] = dp[i - 1][j] + 1;
+            }
+            // 选择匹配source[i - 1]
+            if (source[i - 1] == pattern[j - 1]) {
+                dp[i][j] = max(dp[i][j], dp[i - 1][j - 1]);
+            }
+        }
+    }
+    return dp[n][m];
+}
