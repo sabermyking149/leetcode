@@ -19795,3 +19795,61 @@ int maxRemovals(string source, string pattern, vector<int>& targetIndices)
     }
     return dp[n][m];
 }
+
+
+// LC425
+vector<vector<string>> wordSquares(vector<string>& words)
+{
+    int i;
+    int n = words.size();
+    auto Check = [](vector<string>& brick) {
+        int i, j;
+        int n = brick.size();
+
+        if (n == 1) {
+            return true;
+        }
+
+        string t;
+        for (j = 0; j < n; j++) {
+            t.clear();
+            for (i = 0; i < n; i++) {
+                t += brick[i][j];
+            }
+            if (brick[j].substr(0, n) != t) {
+                return false;
+            }
+        }
+        return true;
+    };
+    unordered_map<char, vector<string>> dict;
+
+    for (auto w : words) {
+        dict[w[0]].emplace_back(w);
+    }
+    vector<string> record;
+    vector<vector<string>> ans;
+    function<void (string&, int)> dfs = [&dfs, &Check, &dict, &record, &ans](string& cur, int idx) {
+        if (record.size() == cur.size()) {
+            ans.emplace_back(record);
+            return;
+        }
+        if (dict.count(cur[idx])) {
+            for (auto w : dict[cur[idx]]) {
+                record.emplace_back(w);
+                if (!Check(record)) {
+                    record.pop_back();
+                    continue;
+                }
+                dfs(cur, idx + 1);
+                record.pop_back();
+            }
+        }
+    };
+    for (i = 0; i < n; i++) {
+        record.emplace_back(words[i]);
+        dfs(words[i], 1);
+        record.pop_back();
+    }
+    return ans;
+}
