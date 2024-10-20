@@ -19853,3 +19853,119 @@ vector<vector<string>> wordSquares(vector<string>& words)
     }
     return ans;
 }
+
+
+// LC3323
+int minConnectedGroups(vector<vector<int>>& intervals, int k)
+{
+    int i;
+    int n = intervals.size();
+    int start, end;
+    vector<vector<int>> ranges;
+
+    sort(intervals.begin(), intervals.end());
+    start = intervals[0][0];
+    end = intervals[0][1];
+    for (i = 1; i < n; i++) {
+        if (intervals[i][0] > end) {
+            ranges.push_back({start, end});
+            start = intervals[i][0];
+            end = intervals[i][1];
+        } else {
+            end = max(end, intervals[i][1]);
+        }
+    }
+    ranges.push_back({start, end});
+
+    int left, right, mid;
+    int target, ans;
+
+    n = ranges.size();
+    ans = INT_MAX;
+    for (i = 0; i < n; i++) {
+        left = i;
+        right = n - 1;
+        target = ranges[i][1] + k;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (ranges[mid][0] <= target) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        ans = min(ans, i + 1 + n - 1 - right);
+    }
+    return ans;
+}
+
+
+// LC3326
+int minOperations_LC3326(vector<int>& nums)
+{
+    auto PrimeChange = [](int n) {
+        if (n == 1 || n == 2) {
+            return -1;
+        }
+        int i;
+        int m = sqrt(n);
+
+        for (i = 2; i <= m; i++) {
+            if (n % i == 0) {
+                return i;
+            }
+        }
+        return -1;
+    };
+
+    int i;
+    int n = nums.size();
+    int ans;
+    int INF = 0x3f3f3f3f;
+
+    vector<int> afterChange(n);
+    for (i = 0; i < n; i++) {
+        auto t = PrimeChange(nums[i]);
+        if (t != -1) {
+            afterChange[i] = t;
+        } else {
+            afterChange[i] = nums[i];
+        }
+    }
+    // dp[i][0 - 1] - 第i位是否变换的最少操作次数
+    vector<vector<int>> dp(n, vector<int>(2, INF));
+    if (afterChange[0] == nums[0]) {
+        dp[0][0] = 0;
+    } else {
+        dp[0][0] = 0;
+        dp[0][1] = 1;
+    }
+    for (i = 1; i < n; i++) {
+        if (nums[i] >= nums[i - 1]) {
+            dp[i][0] = min(dp[i - 1][0], dp[i - 1][1]);
+            if (afterChange[i] != nums[i]) {
+                if (afterChange[i] >= nums[i - 1]) {
+                    dp[i][1] = dp[i - 1][0] == INF ? INF : dp[i - 1][0] + 1;
+                    if (afterChange[i - 1] != nums[i - 1] && afterChange[i] >= afterChange[i - 1]) {
+                        dp[i][1] = min(dp[i][1], dp[i - 1][1] == INF ? INF : dp[i - 1][1] + 1);
+                    }
+                } else {
+                    if (afterChange[i - 1] != nums[i - 1] && afterChange[i - 1] <= afterChange[i]) {
+                        dp[i][1] = dp[i - 1][1] == INF ? INF : dp[i - 1][1] + 1;
+                    }
+                }
+            }
+        } else {
+            if (nums[i] >= afterChange[i - 1]) {
+                dp[i][0] = min(dp[i][0], dp[i - 1][1]);
+            }
+            if (afterChange[i] != nums[i] && afterChange[i - 1] != nums[i - 1]) {
+                if (afterChange[i] >= afterChange[i - 1]) {
+                    dp[i][1] = dp[i - 1][1] == INF ? INF : dp[i - 1][1] + 1;
+                }
+            }
+        }
+    }
+    ans = min(dp[n - 1][0], dp[n - 1][1]);
+    return ans == INF ? -1 : ans;
+}

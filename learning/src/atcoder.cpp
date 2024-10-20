@@ -1213,3 +1213,54 @@ void ABC_375_D()
     }
     cout << ans << endl;
 }
+
+
+// 有向图包含某节点的最小环
+void ABC_376_D()
+{
+    int i;
+    int n, m;
+    int from, to;
+    int INF = 0x3f3f3f3f;
+
+    cin >> n >> m;
+
+    vector<vector<pair<int, int>>> edgeWithWeight(n + 1);
+    // 权重记为1
+    for (i = 0; i < m; i++) {
+        cin >> from >> to;
+        edgeWithWeight[from].push_back({to, 1});
+    }
+
+    vector<int> dist(n + 1, INF);
+    queue<pair<int, int>> q;
+
+    q.push({1, 0});
+    while (q.size()) {
+        auto t = q.front();
+        q.pop();
+
+        if (dist[t.first] < t.second) {
+            continue;
+        }
+        dist[t.first] = t.second;
+        for (auto it : edgeWithWeight[t.first]) {
+            // 发现过节点1的环
+            if (it.first == 1) {
+                // cout << t.first << " " << dist[t.first] << endl;
+                if (dist[it.first] == 0) {
+                    dist[it.first] = t.second + 1;
+                } else {
+                    dist[it.first] = min(dist[it.first], t.second + 1);
+                }
+                // cout << dist[it.first] << endl;
+                continue;
+            }
+            if (dist[t.first] + it.second < dist[it.first]) {
+                dist[it.first] = dist[t.first] + it.second;
+                q.push({it.first, dist[it.first]});
+            }
+        }
+    }
+    cout << (dist[1] == 0 ? -1 : dist[1]) << endl;
+}
