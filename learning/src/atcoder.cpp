@@ -998,67 +998,40 @@ void ABC_372_D()
 }
 
 
-// 有问题
 void ABC_373_D()
 {
     int i;
     int n, m;
-    int node1, node2;
+    int from, to;
     long long w;
 
     cin >> n >> m;
 
-    unordered_map<int, unordered_map<int, long long>> edges;
-    unordered_map<int, int> degree;
-    vector<long long> ans(n + 1, LLONG_MIN);
+    vector<vector<pair<int, long long>>> edgesWithWeight(n + 1);
     for (i = 0; i < m; i++) {
-        cin >> node1 >> node2 >> w;
-        edges[node2][node1] = w;
-        degree[node1]++;
+        cin >> from >> to >> w;
+        edgesWithWeight[from].push_back({to, w});
+        // 加上反向边和对应负权重方便dfs遍历
+        edgesWithWeight[to].push_back({from, -w});
     }
 
-    queue<int> q;
-    for (i = 1; i <= n; i++) {
-        if (degree.count(i) == 0) {
-            q.push(i);
-        }
-    }
-    while (!q.empty()) {
-        auto node = q.front();
-        q.pop();
-        // cout << node << endl;
-        if (edges.count(node)) {
-            for (auto it : edges[node]) {
-                if (ans[node] == LLONG_MIN) {
-                    if (ans[it.first] == LLONG_MIN) {
-                        ans[node] = it.second;
-                        ans[it.first] = 0ll;
-                    } else {
-                        ans[node] = ans[it.first] + it.second;
-                    }
-                } else {
-                    if (ans[it.first] == LLONG_MIN) {
-                        ans[it.first] = ans[node] - it.second;
-                    }
-                }
-                // for (auto a : ans) cout << a << " "; cout << endl;
-                if (degree.count(it.first)) {
-                    if (degree[it.first] > 1) { 
-                        degree[it.first]--;
-                    } else {
-                        q.push(it.first);
-                        degree.erase(it.first);
-                    }
-                }
+    vector<long long> dist(n + 1, LLONG_MIN);
+    function<void (int)> dfs = [&dfs, &edgesWithWeight, &dist](int cur) {
+        for (auto it : edgesWithWeight[cur]) {
+            if (dist[it.first] == LLONG_MIN) {
+                dist[it.first] = dist[cur] + it.second;
+                dfs(it.first);
             }
         }
-    }
-
+    };
     for (i = 1; i <= n; i++) {
-        if (ans[i] == LLONG_MIN) {
-            ans[i] = 0;
+        if (dist[i] == LLONG_MIN) {
+            dist[i] = 0;
+            dfs(i);
         }
-        cout << ans[i] << (i == n ? "\n" : " ");
+    }
+    for (i = 1; i <= n; i++) {
+        cout << dist[i] << (i == n ? "\n" : " ");
     }
 }
 
@@ -1235,6 +1208,7 @@ void ABC_376_D()
     vector<int> dist(n + 1, INF);
     queue<pair<int, int>> q;
 
+    // 用dijkstra间接求最小环
     q.push({1, 0});
     while (q.size()) {
         auto t = q.front();
