@@ -19969,3 +19969,82 @@ int minOperations_LC3326(vector<int>& nums)
     ans = min(dp[n - 1][0], dp[n - 1][1]);
     return ans == INF ? -1 : ans;
 }
+
+
+// 面试题 08.13. 堆箱子
+int pileBox(vector<vector<int>>& box)
+{
+    int i, j;
+    int n = box.size();
+    int ans;
+
+    sort(box.rbegin(), box.rend());
+
+    // dp[i] - 以box[i]作为最上面箱子的最大高度
+    vector<int> dp(n, 0);
+
+    dp[0] = box[0][2];
+    ans = dp[0];
+    for (i = 1; i < n; i++) {
+        dp[i] = box[i][2];
+        for (j = i - 1; j >= 0; j--) {
+            if (box[i][0] < box[j][0] && box[i][1] < box[j][1] && box[i][2] < box[j][2]) {
+                dp[i] = max(dp[i], box[i][2] + dp[j]);
+            }
+        }
+        ans = max(ans, dp[i]);
+    }
+    return ans;
+}
+
+
+// LC3329
+long long numberOfSubstrings(string s, int k)
+{
+    int i, j;
+    int n = s.size();
+    int left, right, mid;
+    int curMaxCnt;
+    long long ans;
+    bool find = false;
+    vector<int> t(26);
+    vector<vector<int>> prefix(n, vector<int>(26, 0));
+
+    ans = 0;
+    curMaxCnt = 0;
+    for (i = 0; i < n; i++) {
+        if (i > 0) {
+            prefix[i] = prefix[i - 1];
+        }
+        prefix[i][s[i] - 'a']++;
+        curMaxCnt = max(curMaxCnt, prefix[i][s[i] - 'a']);
+        if (curMaxCnt < k) {
+            continue;
+        }
+        left = 0;
+        right = i;
+        // 所求为right
+        while (left <= right) {
+            find = false;
+            mid = (right - left) / 2 + left;
+            if (mid == 0) {
+                left = mid + 1;
+                find = true;
+            } else {
+                for (j = 0; j < 26; j++) {
+                    t[j] = prefix[i][j] - prefix[mid - 1][j];
+                    if (t[j] >= k) {
+                        left = mid + 1;
+                        find = true;
+                        break;
+                    }
+                }
+            }
+            if (find == false) {
+                right = mid - 1;
+            }
+        }
+        ans += right + 1;
+    }
+    return ans;
+}
