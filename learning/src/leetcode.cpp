@@ -19472,7 +19472,6 @@ vector<int> remainingMethods(int n, int k, vector<vector<int>>& invocations)
     }
     vector<bool> visited(n, false);
     unordered_set<int> nodes;
-    int cnt = 0;
     function<void (int)> dfs = [&visited, &dfs, &edges, &nodes](int cur) {
         visited[cur] = true;
         nodes.emplace(cur);
@@ -20045,6 +20044,128 @@ long long numberOfSubstrings(string s, int k)
             }
         }
         ans += right + 1;
+    }
+    return ans;
+}
+
+
+// LC685
+vector<int> findRedundantDirectedConnection(vector<vector<int>>& edges)
+{
+    int i;
+    int n = edges.size();
+    int cnt;
+    // 每个节点的入度
+    vector<int> degree(n + 1, 0);
+    vector<int> visited(n + 1, 0);
+    vector<vector<int>> edge(n + 1);
+    for (auto e : edges) {
+        edge[e[0]].emplace_back(e[1]);
+        degree[e[1]]++;
+    }
+    int curRoot = -1;
+    for (i = 1; i <= n; i++) {
+        if (degree[i] == 0) {
+            curRoot = i;
+            break;
+        }
+    }
+    function<void (int, vector<int>&, bool&, int&)> dfs = [&dfs, &edge, &visited]
+        (int cur, vector<int>& deleteEdge, bool& findLoop, int& cnt) {
+        if (findLoop) {
+            return;
+        }
+        visited[cur] = 1;
+        for (auto it : edge[cur]) {
+            if (deleteEdge[0] != cur || deleteEdge[1] != it) {
+                if (visited[it] == 1) {
+                    findLoop = true;
+                    return;
+                }
+                if (visited[it] == 0) {
+                    cnt++;
+                    dfs(it, deleteEdge, findLoop, cnt);
+                }
+            }
+        }
+        visited[cur] = 2;
+    };
+    vector<int> ans;
+    bool findLoop = false;
+    for (i = n - 1; i >= 0; i--) {
+        degree[edges[i][1]]--;
+        if (curRoot != -1 && degree[edges[i][1]] == 0) {
+            // 出现了两个根节点
+            degree[edges[i][1]]++;
+            continue;
+        }
+        cnt = 1;
+        findLoop = false;
+        fill(visited.begin(), visited.end(), 0);
+        if (curRoot != -1) {
+            dfs(curRoot, edges[i], findLoop, cnt);
+        } else {
+            if (degree[edges[i][1]] == 0) {
+                dfs(edges[i][1], edges[i], findLoop, cnt);
+            }
+        }
+        if (findLoop == false && cnt == n) {
+            ans = edges[i];
+            break;
+        }
+        degree[edges[i][1]]++;
+    }
+    return ans;
+}
+
+
+// LC1449
+string largestNumber(vector<int>& cost, int target)
+{
+    int i, j, k;
+    int n = cost.size();
+
+    // dp[target][x] - 用数字x构成target时能得到的最大字符串长度
+    vector<vector<int>> dp(target + 1, vector<int>(10, -1));
+    for (i = 0; i < 10; i++) {
+        dp[0][i] = 0;
+    }
+    for (i = 1; i <= target; i++) {
+        for (j = 0; j < n; j++) {
+            for (k = 1; k <= n; k++) {
+                if (i - cost[j] >= 0 && dp[i - cost[j]][k] != -1) {
+                    dp[i][j + 1] = max(dp[i][j + 1], dp[i - cost[j]][k] + 1);
+                }
+            }
+        }
+    }
+    for (i = 0; i < 10; i++) {
+        if (dp[target][i] != -1) {
+            break;
+        }
+    }
+    if (i == 10) {
+        return "0";
+    }
+    string ans;
+    int curLen, t;
+    while (target) {
+        curLen = 0;
+        for (i = 1; i <= 9; i++) {
+            if (dp[target][i] != -1) {
+                if (dp[target][i] >= curLen) {
+                    curLen = dp[target][i];
+                    t = i;
+                }
+            }
+        }
+        target -= cost[t - 1];
+        ans += t + '0';
+    }
+    for (i = 19; i >= 1; i--) {
+        if ((n & 1 << i) == (1 << i)) {
+            printf ("%d ", 1 << i);
+        }
     }
     return ans;
 }

@@ -1238,3 +1238,27 @@ void ABC_376_D()
     }
     cout << (dist[1] == 0 ? -1 : dist[1]) << endl;
 }
+
+
+void ABC_377_D()
+{
+    int i;
+    int n, m;
+    int l, r;
+    long long ans;
+
+    cin >> n >> m;
+    // left[i] - [left[i], i]最大不重叠区间
+    vector<int> left(m + 1, 1);
+    for (i = 0; i < n; i++) {
+        cin >> l >> r;
+        left[r] = max(l + 1, left[r]);
+    }
+    ans = 0;
+    for (i = 1; i <= m; i++) {
+        left[i] = max(left[i], left[i - 1]);
+        ans += i - left[i] + 1;
+    }
+
+    cout << ans << endl;
+}

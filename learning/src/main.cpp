@@ -775,5 +775,22 @@ int main(int argc, char *argv[])
     cout << MySqrt(5.0) << endl;
     cout << MySqrt(0.64) << endl;
 
-    ABC_356_C();
+    // ABC_356_C();
+    int n;
+    cin >> n;
+    for (int i = 19; i >= 1; i--) {
+        if ((n & 1 << i) == (1 << i)) {
+            printf ("%d ", 1 << i);
+        }
+    }
+    /*double m;
+    int a;
+    for (int i = 19; i != 0; i--) {
+        m = pow(2, i);
+        if (m <= n) {
+            a = (int)m;
+            n -= a;
+        }
+        printf ("%d ", a);
+    }*/
 }
