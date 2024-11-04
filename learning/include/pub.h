@@ -83,4 +83,16 @@ public:
         return hash<T1>()(a.first) ^ hash<T2>()(a.second);
     }
 };
+
+template <typename T>
+struct VectorHash {
+    size_t operator()(const std::vector<T>& v) const {
+        hash<T> hasher;
+        size_t seed = 0;
+        for (int i : v) {
+            seed ^= hasher(i) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+        }
+        return seed;
+    }
+};
 #endif

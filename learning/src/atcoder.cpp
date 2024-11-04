@@ -1262,3 +1262,59 @@ void ABC_377_D()
 
     cout << ans << endl;
 }
+
+
+void ABC_378_D()
+{
+    int i, j;
+    int ans;
+    int H, W, K;
+
+    cin >> H >> W >> K;
+
+    vector<vector<char>> grid(H, vector<char>(W));
+    for (i = 0; i < H; i++) {
+        for (j = 0; j < W; j++) {
+            cin >> grid[i][j];
+        }
+    }
+
+    // dp[i][j][k] - 移动到(i, j)且刚好走了k步的方法数
+    /*vector<vector<vector<long long>>> dp(H, vector<vector<long long>>(W, vector<long long>(K + 1, 0)));
+    for (i = 0; i < H; i++) {
+        for (j = 0; j < W; j++) {
+            dp[i][j][0] = 1;
+        }
+    }*/
+
+    vector<vector<int>> directions = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
+    vector<vector<int>> visited(H, vector<int>(W, 0));
+    ans = 0;
+    function<void (int, int, int)> dfs = [&dfs, &directions, &grid, &visited, &K, &ans](int row, int col, int cnt) {
+        visited[row][col] = 1;
+        if (cnt == K) {
+            ans++;
+            visited[row][col] = 0;
+            return;
+        }
+        for (int i = 0; i < 4; i++) {
+            auto nr = row + directions[i][0];
+            auto nc = col + directions[i][1];
+            if (nr < 0 || nr >= grid.size() || nc < 0 || 
+                nc >= grid[0].size() || visited[nr][nc] || grid[nr][nc] == '#') {
+                continue;
+            }
+            dfs(nr, nc, cnt + 1);
+        }
+        visited[row][col] = 0;
+    };
+    for (i = 0; i < H; i++) {
+        for (j = 0; j < W; j++) {
+            if (grid[i][j] == '#') {
+                continue;
+            }
+            dfs(i, j, 0);
+        }
+    }
+    cout << ans << endl;
+}

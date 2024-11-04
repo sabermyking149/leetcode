@@ -7914,24 +7914,24 @@ int maxProfit(int k, vector<int>& prices)
 
 double MySqrt(double num)
 {
-    double left, right, mid;
-
     if (num < 0) {
         return INFINITY;
     }
-    left = 0.0;
-    right = num + 1; // 防止出现num < 1的情况
-    while (left <= right) {
-        mid = (right - left) / 2 + left;
-
-        auto t = mid * mid;
-        if (num - t >= 10e-5) {
-            left = mid + 10e-4;
+    double left = 0.0;
+    double right = num;
+    if (num < 1) {
+        right = 1.0;
+    }
+    while (right - left > 1e-10) { // 使用更小的阈值
+        double mid = left + (right - left) / 2;
+        double t = mid * mid;
+        if (t > num) {
+            right = mid;
         } else {
-            right = mid - 10e-4;
+            left = mid;
         }
     }
-    return right;
+    return left;
 }
 
 
@@ -20168,4 +20168,170 @@ string largestNumber(vector<int>& cost, int target)
         }
     }
     return ans;
+}
+
+
+// LC3339
+int countOfArrays(int n, int m, int k)
+{
+    int i, j;
+    int mod = 1e9 + 7;
+    // dp[i][0 - 1][k] - 第i位是 偶数/奇数 组成k个偶数数组的情况
+    vector<vector<vector<long long>>> dp(n, vector<vector<long long>>(2, vector<long long>(k + 1, 0)));
+    int oddNum = (m + 1) / 2;
+    int evenNum = m / 2;
+
+    dp[0][0][0] = evenNum;
+    dp[0][1][0] = oddNum;
+    for (i = 1; i < n; i++) {
+        for (j = 0; j <= k; j++) {
+            dp[i][0][j] = evenNum * (dp[i - 1][1][j] + (j > 0 ? dp[i - 1][0][j - 1] : 0ll)) % mod;
+            dp[i][1][j] = oddNum * (dp[i - 1][0][j] + dp[i - 1][1][j]) % mod;
+        }
+    }
+    return (dp[n - 1][0][k] + dp[n - 1][1][k]) % mod;
+}
+
+
+// LC10
+bool isMatch(string s, string p)
+{
+    int m = s.size();
+    int n = p.size();
+    vector<vector<bool>> dp(m + 1, vector<bool>(n + 1, false));
+
+    dp[0][0] = true;
+    for (int i = 0; i <= m; i++) {
+        for (int j = 1; j <= n; j++) {
+            if (p[j - 1] == '*') {
+                dp[i][j] = dp[i][j - 2]; // '*'可以代表前面的字符出现0次
+                if (i > 0 && (s[i - 1] == p[j - 2] || p[j - 2] == '.')) {
+                    dp[i][j] = dp[i][j] || dp[i - 1][j]; // 匹配1次或多次
+                }
+            } else if (i > 0 && (s[i - 1] == p[j - 1] || p[j - 1] == '.')) {
+                dp[i][j] = dp[i - 1][j - 1];
+            }
+        }
+    }
+    return dp[m][n];
+}
+
+
+// LC638
+int shoppingOffers(vector<int>& price, vector<vector<int>>& special, vector<int>& needs)
+{
+    int i;
+    int n = price.size();
+    vector<int> v(n + 1);
+
+    for (i = 0; i < n; i++) {
+        fill(v.begin(), v.end(), 0);
+        v[i] = 1;
+        v[n] = price[i];
+        special.emplace_back(v);
+    }
+
+    auto add = [&needs](vector<int>& b) {
+        int i;
+        int n = needs.size();
+        for (i = 0; i < n; i++) {
+            needs[i] += b[i];
+        }
+    };
+
+    auto minus = [&needs](vector<int>& b) {
+        int i;
+        int n = needs.size();
+        bool f = true;
+        for (i = 0; i < n; i++) {
+            needs[i] -= b[i];
+            if (needs[i] < 0) {
+                f = false;
+            }
+        }
+        return f;
+    };
+
+    unordered_map<vector<int>, int, VectorHash<int>> cost;
+    vector<int> z(n, 0);
+    cost[z] = 0;
+    function<int (vector<int>&)> dfs = [&dfs, &special, &cost, &add, &minus](vector<int>& needs) {
+        int i;
+        int n = needs.size();
+
+        if (cost.count(needs)) {
+            return cost[needs];
+        }
+        int m = special.size();
+        int ans = 0x3f3f3f3f;
+        int a, b;
+        for (i = 0; i < m; i++) {
+            if (minus(special[i])) {
+                a = special[i][n];
+                b = dfs(needs);
+                ans = min(ans, a + b);
+            }
+            add(special[i]);
+        }
+        cost[needs] = ans;
+        return ans;
+    };
+
+    return dfs(needs);
+}
+
+
+int minTimeToReach(vector<vector<int>>& moveTime)
+{
+    int i;
+    int n = moveTime.size();
+    int m = moveTime[0].size();
+    int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+    int cost;
+    // dist[i][j] - 从(0, 0)到(i, j)最少耗时
+    vector<vector<int>> dist(n, vector<int>(m, INT_MAX / 2));
+    auto cmp = [](pair<pair<int, int>, int>& a, pair<pair<int, int>, int>& b) {
+        return a.second > b.second;
+    };
+
+    // 堆优化dijkstra
+    priority_queue<pair<pair<int, int>, int>, vector<pair<pair<int, int>, int>>, decltype(cmp)> q(cmp);
+    q.push({{0, 0}, 0});
+    while (q.size()) {
+
+        auto p = q.top();
+        q.pop();
+        if (dist[p.first.first][p.first.second] < p.second) {
+            continue;
+        }
+        dist[p.first.first][p.first.second] = p.second;
+
+        for (i = 0; i < 4; i++) {
+            auto row = p.first.first + directions[i][0];
+            auto col = p.first.second + directions[i][1];
+            if (row < 0 || row >= n || col < 0 || col >= m) {
+                continue;
+            }
+            if ((row + col) % 2 == 0) {
+                cost = 2;
+            } else {
+                cost = 1;
+            }
+            if (p.second <= moveTime[row][col]) {
+                if (dist[row][col] <= moveTime[row][col] + cost) {
+                    continue;
+                }
+                dist[row][col] = moveTime[row][col] + cost;
+                // printf ("1 %d %d, dist[%d][%d]=%d\n", p.second, cost, row, col, dist[row][col]);
+                q.push({{row, col}, dist[row][col]});
+                continue;
+            }
+            if (p.second + cost < dist[row][col]) {
+                dist[row][col] = p.second + cost;
+                // printf ("2 %d %d, dist[%d][%d]=%d\n", p.second, cost, row, col, dist[row][col]);
+                q.push({{row, col}, dist[row][col]});
+            }
+        }
+    }
+    return dist[n - 1][m - 1];
 }
