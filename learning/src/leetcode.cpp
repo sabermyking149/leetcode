@@ -7931,7 +7931,7 @@ double MySqrt(double num)
             left = mid;
         }
     }
-    return left;
+    return right;
 }
 
 
@@ -20334,4 +20334,114 @@ int minTimeToReach(vector<vector<int>>& moveTime)
         }
     }
     return dist[n - 1][m - 1];
+}
+
+
+// LCP74
+int fieldOfGreatestBlessing(vector<vector<int>>& forceField)
+{
+    int i, j;
+    // 对于每个正方形的两条纵向边进行扫描
+    int n = forceField.size();
+    int m;
+    int ans, cnt;
+    vector<pair<double, char>> line1, line2;
+    // 比较函数, 区间的起点's'在前
+    auto cmp = [](const pair<double, char>& a, const pair<double, char>& b) {
+        if (a.first == b.first) {
+            return a.second > b.second;
+        }
+        return a.first < b.first;
+    };
+    ans = 0;
+    for (i = 0; i < n; i++) {
+        line1.clear();
+        line2.clear();
+        for (j = 0; j < n; j++) {
+            if (forceField[i][0] - forceField[i][2] / 2.0 <= forceField[j][0] + forceField[j][2] / 2.0 &&
+                forceField[i][0] - forceField[i][2] / 2.0 >= forceField[j][0] - forceField[j][2] / 2.0) {
+                line1.push_back({forceField[j][1] - forceField[j][2] / 2.0, 's'});
+                line1.push_back({forceField[j][1] + forceField[j][2] / 2.0, 'e'});
+            }
+            if (forceField[i][0] + forceField[i][2] / 2.0 <= forceField[j][0] + forceField[j][2] / 2.0 &&
+                forceField[i][0] + forceField[i][2] / 2.0 >= forceField[j][0] - forceField[j][2] / 2.0) {
+                line2.push_back({forceField[j][1] - forceField[j][2] / 2.0, 's'});
+                line2.push_back({forceField[j][1] + forceField[j][2] / 2.0, 'e'});
+            }
+        }
+        sort(line1.begin(), line1.end(), cmp);
+        sort(line2.begin(), line2.end(), cmp);
+        cnt = 0;
+        m = line1.size();
+        for (j = 0; j < m; j++) {
+            if (line1[j].second == 's') {
+                cnt++;
+                ans = max(ans, cnt);
+            } else {
+                cnt--;
+            }
+        }
+        cnt = 0;
+        m = line2.size();
+        for (j = 0; j < m; j++) {
+            if (line2[j].second == 's') {
+                cnt++;
+                ans = max(ans, cnt);
+            } else {
+                cnt--;
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LCP56
+int conveyorBelt(vector<string>& matrix, vector<int>& start, vector<int>& end)
+{
+    int i;
+    int m = matrix.size();
+    int n = matrix[0].size();
+    int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+
+    // 到达(i, j)的最小修改次数
+    vector<vector<int>> dist(m, vector<int>(n, 0x3f3f3f3f));
+    auto cmp = [](const pair<vector<int>, int>& a, const pair<vector<int>, int>& b) {
+        return a.second > b.second;
+    };
+    priority_queue<pair<vector<int>, int>, vector<pair<vector<int>, int>>, decltype(cmp)> pq(cmp);
+
+    // 堆优化dijkstra
+    pq.push({start, 0});
+    while (pq.size()) {
+        auto p = pq.top();
+        pq.pop();
+
+        if (dist[p.first[0]][p.first[1]] < p.second) {
+            continue;
+        }
+        dist[p.first[0]][p.first[1]] = p.second;
+        for (i = 0; i < 4; i++) {
+            auto nr = p.first[0] + directions[i][0];
+            auto nc = p.first[1] + directions[i][1];
+            if (nr < 0 || nr >= m || nc < 0 || nc >= n) {
+                continue;
+            }
+            if ((matrix[p.first[0]][p.first[1]] == '>' && i != 0) ||
+                (matrix[p.first[0]][p.first[1]] == 'v' && i != 1) ||
+                (matrix[p.first[0]][p.first[1]] == '<' && i != 2) ||
+                (matrix[p.first[0]][p.first[1]] == '^' && i != 3)) {
+                if (p.second + 1 < dist[nr][nc]) {
+                    dist[nr][nc] = p.second + 1;
+                    pq.push({{nr, nc}, dist[nr][nc]});
+                }
+            } else {
+                if (p.second < dist[nr][nc]) {
+                    dist[nr][nc] = p.second;
+                    pq.push({{nr, nc}, p.second});
+                }
+            }
+        }
+    }
+    return dist[end[0]][end[1]];
 }
