@@ -20217,6 +20217,38 @@ bool isMatch(string s, string p)
 }
 
 
+// LC44
+bool isMatch_LC44(string s, string p)
+{
+    int i, j;
+    int m = s.size();
+    int n = p.size();
+    vector<vector<bool>> dp(m + 1, vector<bool>(n + 1, false));
+
+    dp[0][0] = true;
+
+    string t;
+    for (j = 1; j <= n; j++) {
+        t.append(1, '*');
+        if (p.substr(0, j) == t) {
+            dp[0][j] = true;
+        } else {
+            break;
+        }
+    }
+    for (i = 1; i <= m; i++) {
+        for (j = 1; j <= n; j++) {
+            if (s[i - 1] == p[j - 1] || p[j - 1] == '?') {
+                dp[i][j] = dp[i - 1][j - 1];
+            } else if (p[j - 1] == '*') {
+                dp[i][j] = dp[i - 1][j] || dp[i][j - 1]; // 是否匹配'*'
+            }
+        }
+    }
+    return dp[m][n];
+}
+
+
 // LC638
 int shoppingOffers(vector<int>& price, vector<vector<int>>& special, vector<int>& needs)
 {
@@ -20444,4 +20476,127 @@ int conveyorBelt(vector<string>& matrix, vector<int>& start, vector<int>& end)
         }
     }
     return dist[end[0]][end[1]];
+}
+
+
+// LC1723
+int minimumTimeRequired(vector<int>& jobs, int k)
+{
+    // to do
+}
+
+
+// LC3346 LC3347
+int maxFrequency(vector<int>& nums, int k, int numOperations)
+{
+    int n = nums.size();
+
+    unordered_map<int, int> num;
+    unordered_set<int> p;
+    for (auto n : nums) {
+        num[n]++;
+        p.emplace(n);
+        p.emplace(n - k);
+        p.emplace(n + k);
+    }
+    sort(nums.begin(), nums.end());
+
+    int ans = 0;
+    int cnt;
+    int left, right, mid;
+    int lrange, rrange;
+    for (auto it : p) {
+        left = 0;
+        right = n - 1;
+        // 最后一个小于等于 it + k
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (nums[mid] <= it + k) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        rrange = right;
+
+        left = 0;
+        right = n - 1;
+        // 第一个大于等于 it - k
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (nums[mid] >= it - k) {
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        lrange = left;
+
+        cnt = min(rrange - lrange + 1 - num[it], numOperations) + num[it];
+        ans = max(ans, cnt);
+    }
+    return ans;
+}
+
+
+// LC3350
+int maxIncreasingSubarrays(vector<int>& nums)
+{
+    int i;
+    int n = nums.size();
+    vector<int> f(n); // 以nums[i] 结尾最长递增子数组大小
+    vector<int> g(n); // 以nums[i] 结尾从右到左最长递减子数组大小
+
+    f[0] = 1;
+    for (i = 1; i < n; i++) {
+        if (nums[i] > nums[i - 1]) {
+            f[i] = f[i - 1] + 1;
+        } else {
+            f[i] = 1;
+        }
+    }
+    g[n - 1] = 1;
+    for (i = n - 2; i >= 0; i--) {
+        if (nums[i] < nums[i + 1]) {
+            g[i] = g[i + 1] + 1;
+        } else {
+            g[i] = 1;
+        }
+    }
+    int ans = 1;
+    for (i = 0; i < n - 1; i++) {
+        ans = max(ans, min(f[i], g[i + 1]));
+    }
+    return ans;
+}
+
+
+// LC540
+int singleNonDuplicate(vector<int>& nums)
+{
+    int n = nums.size();
+    int left, right, mid;
+
+    left = 0;
+    right = n - 1;
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        if (mid > 0 && mid < n - 1 && nums[mid] != nums[mid - 1] && nums[mid] != nums[mid + 1]) {
+            return nums[mid];
+        }
+        if (mid % 2 == 0) { // odd
+            if (mid > 0 && nums[mid] != nums[mid - 1]) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        } else {
+            if (nums[mid] != nums[mid - 1]) {
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+    }
+    return nums[mid];
 }
