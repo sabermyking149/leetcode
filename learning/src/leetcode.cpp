@@ -20482,7 +20482,48 @@ int conveyorBelt(vector<string>& matrix, vector<int>& start, vector<int>& end)
 // LC1723
 int minimumTimeRequired(vector<int>& jobs, int k)
 {
-    // to do
+    int i, j, z;
+    int t, idx;
+    int n = jobs.size();
+    // dp[k][p] - k个工人完成p工作的最小的最大工作时间, p - 二进制位
+    // bits - 二进制位工作量和
+    vector<vector<int>> dp(k + 1, vector<int>(1 << n, 0x3f3f3f3f));
+    vector<int> bits;
+
+    bits.emplace_back(0);
+    for (i = 1; i < (1 << n); i++) {
+        t = i;
+        idx = 0;
+        dp[1][i] = 0;
+        while (t) {
+            if (t % 2 == 1) {
+                dp[1][i] += jobs[idx];
+            }
+            t >>= 1;
+            idx++;
+        }
+        bits.emplace_back(dp[1][i]);
+    }
+
+    for (i = 2; i <= k; i++) {
+        for (j = 1; j < (1 << n); j++) {
+            // 由奇偶性双倍递增z, 效率更高
+            if (j % 2 == 0) {
+                z = 2;
+            } else {
+                z = 1;
+            }
+            for (; z < j; z += 2) {
+                // 判断z是否是j的二进制子集 - 例如 j = 10111, z = 00101, 则z是j的子集
+                if ((j | z) > j) {
+                    continue;
+                }
+                // cout << z << " " << j << endl;
+                dp[i][j] = min(dp[i][j], max(dp[i - 1][z], bits[j] - bits[z]));
+            }
+        }
+    }
+    return dp[k][(1 << n) - 1];
 }
 
 
@@ -20599,4 +20640,32 @@ int singleNonDuplicate(vector<int>& nums)
         }
     }
     return nums[mid];
+}
+
+
+// LC1153
+bool canConvert(string str1, string str2)
+{
+    if (str1 == str2) {
+        return true;
+    }
+
+    vector<vector<int>> edges(26);
+    int i;
+    int n = str1.size();
+    unordered_set<char> uniqueChar;
+    // 无论形成几个环, 只要str2用的唯一字符数小于26, 总能找到一个字符转换这个环
+    for (i = 0; i < n; i++) {
+        if (edges[str1[i] - 'a'].empty()) {
+            edges[str1[i] - 'a'].emplace_back(str2[i] - 'a');
+        } else {
+            // 不能指向两个节点
+            if (edges[str1[i] - 'a'][0] != str2[i] - 'a') {
+                return false;
+            }
+        }
+        uniqueChar.emplace(str2[i]);
+    }
+
+    return uniqueChar.size() < 26;
 }
