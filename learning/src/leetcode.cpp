@@ -20669,3 +20669,157 @@ bool canConvert(string str1, string str2)
 
     return uniqueChar.size() < 26;
 }
+
+
+// LC3355 & LC3356 强相关
+bool isZeroArray(vector<int>& nums, vector<vector<int>>& queries)
+{
+    int i;
+    int n = nums.size();
+    vector<int> v(n + 1, 0);
+    vector<int> diff(n + 1); // v[i] - v[i - 1];
+
+    for (auto q : queries) {
+        diff[q[0]]++;
+        diff[q[1] + 1]--;
+    }
+    v[0] = diff[0];
+    for (i = 1; i < n; i++) {
+        v[i] = diff[i] + v[i - 1];
+    }
+    // for (auto num : v) cout << num << " ";
+    for (i = 0; i < n; i++) {
+        if (v[i] < nums[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+int minZeroArray(vector<int>& nums, vector<vector<int>>& queries)
+{
+    int i;
+    int n = nums.size();
+    vector<int> v(n + 1, 0);
+    vector<int> diff(n + 1); // v[i] - v[i - 1];
+    bool ok = true;
+    int left, right, mid;
+
+    // 检查原数组是否是全0
+    for (i = 0; i < n; i++) {
+        if (nums[i] != 0) {
+            ok = false;
+            break;
+        }
+    }
+    if (ok) {
+        return 0;
+    }
+
+    left = 0;
+    right = queries.size() - 1;
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        ok = true;
+        v.assign(n + 1, 0);
+        diff.assign(n + 1, 0);
+        for (i = 0; i <= mid; i++) {
+            diff[queries[i][0]] += queries[i][2];
+            diff[queries[i][1] + 1] -= queries[i][2];
+        }
+        v[0] = diff[0];
+        if (v[0] < nums[0]) {
+            left = mid + 1;
+            continue;
+        }
+        for (i = 1; i < n; i++) {
+            v[i] = diff[i] + v[i - 1];
+            if (v[i] < nums[i]) {
+                left = mid + 1;
+                ok = false;
+                break;
+            }
+        }
+        if (ok) {
+            right = mid - 1;
+        }
+    }
+    if (left == queries.size()) {
+        return -1;
+    }
+    return left + 1;
+}
+
+
+// LC3224
+int minChanges(vector<int>& nums, int k)
+{
+    int i;
+    int n = nums.size();
+    int absVal, maxVal;
+    int ans;
+
+    // abs(nums[i] - nums[n - 1 - i]) x的范围[0, k], 用差分数组统计得到每个x的改变次数
+    vector<int> x(k + 1, 0);
+    vector<int> diff(k + 2, 0); // diff[i] = x[i] - x[i - 1];
+    for (i = 0; i < n / 2; i++) {
+        absVal = abs(nums[i] - nums[n - 1 - i]);
+        // [0, absVal - 1] 只需改变一个数
+        diff[0]++;
+        diff[absVal]--;
+
+        // [absVal + 1, max(k - min(p, q), p, q)] 只需改变一个数
+        maxVal = max({k - min(nums[i], nums[n - 1 - i]), nums[i], nums[n - 1 - i]});
+        diff[absVal + 1]++;
+        diff[maxVal + 1]--;
+
+        // 剩下的情况需要改变两个数
+        diff[maxVal + 1] += 2;
+        diff[k + 1] -= 2;
+    }
+    x[0] = diff[0];
+    ans = x[0];
+    for (i = 1; i <= k; i++) {
+        x[i] = diff[i] + x[i - 1];
+        ans = min(ans, x[i]);
+    }
+    return ans;
+}
+
+
+// LC1674 - 与LC3224高度相似
+int minMoves(vector<int>& nums, int limit)
+{
+    // 无论怎么改变两数之和只能在[2, 2 * limit]区间
+    int i;
+    int n = nums.size();
+    int sum;
+
+    // x[n] - 互补数组两数之和为n时操作数
+    vector<int> x(limit * 2 + 1, 0);
+    vector<int> diff(limit * 2 + 2, 0); // diff[i] = x[i] - x[i - 1];
+
+    for (i = 0; i < n / 2; i++) {
+        sum = nums[i] + nums[n - 1 - i];
+
+        // [sum + 1, max(nums[i], nums[n - 1 - i]) + limit] 需要改变一次
+        diff[sum + 1]++;
+        diff[max(nums[i], nums[n - 1 - i]) + limit + 1]--;
+
+        // [min(nums[i], nums[n - 1 - i]) + 1, sum - 1] 需要改变一次
+        diff[min(nums[i], nums[n - 1 - i]) + 1]++;
+        diff[sum]--;
+
+        // 其它情况要改变两次
+        diff[2] += 2;
+        diff[min(nums[i], nums[n - 1 - i]) + 1] -= 2;
+
+        diff[limit * 2 + 1] -= 2;
+        diff[max(nums[i], nums[n - 1 - i]) + limit + 1] += 2;
+    }
+    int ans = 0x3f3f3f3f;
+    for (i = 2; i <= limit * 2; i++) {
+        x[i] = diff[i] + x[i - 1];
+        ans = min(ans, x[i]);
+    }
+    return ans;
+}
