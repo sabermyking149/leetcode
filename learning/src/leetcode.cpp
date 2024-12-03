@@ -20823,3 +20823,457 @@ int minMoves(vector<int>& nums, int limit)
     }
     return ans;
 }
+
+
+// LC446
+int numberOfArithmeticSlices(vector<int>& nums)
+{
+    int i, j;
+    int n = nums.size();
+    int ans;
+    // cnt[i][d] - 以nums[i]结尾, 公差为d的子序列个数
+    vector<unordered_map<long long, int>> cnt(n);
+    // cnt2[i][d] - 以nums[i]结尾, 公差为d的长度为2的子序列个数
+    vector<unordered_map<long long, int>> cnt2(n);
+    // dp[i] - 以第i位等差子序列个数
+    vector<int> dp(n, 0);
+
+    if (n < 3) {
+        return 0;
+    }
+
+    ans = 0;
+    cnt2[1][nums[1] * 1ll - nums[0]] = 1; // 防止溢出
+    for (i = 2; i < n; i++) {
+        for (j = 0; j <= i - 1; j++) {
+            auto d = nums[i] * 1ll - nums[j]; // 防止溢出
+            cnt2[i][d]++;
+            if (cnt[j].count(d)) {
+                dp[i] += cnt[j][d];
+                cnt[i][d] += cnt[j][d];
+            }
+            if (cnt2[j].count(d)) {
+                dp[i] += cnt2[j][d];
+                cnt[i][d] += cnt2[j][d];
+            }
+        }
+        ans += dp[i];
+    }
+    return ans;
+}
+
+
+// LC312
+int maxCoins(vector<int>& nums)
+{
+    // 在nums两端添加1, 方便计算
+    vector<int> nums1;
+
+    nums1.emplace_back(1);
+    nums1.insert(nums1.end(), nums.begin(), nums.end());
+    nums1.emplace_back(1);
+
+    int n = nums1.size();
+    // dp[i][j] - nums1[i, j] 之间取得最大分数
+    vector<vector<int>> dp(n, vector<int>(n, -1));
+    // 把戳气球想象成在两个1之间从零添加气球
+    function<int (int left, int right)> dfs = [&dfs, &dp, &nums1](int left, int right) {
+        if (left + 1 >= right) {
+            return 0;
+        }
+        if (dp[left][right] != -1) {
+            return dp[left][right];
+        }
+
+        int i;
+        int n = nums1.size();
+        int a, b;
+        int sum, ans;
+
+        ans = 0;
+        for (i = left + 1; i < right; i++) {
+            a = dfs(left, i);
+            b = dfs(i, right);
+            sum = nums1[left] * nums1[i] * nums1[right] + a + b;
+            ans = max(ans, sum);
+        }
+        dp[left][right] = ans;
+        return ans;
+    };
+
+    auto ans = dfs(0, n - 1);
+    return ans;
+}
+
+
+// LC847
+int shortestPathLength(vector<vector<int>>& graph)
+{
+    int i;
+    int n = graph.size();
+    int ans;
+    // 由于n很小, 可以用二进制bitmask表示访问状态
+    // 多源bfs
+    queue<tuple<int, int, int>> q; // {curNode, curBitMask, dist}
+    vector<vector<int>> visited(n, vector<int>(1 << n, 0));
+    for (i = 0; i < n; i++) {
+        q.emplace(i, 1 << i, 0);
+        visited[i][1 << i] = 1; // 此处预处理极大增加效率
+    }
+
+    int end = (1 << n) - 1;
+    while (q.size()) {
+        auto [curNode, curBitMask, dist] = q.front();
+        q.pop();
+
+        if (curBitMask == end) {
+            ans = dist;
+            // cout << ans << endl;
+            break;
+        }
+        // visited[curNode][curBitMask] = 1;
+        for (auto it : graph[curNode]) {
+            auto bitMask = curBitMask | (1 << it);
+            if (visited[it][bitMask]) {
+                continue;
+            }
+            visited[it][bitMask] = 1;
+            q.emplace(it, bitMask, dist + 1);
+        }
+    }
+    return ans;
+}
+
+
+// LC3366
+int minArraySum(vector<int>& nums, int k, int op1, int op2)
+{
+    int i, j, p;
+    int n = nums.size();
+    int ans, cnt;
+    vector<vector<vector<int>>> dp(n, vector<vector<int>>(op1 + 1, vector<int>(op2 + 1, 0x3f3f3f3f)));
+
+    // 特殊情况处理
+    sort(nums.rbegin(), nums.rend());
+    ans = 0;
+    if (op1 == 0 && op2 == 0) {
+        return accumulate(nums.begin(), nums.end(), 0);
+    }
+    if (op1 == 0) {
+        cnt = 0;
+        for (i = 0; i < n; i++) {
+            if (cnt < op2 && nums[i] >= k) {
+                ans += nums[i] - k;
+                cnt++;
+            } else {
+                ans += nums[i];
+            }
+        }
+        return ans;
+    }
+    if (op2 == 0) {
+        cnt = 0;
+        for (i = 0; i < n; i++) {
+            if (cnt < op1) {
+                ans += (nums[i] + 1) / 2;
+                cnt++;
+            } else {
+                ans += nums[i];
+            }
+        }
+        return ans;
+    }
+    // 注意op1和op2可以处理同一个下标各一次
+    // 边界情况处理
+    dp[0][0][0] = nums[0];
+    dp[0][1][0] = (nums[0] + 1) / 2;
+    if (nums[0] >= k) {
+        dp[0][0][1] = nums[0] - k;
+    }
+    dp[0][1][1] = dp[0][1][0] - k >= 0 ? dp[0][1][0] - k : dp[0][1][1];
+    dp[0][1][1] = min(dp[0][1][1], dp[0][0][1] == 0x3f3f3f3f ? 0x3f3f3f3f : (dp[0][0][1] + 1) / 2);
+    if (n == 1) {
+        return min({dp[0][0][0], dp[0][0][1], dp[0][1][0], dp[0][1][1]});
+    }
+    ans = 0x3f3f3f3f;
+    for (i = 1; i < n; i++) {
+        for (j = 0; j <= op1; j++) {
+            for (p = 0; p <= op2; p++) {
+                // 什么都不做
+                if (dp[i - 1][j][p] != 0x3f3f3f3f) {
+                    dp[i][j][p] = dp[i - 1][j][p] + nums[i];
+                }
+                // printf("1 dp[%d][%d][%d] = %d\n",i, j, p, dp[i][j][p]);
+                // op1
+                if (j > 0 && dp[i - 1][j - 1][p] != 0x3f3f3f3f) {
+                    dp[i][j][p] = min(dp[i][j][p], dp[i - 1][j - 1][p] + (nums[i] + 1) / 2);
+                }
+                // printf("2 dp[%d][%d][%d] = %d\n",i, j, p, dp[i][j][p]);
+                // op2
+                if (p > 0 && dp[i - 1][j][p - 1] != 0x3f3f3f3f && nums[i] >= k) {
+                    dp[i][j][p] = min(dp[i][j][p], dp[i - 1][j][p - 1] + (nums[i] - k));
+                }
+                // printf("3 dp[%d][%d][%d] = %d\n",i, j, p, dp[i][j][p]);
+                // op1 && op2
+                if (p > 0 && j > 0 && dp[i - 1][j - 1][p - 1] != 0x3f3f3f3f && nums[i] >= k) {
+                    auto t = nums[i];
+                    t -= k;
+                    t = (t + 1) / 2;
+                    dp[i][j][p] = min(dp[i][j][p], dp[i - 1][j - 1][p - 1] + t);
+                    auto r = nums[i];
+                    r = (r + 1) / 2;
+                    if (r >= k) {
+                        r -= k;
+                        dp[i][j][p] = min(dp[i][j][p], dp[i - 1][j - 1][p - 1] + r);
+                    }
+                }
+                // printf("4 dp[%d][%d][%d] = %d\n",i, j, p, dp[i][j][p]);
+                if (i == n - 1) {
+                    ans = min(ans, dp[i][j][p]);
+                }
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LC743
+int networkDelayTime(vector<vector<int>>& times, int n, int k)
+{
+    // 标准dijkstra模版
+    int i;
+    vector<int> dist(n + 1, 0x3f3f3f3f);
+    vector<vector<pair<int, int>>> edges(n + 1);
+
+    for (auto t : times) {
+        edges[t[0]].emplace_back(make_pair(t[1], t[2]));
+    }
+
+    auto cmp = [](const pair<int, int>& a, const pair<int, int>& b) {
+        return a.second > b.second;
+    };
+    priority_queue<pair<int, int>, vector<pair<int, int>>, decltype(cmp)> pq(cmp);
+    pq.push({k, 0});
+    while (pq.size()) {
+        auto p = pq.top();
+        pq.pop();
+
+        if (dist[p.first] < p.second) {
+            continue;
+        }
+        dist[p.first] = p.second;
+        for (auto it : edges[p.first]) {
+            if (p.second + it.second < dist[it.first]) {
+                dist[it.first] = p.second + it.second;
+                pq.push({it.first, p.second + it.second});
+            }
+        }
+    }
+    int ans = 0;
+    for (i = 1; i <= n; i++) {
+        if (dist[i] == 0x3f3f3f3f) {
+            return -1;
+        }
+        ans = max(ans, dist[i]);
+    }
+    return ans;
+}
+
+
+// LC3373
+vector<int> BFS(vector<vector<int>>& edges, int start, vector<int>& len)
+{
+    queue<int> q;
+    int dist = 0;
+    int n = edges.size();
+    vector<int> visited(n, 0);
+    vector<int> ans(2, 0);
+    q.push(start);
+    while (q.size()) {
+        int size = q.size();
+        for (int i = 0; i < size; i++) {
+            auto node = q.front();
+            q.pop();
+            visited[node] = 1;
+            len[node] = dist;
+            ans[dist % 2]++;
+            for (auto e : edges[node]) {
+                if (visited[e] == 0) {
+                    q.push(e);
+                }
+            }
+        }
+        dist++;
+    }
+    return ans;
+}
+vector<int> maxTargetNodes(vector<vector<int>>& edges1, vector<vector<int>>& edges2)
+{
+    int i, j;
+    int n = edges1.size() + 1;
+    int m = edges2.size() + 1;
+
+    vector<vector<int>> e1(n), e2(m);
+    for (auto edge : edges1) {
+        e1[edge[0]].emplace_back(edge[1]);
+        e1[edge[1]].emplace_back(edge[0]);
+    }
+    for (auto edge : edges2) {
+        e2[edge[0]].emplace_back(edge[1]);
+        e2[edge[1]].emplace_back(edge[0]);
+    }
+    // len[j] - start到j的距离
+    vector<int> len1(n, 0);
+    vector<int> len2(m, 0);
+    auto p1 = BFS(e1, 0, len1);
+    auto p2 = BFS(e2, 0, len2);
+    vector<int> ans(n);
+    for (i = 0; i < n; i++) {
+        if (len1[i] % 2 == 0) {
+            ans[i] = p1[0] + max(p2[0], p2[1]);
+        } else {
+            ans[i] = p1[1] + max(p2[0], p2[1]);
+        }
+    }
+    return ans;
+}
+
+
+// LC51
+vector<vector<string>> solveNQueens(int n)
+{
+    vector<string> board(n, string(n, '.'));
+    vector<vector<string>> ans;
+    function<void (int)> SetQueen = [&SetQueen, &board, &ans](int row) {
+        int i, j;
+        int n = board.size();
+        if (row == n) {
+            ans.emplace_back(board);
+            return;
+        }
+
+        int col;
+        for (col = 0; col < n; col++) {
+            // 校验
+            bool condition = true;
+            // 纵向
+            for (i = row - 1; i >= 0; i--) {
+                if (board[i][col] == 'Q') {
+                    condition = false;
+                    break;
+                }
+            }
+            if (!condition) {
+                continue;
+            }
+
+            // 左斜向上
+            i = row - 1;
+            j = col - 1;
+            while (i >= 0 && j >= 0) {
+                if (board[i][j] == 'Q') {
+                    condition = false;
+                    break;
+                }
+                i--;
+                j--;
+            }
+            if (!condition) {
+                continue;
+            }
+
+            // 右斜向上
+            i = row - 1;
+            j = col + 1;
+            while (i >= 0 && j < n) {
+                if (board[i][j] == 'Q') {
+                    condition = false;
+                    break;
+                }
+                i--;
+                j++;
+            }
+            if (condition) {
+                board[row][col] = 'Q';
+                SetQueen(row + 1);
+                board[row][col] = '.';
+            }
+        }
+    };
+
+    SetQueen(0);
+
+    return ans;
+}
+
+
+// LC1564
+int maxBoxesInWarehouse(vector<int>& boxes, vector<int>& warehouse)
+{
+    int i;
+    int n = warehouse.size();
+    int m = boxes.size();
+    vector<int> h(n); // h[i] - i处能放的最高行李
+
+    h[0] = warehouse[0];
+    for (i = 1; i < n; i++) {
+        if (warehouse[i] < h[i - 1]) {
+            h[i] = warehouse[i];
+        } else {
+            h[i] = h[i - 1];
+        }
+    }
+
+    int left, right, mid;
+    int pos = n - 1;
+    int ans;
+    sort (boxes.begin(), boxes.end());
+    for (i = 0; i < m; i++) {
+        // h具有单调性, 求每个boxes[i]的最后一个满足 boxes[i] >= h[pos] 位置
+        left = 0;
+        right = pos;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (h[mid] >= boxes[i]) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        if (right < 0) {
+            ans = i;
+            break;
+        }
+        pos = right - 1;
+    }
+    return ans;
+}
+int maxBoxesInWarehouse_betterWay(vector<int>& boxes, vector<int>& warehouse)
+{
+    int i, j;
+    int n = warehouse.size();
+    int m = boxes.size();
+    vector<int> h(n); // h[i] - i处能放的最高行李
+
+    h[0] = warehouse[0];
+    for (i = 1; i < n; i++) {
+        if (warehouse[i] < h[i - 1]) {
+            h[i] = warehouse[i];
+        } else {
+            h[i] = h[i - 1];
+        }
+    }
+
+    sort (boxes.begin(), boxes.end());
+    j = 0;
+    for (i = n - 1; i >= 0; i--) {
+        if (h[i] >= boxes[j]) {
+            j++;
+            if (j == m) {
+                break;
+            }
+        }
+    }
+    return j;
+}

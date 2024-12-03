@@ -1318,3 +1318,44 @@ void ABC_378_D()
     }
     cout << ans << endl;
 }
+
+
+void ABC_382_D()
+{
+    int i;
+    int n, m;
+
+    cin >> n >> m;
+
+    int a = m - (n - 1) * 10;
+    vector<vector<int>> res;
+    vector<int> record;
+    function<void (int, int, int)> Generate = [&Generate, &res, &record, &n, &m](int start, int cur, int cnt) {
+        if (cnt == n) {
+            res.emplace_back(record);
+            return;
+        }
+        int i;
+        int diff = (m - start) / (n - 1) + 10;
+        for (i = 10; i <= diff; i++) {
+            if (cur + i <= m && cur + i + (n - 1 - cnt) * 10 <= m) {
+                record.emplace_back(cur + i);
+                Generate(start, cur + i, cnt + 1);
+                record.pop_back();
+            } else {
+                break;
+            }
+        }
+    };
+    for (i = 1; i <= a; i++) {
+        record.emplace_back(i);
+        Generate(i, i, 1);
+        record.pop_back();
+    }
+    cout << res.size() << endl;
+    for (auto v : res) {
+        for (i = 0; i < v.size(); i++) {
+            cout << v[i] << (i != v.size() - 1 ? " " : "\n");
+        }
+    }
+}
