@@ -21277,3 +21277,39 @@ int maxBoxesInWarehouse_betterWay(vector<int>& boxes, vector<int>& warehouse)
     }
     return j;
 }
+
+
+// LC3381
+long long maxSubarraySum(vector<int>& nums, int k)
+{
+    int i;
+    int n = nums.size();
+    long long curSum = 0;
+
+    for (i = 0; i < k; i++) {
+        curSum += nums[i];
+    }
+
+    vector<vector<long long>> coll(k);
+    coll[0].emplace_back(curSum);
+    for (i = k; i < n; i++) {
+        curSum -= nums[i - k];
+        curSum += nums[i];
+        coll[(i + 1) % k].emplace_back(curSum);
+    }
+    long long ans = LLONG_MIN;
+    vector<long long> dp(n);
+    for (auto v : coll) {
+        if (v.empty()) {
+            continue;
+        }
+        dp[0] = v[0];
+        ans = max(ans, dp[0]);
+        for (i = 1; i < v.size(); i++) {
+            dp[i] = dp[i - 1] > 0 ? dp[i - 1] + v[i] : v[i];
+            ans = max(ans, dp[i]);
+        }
+        // printf ("ans = %d\n", ans);
+    }
+    return ans;
+}
