@@ -21284,3 +21284,52 @@ int beautifulSplits(vector<int>& nums)
     }
     return ans;
 }
+
+
+// LC1293
+int shortestPath(vector<vector<int>>& grid, int k)
+{
+    int i;
+    int m = grid.size();
+    int n = grid[0].size();
+    int routeLen;
+    vector<vector<int>> directions = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
+    vector<vector<int>> needBlock(m, vector<int>(n, 0x3f3f3f3f)); // 到达(i, j) 需要最少消除障碍数
+    queue<tuple<int, int, int>> q; // 坐标 - x - y - 到达(x, y) 需要的消除障碍数
+
+    // 横竖全打通
+    if (k >= m + n - 3) {
+        return m + n - 2;
+    }
+
+    q.push({0, 0, 0});
+    routeLen = 0;
+    while (q.size()) {
+        int size = q.size();
+        for (int p = 0; p < size; p++) {
+            auto [x, y, blockCnt] = q.front();
+            q.pop();
+            if (blockCnt > k || blockCnt >= needBlock[x][y]) {
+                continue;
+            }
+            needBlock[x][y] = blockCnt;
+            if (x == m - 1 && y == n - 1) {
+                return routeLen;
+            }
+            for (i = 0; i < 4; i++) {
+                auto nx = x + directions[i][0];
+                auto ny = y+ directions[i][1];
+                if (nx < 0 || nx >= m || ny < 0 || ny >= n) {
+                    continue;
+                }
+                if (grid[nx][ny] == 1) {
+                    q.push({nx, ny, blockCnt + 1});
+                } else {
+                    q.push({nx, ny, blockCnt});
+                }
+            }
+        }
+        routeLen++;
+    }
+    return -1;
+}

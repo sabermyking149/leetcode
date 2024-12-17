@@ -150,3 +150,49 @@ void CR_991_E()
     }
     cout << dp[m][n] << endl;
 }
+
+
+void CR_993_E()
+{
+    int i;
+    long long left, right, mid;
+    long long k, l1, r1, l2, r2;
+    long long a, b;
+    long long ans = 0;
+
+    cin >> k >> l1 >> r1 >> l2 >> r2;
+
+    for (i = 0; i <= 30; i++) {
+        if (pow(k, i) > r2) {
+            break;
+        }
+        left = l1;
+        right = r1;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (mid * pow(k, i) < l2) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        a = left;
+
+        left = l1;
+        right = r1;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (mid * pow(k, i) > r2) {
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        b = right;
+
+        if (b >= a) {
+            ans += b - a + 1;
+        }
+    }
+    cout << ans << endl;
+}
