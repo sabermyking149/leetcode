@@ -5481,132 +5481,6 @@ int adventureCamp(vector<string>& expeditions)
 }
 
 
-// LCP74 有问题
-// [x1, y1, x2, y2] [x3, y3, x4, y4]
-// (x4 - x1) * (x3 - x2) <= 0 且 (y4 - y1) * (y3 - y2) <= 0
-bool CheckIfCoincided(vector<double>& a, vector<double>& b)
-{
-    return ((b[2] - a[0]) * (b[0] - a[2])) <= 0 && ((b[3] - a[1]) * (b[1] - a[3]) <= 0);
-}
-int fieldOfGreatestBlessing(vector<vector<int>>& forceField)
-{
-    int i, j, k, l;
-    int m, cnt, ans;
-    // 转换forceFiel为左下-右上坐标
-    vector<vector<double>> newForceField;
-    for (auto t : forceField) {
-        newForceField.push_back({t[0] - t[2] / 2.0, t[1] - t[2] / 2.0, t[0] + t[2] / 2.0, t[1] + t[2] / 2.0});
-    }
-    /*for (auto t : newForceField) {
-        for (auto v : t) {
-            cout << v << " ";
-        }
-        cout << endl;
-    }*/
-
-    vector<vector<double>> coincidedTriange;
-    ans = 1;
-    m = newForceField.size();
-    for (i = 0; i < m; i++) {
-        coincidedTriange.clear();
-        coincidedTriange.emplace_back(newForceField[i]);
-        for (j = i + 1; j < m; j++) {
-            // [x1, y1, x2, y2] [x3, y3, x4, y4]
-            // (x4 - x1) * (x3 - x2) <= 0 且 (y4 - y1) * (y3 - y2) <= 0
-            /*if ((newForceField[j][2] - newForceField[i][0]) * (newForceField[j][0] - newForceField[i][2]) <= 0 &&
-                (newForceField[j][3] - newForceField[i][1]) * (newForceField[j][1] - newForceField[i][3]) <= 0)
-            {
-                cnt++;
-            }*/
-            // coincidedTriange.clear();
-            if (CheckIfCoincided(newForceField[i], newForceField[j])) {
-                // coincidedTriange.emplace_back(newForceField[i]);
-                coincidedTriange.emplace_back(newForceField[j]);
-                for (k = j + 1; k < m; k++) {
-                    for (l = 0; l < coincidedTriange.size(); l++) {
-                        if (CheckIfCoincided(newForceField[l], newForceField[k]) == false) {
-                            break;
-                        }
-                    }
-                    if (l == coincidedTriange.size()) {
-                        coincidedTriange.emplace_back(newForceField[k]);
-                    }
-                }
-                ans = max(ans, static_cast<int>(coincidedTriange.size()));
-            }
-        }
-    }
-    return ans;
-}
-
-void DFSGetMaxCoincided(vector<vector<double>>& forceField, int curIdx, vector<vector<double>>& coincidedTriange, int cnt, int& maxNum)
-{
-    int i, k;
-    int n = forceField.size();
-
-    if (curIdx == n) {
-        maxNum = max(cnt, maxNum);
-        return;
-    }
-    for (i = curIdx; i < n; i++) {
-        if (coincidedTriange.size() == 0) {
-            coincidedTriange.emplace_back(forceField[i]);
-            DFSGetMaxCoincided(forceField, i + 1, coincidedTriange, cnt + 1, maxNum);
-            coincidedTriange.pop_back();
-        } else {
-            for (k = 0; k < coincidedTriange.size(); k++) {
-                if (CheckIfCoincided(forceField[k], forceField[curIdx]) == false) {
-                    break;
-                }
-            }
-            if (k == coincidedTriange.size()) {
-                coincidedTriange.emplace_back(forceField[curIdx]);
-                DFSGetMaxCoincided(forceField, i + 1, coincidedTriange, cnt + 1, maxNum);
-                coincidedTriange.pop_back();
-            } else {
-                DFSGetMaxCoincided(forceField, i + 1, coincidedTriange, cnt, maxNum);
-            }
-        }
-    }
-}
-int fieldOfGreatestBlessing1(vector<vector<int>>& forceField)
-{
-    int i, j, k, l;
-    int m, cnt, ans;
-    // 转换forceFiel为左下-右上坐标
-    vector<vector<double>> newForceField;
-    for (auto t : forceField) {
-        newForceField.push_back({t[0] - t[2] / 2.0, t[1] - t[2] / 2.0, t[0] + t[2] / 2.0, t[1] + t[2] / 2.0});
-    }
-    /*for (auto t : newForceField) {
-        for (auto v : t) {
-            cout << v << " ";
-        }
-        cout << endl;
-    }*/
-
-    vector<vector<double>> coincidedTriange;
-    ans = 1;
-    m = newForceField.size();
-    for (i = 0; i < m; i++) {
-        coincidedTriange.clear();
-        coincidedTriange.emplace_back(newForceField[i]);
-        for (j = i + 1; j < m; j++) {
-            for (k = 0; k < coincidedTriange.size(); k++) {
-                if (CheckIfCoincided(newForceField[k], newForceField[j]) == false) {
-                    break;
-                }
-            }
-            if (k == coincidedTriange.size()) {
-                coincidedTriange.emplace_back(newForceField[j]);
-            }
-        }
-        ans = max(ans, static_cast<int>(coincidedTriange.size()));
-    }
-    return ans;
-}
-
-
 // LC2653
 vector<int> getSubarrayBeauty(vector<int>& nums, int k, int x)
 {
@@ -21310,6 +21184,103 @@ long long maxSubarraySum(vector<int>& nums, int k)
             ans = max(ans, dp[i]);
         }
         // printf ("ans = %d\n", ans);
+    }
+    return ans;
+}
+
+
+// LC940
+int distinctSubseqII(string s)
+{
+    int i, j;
+    int n = s.size();
+    int mod = 1e9 + 7;
+    long long ans;
+    // dp[i] - s[i] 结尾的不同子序列数
+    vector<long long> dp(n, 0);
+    vector<int> alphabet(26, 0); // 已出现的字符
+    vector<long long> cnt(26, 0);
+
+    for (i = 0; i < n; i++) {
+        alphabet.assign(26, 0);
+        dp[i] = 1;
+        for (j = i - 1; j >= 0; j--) {
+            if (alphabet[s[j] - 'a'] == 0) {
+                dp[i] = (dp[i] + dp[j]) % mod;
+                alphabet[s[j] - 'a'] = 1;
+            }
+        }
+        cnt[s[i] - 'a'] = dp[i];
+    }
+    ans = 0;
+    for (auto c : cnt) {
+        ans = (ans + c) % mod;
+    }
+    return ans;
+}
+
+
+// LC3378
+int countComponents(vector<int>& nums, int threshold)
+{
+    int i;
+    UnionFind uf = UnionFind(threshold + 1);
+    for (auto num : nums) {
+        for (i = num * 2; i <= threshold; i += num) {
+            uf.unionSets(num, i);
+        }
+    }
+
+    unordered_set<int> areas;
+    int cnt = 0;
+    for (auto num : nums) {
+        if (num <= threshold) {
+            areas.emplace(uf.findSet(num));
+        } else {
+            cnt++;
+        }
+    }
+    return areas.size() + cnt;
+}
+
+
+// LC3388
+int beautifulSplits(vector<int>& nums)
+{
+    int i, j;
+    int n = nums.size();
+
+    if (n < 3) {
+        return 0;
+    }
+
+    // 数组哈希
+    unsigned long long base = 1337;
+    vector<vector<unsigned long long>> numsHash(n);
+
+    unsigned long long t;
+    for (i = 0; i < n; i++) {
+        t = 0;
+        for (j = i; j < n; j++) {
+            // nums[j] - [0, 50]
+            t = t * base + (nums[j] != 0 ? nums[j] * 1ull: 51ull);
+            numsHash[i].emplace_back(t);
+        }
+    }
+    int ans = 0;
+    // i, j分别表示nums1和nums2的最后一位的下标
+    for (i = 0; i < n - 2; i++) {
+        for (j = i + 1; j < n - 1; j++) {
+            // nums1是nums2前缀
+            if (j - i >= i + 1 && numsHash[0][i] == numsHash[i + 1][i]) {
+                ans++;
+                continue;
+            }
+            // nums2是nums3前缀
+            if (j - i <= n - 1 - j && numsHash[i + 1][j - i - 1] == numsHash[j + 1][j - i - 1]) {
+                ans++;
+            }
+        }
     }
     return ans;
 }

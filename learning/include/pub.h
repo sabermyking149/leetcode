@@ -95,4 +95,55 @@ struct VectorHash {
         return seed;
     }
 };
+
+class UnionFind {
+private:
+    vector<int> parent;  // 存储每个节点的父节点
+    vector<int> rank;    // 存储每个根节点所对应的树的秩（高度）
+
+    // 查找元素x所在集合的代表元素，并进行路径压缩
+    int find(int x)
+    {
+        if (parent[x] != x) {
+            parent[x] = find(parent[x]);  // 路径压缩
+        }
+        return parent[x];
+    }
+
+public:
+    // 构造函数，初始化parent和rank数组
+    UnionFind(int size) : parent(size), rank(size, 0)
+    {
+        for (int i = 0; i < size; ++i) {
+            parent[i] = i;  // 初始时，每个节点的父节点是它自己
+        }
+    }
+
+    // 合并两个元素所在的集合
+    void unionSets(int x, int y)
+    {
+        int xRoot = find(x);
+        int yRoot = find(y);
+
+        if (xRoot == yRoot) {
+            return;  // 如果x和y已经在同一个集合中，则不需要合并
+        }
+
+        // 按秩合并：将秩较小的树合并到秩较大的树下
+        if (rank[xRoot] < rank[yRoot]) {
+            parent[xRoot] = yRoot;
+        } else if (rank[xRoot] > rank[yRoot]) {
+            parent[yRoot] = xRoot;
+        } else {
+            parent[yRoot] = xRoot;
+            rank[xRoot] += 1;  // 如果秩相等，选择一个作为根，并增加其秩
+        }
+    }
+
+    // 查找元素x所在集合的代表元素
+    int findSet(int x)
+    {
+        return find(x);
+    }
+};
 #endif
