@@ -35,6 +35,8 @@ struct ListNode {
     ListNode(int x, ListNode *next) : val(x), next(next) {}
 };
 
+
+// 前缀树
 template <typename T>
 class Trie {
 public:
@@ -96,6 +98,8 @@ struct VectorHash {
     }
 };
 
+
+// 查并集
 class UnionFind {
 private:
     vector<int> parent;  // 存储每个节点的父节点

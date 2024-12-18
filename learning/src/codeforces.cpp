@@ -196,3 +196,41 @@ void CR_993_E()
     }
     cout << ans << endl;
 }
+
+
+void CR_993_G1()
+{
+    // 拓扑排序
+    int n, r;
+    int i;
+
+    cin >> n;
+    vector<int> inDegree(n + 1, 0); // 节点入度
+    vector<vector<int>> edges(n + 1);
+    for (i = 1; i <= n; i++) {
+        cin >> r;
+        inDegree[r]++;
+        edges[i].emplace_back(r);
+    }
+    queue<int> q;
+    for (i = 1; i <= n; i++) {
+        if (inDegree[i] == 0) {
+            q.push(i);
+        }
+    }
+    int cnt = 0;
+    while (q.size()) {
+        int size = q.size();
+        for (i = 0; i < size; i++) {
+            auto t = q.front();
+            q.pop();
+            auto to = edges[t][0];
+            inDegree[to]--;
+            if (inDegree[to] == 0) {
+                q.push(to);
+            }
+        }
+        cnt++;
+    }
+    cout << cnt + 2 << endl;
+}

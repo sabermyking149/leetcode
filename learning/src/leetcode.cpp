@@ -19129,6 +19129,52 @@ int minValidStrings(vector<string>& words, string target)
     delete(root);
     return dp[n] == 0x3f3f3f3f ? -1 : dp[n];
 }
+// 另一思路, 超时
+int minValidStrings_1(vector<string>& words, string target)
+{
+    // 字符串哈希
+    int i, j, k, p;
+    int n = target.size();
+    vector<int> dp(n + 1, 0x3f3f3f3f);
+
+    unsigned long long base = 1337;
+    unsigned long long t;
+    int m = words.size();
+    vector<unordered_set<unsigned long long>> wordsHash(5001);
+    for (i = 0; i < m; i++) {
+        t = 0;
+        p = words[i].size();
+        for (j = 0; j < p; j++) {
+            t = t * base + (words[i][j] - 'a' + 1);
+            wordsHash[j + 1].emplace(t);
+        }
+    }
+
+    vector<vector<unsigned long long>> targetHash(n);
+    for (i = 0; i < n; i++) {
+        t = 0;
+        for (j = i; j < n; j++) {
+            t = t * base + (target[j] - 'a' + 1);
+            targetHash[i].emplace_back(t);
+        }
+    }
+
+    dp[0] = 0;
+    for (i = 1; i <= n; i++) {
+        if (wordsHash[i].count(targetHash[0][i - 1])) {
+            dp[i] = 1;
+            continue;
+        }
+        for (j = 1; j <= i; j++) {
+            auto hash = targetHash[j - 1][i - j];
+            if (wordsHash[i - j + 1].count(hash)) {
+                dp[i] = min(dp[i], dp[j - 1] + 1);
+                break;
+            }
+        }
+    }
+    return dp[n] == 0x3f3f3f3f ? -1 : dp[n];
+}
 
 
 // LC3229
