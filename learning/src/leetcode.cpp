@@ -21379,3 +21379,103 @@ int shortestPath(vector<vector<int>>& grid, int k)
     }
     return -1;
 }
+
+
+// LC3394
+bool checkValidCuts(int n, vector<vector<int>>& rectangles)
+{
+    vector<vector<int>> x; // 纵向切割
+    vector<vector<int>> y; // 横向切割
+
+    for (auto p : rectangles) {
+        x.push_back({p[0], p[2]});
+        y.push_back({p[1], p[3]});
+    }
+
+    sort (x.begin(), x.end());
+    sort (y.begin(), y.end());
+
+    // 分别合并区间, 只要有一个合并完有3个独立的区间, 就可以分割
+    auto f = [](vector<vector<int>>& ranges) {
+        vector<vector<int>> ans;
+        int l, r;
+        int i;
+        int n = ranges.size();
+        l = ranges[0][0];
+        r = ranges[0][1];
+        for (i = 1; i < n; i++) {
+            if (ranges[i][0] < r) {
+                r = max(r, ranges[i][1]);
+            } else {
+                ans.push_back({l, r});
+                l = ranges[i][0];
+                r = ranges[i][1];
+            }
+        }
+        ans.push_back({l, r});
+        return ans;
+    };
+
+    return f(x).size() >= 3 || f(y).size() >= 3;
+}
+
+
+// LC3397
+int maxDistinctElements(vector<int>& nums, int k)
+{
+    int i;
+    int n = nums.size();
+    unordered_map<int, int> cnt;
+
+    sort(nums.begin(), nums.end());
+    nums[0] -= k;
+    for (i = 1; i < n; i++) {
+        if (nums[i] - nums[i - 1] > k) {
+            nums[i] -= k;
+        } else {
+            if (nums[i] <= nums[i - 1]) {
+                if (nums[i - 1] + 1 - nums[i] <= k) {
+                    nums[i] = nums[i - 1] + 1;
+                } else {
+                    nums[i] = nums[i - 1];
+                }
+            } else {
+                nums[i] = nums[i - 1] + 1;
+            }
+        }
+    }
+    for (auto n : nums) {
+        cnt[n]++;
+    }
+    return cnt.size();
+}
+
+
+// LC3344
+int maxSizedArray(long long s)
+{
+    // s <= 10^15
+    int i, j;
+    int left, right, mid;
+    long long sum;
+    long long multiply;
+
+    left = 0;
+    right = 2000;
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        sum = 0;
+        for (i = 0; i <= mid; i++) {
+            for (j = 0; j <= mid; j++) {
+                sum += (i | j);
+            }
+        }
+        multiply = mid * 1ll * (mid + 1) / 2;
+        if (multiply * sum <= s) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    return right + 1;
+}

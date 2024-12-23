@@ -234,3 +234,63 @@ void CR_993_G1()
     }
     cout << cnt + 2 << endl;
 }
+
+
+void CR_995_D()
+{
+    int i;
+    int n;
+    long long x, y;
+    long long sum, ans, target;
+    int leftBound, rightBound;
+
+    cin >> n >> x >> y;
+        
+    vector<long long> a(n);
+    sum = 0;
+    for (i = 0; i < n; i++) {
+        cin >> a[i];
+        sum += a[i];
+    }
+    sort(a.begin(), a.end());
+    ans = 0;
+    int left, right, mid;
+    for (i = 0; i < n - 1; i++) {
+        if (sum - a[i] < x) {
+            break;
+        }
+        // 左边界
+        left = i + 1;
+        right = n - 1;
+        target = sum - a[i] - y;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (a[mid] >= target) {
+                right = mid - 1;
+                
+            } else {
+                left = mid + 1;
+            }
+        }
+        leftBound = left;
+
+        // 右边界
+        left = i + 1;
+        right = n - 1;
+        target = sum - a[i] - x;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (a[mid] <= target) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        rightBound = right;
+        if (rightBound >= leftBound) {
+            // printf ("i = %d %d %d\n", i, leftBound, rightBound);
+            ans += rightBound - leftBound + 1;
+        }
+    }
+    cout << ans << endl;
+}
