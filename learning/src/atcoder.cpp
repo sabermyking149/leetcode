@@ -13,6 +13,7 @@
 #include <functional>
 #include <climits>
 #include <iomanip>
+#include <numeric>
 using namespace std;
 
 void ABC_346_D()
@@ -1358,4 +1359,66 @@ void ABC_382_D()
             cout << v[i] << (i != v.size() - 1 ? " " : "\n");
         }
     }
+}
+
+
+void ABC_386_D()
+{
+    int i;
+    int n, m;
+
+    cin >> n >> m;
+
+    int x, y;
+    char color;
+    vector<vector<int>> pos;
+    map<int, int> edge;
+    for (i = 0; i < m; i++) {
+        cin >> x >> y >> color;
+        if (color == 'W') {
+            if (edge.count(x)) {
+                edge[x] = min(edge[x], y);
+            } else {
+                edge[x] = y;
+            }
+        } else {
+            pos.push_back({x, y});
+        }
+    }
+    if (edge.empty() || pos.empty()) {
+        cout << "Yes\n";
+        return;
+    }
+
+    int cur = edge.begin()->second;
+    for (auto it : edge) {
+        edge[it.first] = min(edge[it.first], cur);
+        cur = edge[it.first];
+    }
+    for (auto p : pos) {
+        auto it = edge.lower_bound(p[0]);
+        if (it == edge.end()) {
+            it--;
+            if (p[1] >= it->second) {
+                cout << "No\n";
+                return;
+            }
+        } else {
+            if (it == edge.begin()) {
+                if (p[0] == it->first && p[1] >= it->second) {
+                    cout << "No\n";
+                    return;
+                }
+            } else {
+                auto prev = it;
+                prev--;
+                if ((p[0] == it->first && p[1] >= it->second) || 
+                    (p[0] < it->first && p[1] >= prev->second)) {
+                    cout << "No\n";
+                    return;
+                }
+            }
+        }
+    }
+    cout << "Yes\n";
 }

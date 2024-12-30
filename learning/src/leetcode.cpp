@@ -21479,3 +21479,181 @@ int maxSizedArray(long long s)
     }
     return right + 1;
 }
+
+
+// LC483
+string smallestGoodBase(string n)
+{
+    // n ~ [3, 10^18] < 2^60
+    int i, j;
+    long long num = atol(n.c_str());
+    long long left, right, mid;
+    long long cur;
+    long long ans = num;
+    bool tooBig = false;
+    for (i = 2; i <= 60; i++) {
+        left = 2;
+        right = num - 1;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            cur = 0;
+            tooBig = false;
+            for (j = 0; j < i; j++) {
+                // 溢出
+                if (cur != 0 && LLONG_MAX / cur < mid) {
+                    right = mid - 1;
+                    tooBig = true;
+                    break;
+                }
+                cur = cur * mid + 1;
+                if (cur > num) {
+                    tooBig = true;
+                    right = mid - 1;
+                    break;
+                }
+            }
+            if (!tooBig) {
+                if (cur < num) {
+                    left = mid + 1;
+                } else if (cur == num) {
+                    ans = min(ans, mid);
+                    break;
+                }
+            }
+        }
+    }
+    return to_string(ans);
+}
+
+
+// LC1705
+int eatenApples(vector<int>& apples, vector<int>& days)
+{
+    int i;
+    int n = apples.size();
+    int ans = 0;
+    map<int, int> nums; // 第i天过期苹果数
+    for (i = 0; i < n; i++) {
+        if (apples[i] != 0) {
+            nums[i + days[i]] += apples[i];
+        }
+        while (!nums.empty()) {
+            auto it = nums.begin();
+            if (i >= it->first) {
+                nums.erase(it);
+                continue;
+            }
+            ans++;
+            if (it->second == 1) {
+                nums.erase(it);
+            } else {
+                nums[it->first]--;
+            }
+            break;
+        }
+    }
+    // 还有未变质的苹果
+    int day = n;
+    while (!nums.empty()) {
+        auto it = nums.begin();
+        if (day >= it->first) {
+            nums.erase(it);
+            continue;
+        }
+        ans++;
+        day++;
+        if (it->second == 1) {
+            nums.erase(it);
+        } else {
+            nums[it->first]--;
+        }
+    }
+    return ans;
+}
+
+
+// LC1847
+vector<int> closestRoom(vector<vector<int>>& rooms, vector<vector<int>>& queries)
+{
+    // 房间按面积优先排列
+    sort(rooms.begin(), rooms.end(), [](const vector<int>& a, const vector<int>& b) {
+        if (a[1] == b[1]) {
+            return a[0] < b[0];
+        }
+        return a[1] < b[1];
+    });
+
+    int i, j;
+    int prev;
+    int n = rooms.size();
+    multiset<int> preference;
+    bool tooBig = false;
+    for (auto v : rooms) {
+        preference.emplace(v[0]);
+    }
+
+    int m = queries.size();
+    vector<vector<int>> qq;
+    for (i = 0; i < m; i++) {
+        qq.push_back({queries[i][0], queries[i][1], i});
+    }
+    // 提问也按面积优先排列
+    sort(qq.begin(), qq.end(), [](const vector<int>& a, const vector<int>& b) {
+        if (a[1] == b[1]) {
+            return a[0] < b[0];
+        }
+        return a[1] < b[1];
+    });
+
+    vector<int> ans(m);
+    int left, right, mid;
+    int diff1, diff2;
+    prev = 0;
+    for (i = 0; i < m; i++) {
+        if (tooBig) {
+            ans[qq[i][2]] = -1;
+            continue;
+        }
+        left = 0;
+        right = n - 1;
+        // 第一个大于等于qq[i][1], left
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (rooms[mid][1] >= qq[i][1]) {
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        if (left == n) {
+            tooBig = true;
+            ans[qq[i][2]] = -1;
+            continue;
+        }
+        // 删除面积小于rooms[left]的成员
+        for (j = prev; j < left; j++) {
+            preference.erase(preference.find(rooms[j][0]));
+        }
+        prev = left; // 防止重复操作
+
+        diff1 = diff2 = INT_MAX;
+        int val1, val2;
+        auto it = preference.lower_bound(qq[i][0]);
+        if (it != preference.end()) {
+            val1 = *it;
+            diff1 = abs(qq[i][0] - val1);
+            if (it != preference.begin()) {
+                val2 = *--it;
+                diff2 = abs(qq[i][0] - val2);
+            }
+            if (diff1 < diff2) {
+                ans[qq[i][2]] = val1;
+            } else {
+                ans[qq[i][2]] = val2;
+            }
+        } else {
+            ans[qq[i][2]] = *--it;
+        }
+    }
+    return ans;
+}
