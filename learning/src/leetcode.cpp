@@ -17476,6 +17476,7 @@ vector<vector<string>> accountsMerge(vector<vector<string>>& accounts)
 
 
 // LC1163
+// 后缀数组
 string lastSubstring(string s)
 {
     int i, j;
@@ -21657,3 +21658,123 @@ vector<int> closestRoom(vector<vector<int>>& rooms, vector<vector<int>>& queries
     }
     return ans;
 }
+
+
+// LCP19
+int minimumOperations(string leaves)
+{
+    int i;
+    int n = leaves.size();
+    // dp[i][0 - 2] - 第i位属于leaves第几部分的最小变换, 同时
+    // 要保证leaves[0] = 'r', leaves[n - 1] = 'r', 所求dp[n - 1][2]
+    vector<vector<int>> dp(n, vector<int>(3, -1));
+
+    if (leaves[0] == 'y') {
+        dp[0][0] = 1;
+    } else {
+        dp[0][0] = 0;
+    }
+    for (i = 1; i < n; i++) {
+        if (leaves[i] == 'r') {
+            dp[i][0] = dp[i - 1][0];
+            dp[i][1] = dp[i - 1][0] + 1;
+            if (dp[i - 1][1] != -1) {
+                dp[i][1] = min(dp[i][1], dp[i - 1][1] + 1);
+                dp[i][2] = dp[i - 1][1];
+                if (dp[i - 1][2] != -1) {
+                    dp[i][2] = min(dp[i][2], dp[i - 1][2]);
+                }
+            }
+        } else {
+            dp[i][0] = dp[i - 1][0] + 1;
+            dp[i][1] = dp[i - 1][0];
+            if (dp[i - 1][1] != -1) {
+                dp[i][1] = min(dp[i][1], dp[i - 1][1]);
+                dp[i][2] = dp[i - 1][1] + 1;
+                if (dp[i - 1][2] != -1) {
+                    dp[i][2] = min(dp[i][2], dp[i - 1][2] + 1);
+                }
+            }
+        }
+    }
+    return dp[n - 1][2];
+}
+
+
+// LC3406
+string answerString(string word, int numFriends)
+{
+    if (numFriends == 1) {
+        return word;
+    }
+
+    // 寻找word的最大后缀
+    // 取后缀的前word.size() - numFriends + 1即可
+    // 最大后缀 LC1163
+    string maxSuffix = lastSubstring(word);
+    int n = maxSuffix.size();
+    int len = word.size() - numFriends + 1;
+    string ans = maxSuffix.substr(0, min(len, n));
+    return ans;
+}
+
+
+// LC731 LC732
+class MyCalendarTwo_MyCalendarThree {
+public:
+    vector<vector<int>> ranges;
+    vector<vector<int>> rangesTwo;
+    int curMax;
+    map<int, int> r;
+    MyCalendarTwo_MyCalendarThree()
+    {
+        curMax = 0;
+    }
+
+    int book_K(int startTime, int endTime)
+    {
+        int k = 0;
+        r[startTime]++;
+        r[endTime]--;
+        for (auto it : r) {
+            k += it.second;
+            curMax = max(curMax, k);
+        }
+        return curMax;
+    }
+
+    // 较为麻烦的实现方式, 更高效方法参考book_K
+    bool book_Two(int startTime, int endTime)
+    {
+        if (ranges.empty()) {
+            ranges.push_back({startTime, endTime});
+        } else {
+            int i;
+            int n = rangesTwo.size();
+            // 3重预定判断
+            for (i = 0; i < n; i++)
+            {
+                if ((startTime >= rangesTwo[i][0] && startTime < rangesTwo[i][1]) ||
+                    (endTime > rangesTwo[i][0] && endTime <= rangesTwo[i][1]) ||
+                    (startTime < rangesTwo[i][0] && endTime > rangesTwo[i][1])) {
+                    return false;
+                }
+            }
+            n = ranges.size();
+            for (i = 0; i < n; i++)
+            {
+                if (startTime >= ranges[i][0] && startTime < ranges[i][1]) {
+                    rangesTwo.push_back({startTime, min(endTime, ranges[i][1])});
+                } else if (endTime > ranges[i][0] && endTime <= ranges[i][1]) {
+                    rangesTwo.push_back({max(startTime, ranges[i][0]), endTime});
+                } else if (startTime < ranges[i][0] && endTime > ranges[i][1]) {
+                    rangesTwo.push_back({ranges[i][0], ranges[i][1]});
+                }
+            }
+            ranges.push_back({startTime, endTime});
+            sort(ranges.begin(), ranges.end());
+            sort(rangesTwo.begin(), rangesTwo.end());
+        }
+        return true;
+    }
+};
