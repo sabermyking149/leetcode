@@ -21778,3 +21778,158 @@ public:
         return true;
     }
 };
+
+
+// LC3413
+long long maximumCoins(vector<vector<int>>& coins, int k)
+{
+    sort(coins.begin(), coins.end());
+    int i;
+    int n = coins.size();
+    vector<long long> prefix(n);
+
+    prefix[0] = coins[0][2] * 1ll * (coins[0][1] - coins[0][0] + 1);
+    for (i = 1; i < n; i++) {
+        prefix[i] = prefix[i - 1] + coins[i][2] * 1ll * (coins[i][1] - coins[i][0] + 1);
+    }
+    if (k >= coins[n - 1][1] - coins[0][0] + 1) {
+        return prefix[n - 1];
+    }
+
+    int left, right, mid;
+    int pos, diff;
+    long long ans, sum;
+    ans = 0;
+    // 最佳策略 1 从每个区间开始取  2 从每个区间最后从后往前取
+    for (i = 0; i < n; i++) {
+        left = i;
+        right = n - 1;
+        pos = coins[i][0] + k - 1;
+        // 第一个区间右边界大于等于pos的区间
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (coins[mid][1] < pos) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        if (left == n) {
+            sum = prefix[n - 1] - prefix[i - 1];
+            ans = max(ans, sum);
+            break;
+        }
+        if (i == left) {
+            sum = k * 1ll * coins[left][2];
+        } else {
+            diff = pos - coins[left][0] + 1;
+            if (i == 0) {
+                sum = prefix[left - 1] + (diff > 0 ? diff : 0) * 1ll * coins[left][2];
+            } else {
+                sum = prefix[left - 1] - prefix[i - 1] + 
+                    (diff > 0 ? diff : 0) * 1ll * coins[left][2];
+            }
+        }
+        // printf ("left = %d sum = %lld\n", left, sum);
+        ans = max(ans, sum);
+    }
+    // 从后往前算
+    for (i = n - 1; i >= 0; i--) {
+        left = 0;
+        right = i;
+        pos = coins[i][1] - k + 1;
+        if (pos < 0) {
+            ans = max(ans, prefix[i]);
+            break;
+        }
+        // 最初一个左边界在pos右边的区间
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (coins[mid][0] < pos) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        if (right < 0) {
+            ans = max(ans, prefix[i]);
+            break;
+        } else if (left == n) {
+            sum = k * 1ll * coins[left - 1][2];
+        } else {
+            sum = prefix[i] - prefix[left - 1];
+            if (coins[left - 1][1] >= pos) {
+                sum += (coins[left - 1][1] - pos + 1) * 1ll * coins[left - 1][2];
+            }
+        }
+        ans = max(ans, sum);
+    }
+    return ans;
+}
+
+
+// LC972
+bool isRationalEqual(string s, string t)
+{
+    // 分离字符串
+    auto f = [](string &s) {
+        if (s.find('.') == string::npos) {
+            return vector<string>{s, "", ""};
+        }
+        string a = s.substr(0, s.find('.'));
+        if (s.find('(') == string::npos) {
+            string b = s.substr(s.find('.') + 1);
+            return vector<string>{a, b, ""};
+        }
+        string b = s.substr(s.find('.') + 1, s.find('(') - s.find('.') - 1);
+        string c = s.substr(s.find('(') + 1, s.find(')') - s.find('(') - 1);
+        // cout << a << " " << b << " " << c;
+        return vector<string>{a, b, c};
+    };
+    auto vs = f(s);
+    auto vt = f(t);
+    
+    // 重新组合
+    auto f1 = [](vector<string>& vs) {
+        int i;
+        int n;
+        double a, b, val;
+        double dividend, divisor;
+        if (!vs[1].empty()) {
+            a = atof(vs[1].c_str());
+            if (!vs[2].empty()) {
+                b = atof(vs[2].c_str());
+                dividend = a * pow(10, vs[2].size()) + b - a;
+                divisor = 0;
+                n = vs[2].size();
+                for (i = 0; i < n; i++) {
+                    divisor = divisor * 10 + 9;
+                }
+                divisor *= pow(10, vs[1].size());
+                val = dividend / divisor;
+            } else {
+                n = vs[1].size();
+                val = a / pow(10, n);
+            }
+        } else {
+            if (!vs[2].empty()) {
+                b = atof(vs[2].c_str());
+                dividend = b;
+                divisor = 0;
+                n = vs[2].size();
+                for (i = 0; i < n; i++) {
+                    divisor = divisor * 10 + 9;
+                }
+                val = dividend / divisor;
+            } else {
+                val = 0.0;
+            }
+        }
+        return val + atof(vs[0].c_str());
+    };
+    double dvs, dvt;
+    dvs = f1(vs);
+    dvt = f1(vt);
+    // cout << dvs << " " << dvt << endl;
+    return dvs == dvt;
+}
