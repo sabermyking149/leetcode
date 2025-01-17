@@ -21933,3 +21933,129 @@ bool isRationalEqual(string s, string t)
     // cout << dvs << " " << dvt << endl;
     return dvs == dvt;
 }
+
+
+// LC3418
+int maximumAmount(vector<vector<int>>& coins)
+{
+    int inf = -0x3f3f3f3f;
+    int i, j, k;
+    int m = coins.size();
+    int n = coins[0].size();
+    vector<vector<vector<int>>> dp(m, vector<vector<int>>(n, vector<int>(3, inf)));
+
+    if (coins[0][0] < 0) {
+        dp[0][0][1] = 0;
+    }
+    dp[0][0][0] = coins[0][0];
+    for (i = 1; i < m; i++) {
+        for (k = 0; k <= 2; k++) {
+            // 不"感化"
+            if (dp[i - 1][0][k] != inf) {
+                dp[i][0][k] = dp[i - 1][0][k] + coins[i][0];
+            }
+            // "感化"
+            if (coins[i][0] < 0 && k > 0 && dp[i - 1][0][k - 1] != inf) {
+                dp[i][0][k] = max(dp[i][0][k], dp[i - 1][0][k - 1]);
+            }
+        }
+    }
+    for (j = 1; j < n; j++) {
+        for (k = 0; k <= 2; k++) {
+            if (dp[0][j - 1][k] != inf) {
+                dp[0][j][k] = dp[0][j - 1][k] + coins[0][j];
+            }
+            if (coins[0][j] < 0 && k > 0 && dp[0][j - 1][k - 1] != inf) {
+                dp[0][j][k] = max(dp[0][j][k], dp[0][j - 1][k - 1]);
+            }
+        }
+    }
+    for (i = 1; i < m; i++) {
+        for (j = 1; j < n; j++) {
+            for (k = 0; k <= 2; k++) {
+                if (dp[i - 1][j][k] != inf) {
+                    dp[i][j][k] = dp[i - 1][j][k] + coins[i][j];
+                }
+                if (coins[i][j] < 0 && k > 0 && dp[i - 1][j][k - 1] != inf) {
+                    dp[i][j][k] = max(dp[i][j][k], dp[i - 1][j][k - 1]);
+                }
+            }
+            for (k = 0; k <= 2; k++) {
+                if (dp[i][j - 1][k] != inf) {
+                    dp[i][j][k] = max(dp[i][j][k], dp[i][j - 1][k] + coins[i][j]);
+                }
+                if (coins[i][j] < 0 && k > 0 && dp[i][j - 1][k - 1] != inf) {
+                    dp[i][j][k] = max(dp[i][j][k], dp[i][j - 1][k - 1]);
+                }
+            }
+        }
+    }
+    /*
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            for (k = 0; k <= 2; k++) {
+                printf ("%d ", dp[i][j][k]);
+            }
+            cout << endl;
+        }
+    }
+    */
+    return *max_element(dp[m - 1][n - 1].begin(), dp[m - 1][n - 1].end());
+}
+
+
+// LC3419
+int minMaxWeight(int n, vector<vector<int>>& edges, int threshold)
+{
+    int i;
+    int maxVal, minVal;
+
+    maxVal = 0;
+    minVal = 0x3f3f3f3f;
+    vector<vector<pair<int, int>>> edgesWithWeight(n);
+    // 存反向边
+    for (auto e : edges) {
+        edgesWithWeight[e[1]].push_back({e[0], e[2]});
+        maxVal = max(maxVal, e[2]);
+        minVal = min(minVal, e[2]);
+    }
+
+    vector<int> visited(n, 0);
+    int left, right, mid;
+
+    left = minVal;
+    right = maxVal;
+    // 带权的连通性判断
+    function<void (int, int)> dfs_w = [&dfs_w, &edgesWithWeight, &visited](int cur, int w) {
+        visited[cur] = 1;
+        for (auto it : edgesWithWeight[cur]) {
+            if (visited[it.first] != 1 && it.second <= w) {
+                dfs_w(it.first, w);
+            }
+        }
+    };
+    // 先判断一次连通性
+    visited.assign(n, 0);
+    dfs_w(0, maxVal);
+    for (auto it : visited) {
+        if (it == 0) {
+            return -1;
+        }
+    }
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        visited.assign(n, 0);
+        // 从节点0开始判断权重为mid连通性
+        dfs_w(0, mid);
+        for (i = 0; i < n; i++) {
+            if (visited[i] == 0) {
+                left = mid + 1;
+                break;
+            }
+        }
+        if (i == n) {
+            right = mid - 1;
+        }
+    }
+    return left > maxVal ? -1 : left;
+}

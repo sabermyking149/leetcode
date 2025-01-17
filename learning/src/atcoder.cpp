@@ -1422,3 +1422,70 @@ void ABC_386_D()
     }
     cout << "Yes\n";
 }
+
+
+void ABC_388_D()
+{
+    int i;
+    int n, len;
+
+    cin >> n;
+
+    vector<int> v(n);
+    for (i = 0; i < n; i++) {
+        cin >> v[i];
+    }
+
+    vector<int> diff(n + 1); // diff[i] = v[i] - v[i - 1]
+    for (i = 0; i < n; i++) {
+        if (i != 0) {
+            diff[i] += diff[i - 1];
+            v[i] += diff[i];
+        }
+        auto t = min(n - 1 - i, v[i]);
+        diff[i + 1]++;
+        diff[i + 1 + t]--;
+        v[i] -= t;
+    }
+
+    for (i = 0; i < n; i++) {
+        cout << v[i] << (i == n - 1 ? "\n" : " ");
+    }
+}
+
+
+void ABC_388_E()
+{
+    int i, j;
+    int n;
+
+    cin >> n;
+    vector<int> v(n);
+    for (i = 0; i < n; i++) {
+        cin >> v[i];
+    }
+
+    int left, right, mid;
+
+    left = 0;
+    right = n - 1;
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        i = 0;
+        j = mid + 1;
+        while (i <= mid && j < n) {
+            if (v[i] * 2 <= v[j]) {
+                i++;
+                j++;
+            } else {
+                j++;
+            }
+        }
+        if (i == mid + 1) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    cout << right + 1 << endl;
+}
