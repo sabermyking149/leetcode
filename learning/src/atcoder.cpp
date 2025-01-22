@@ -1427,7 +1427,7 @@ void ABC_386_D()
 void ABC_388_D()
 {
     int i;
-    int n, len;
+    int n;
 
     cin >> n;
 
@@ -1488,4 +1488,59 @@ void ABC_388_E()
         }
     }
     cout << right + 1 << endl;
+}
+
+
+// 正方形四个顶点是否在圆(0.5, 0.5, r)内
+bool IsInside(double x, double y, double r)
+{
+    return (x - 0.5) * (x - 0.5) + (y - 0.5) * (y - 0.5) - r * r < 1e-6;
+}
+void ABC_389_D()
+{
+    int i;
+    int r;
+    int left, right, mid;
+    long long a, b;
+    long long ans = 0;
+
+    cin >> r;
+    if (r == 1) {
+        cout << "1" << endl;
+        return;
+    }
+    for (i = -r + 1; i <= r; i++) {
+        left = -r;
+        right = r;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (IsInside(mid, i, r) && IsInside(mid - 1, i, r) &&
+                IsInside(mid, i + 1, r) && IsInside(mid - 1, i + 1, r)) {
+                right = mid - 1;        
+            } else {
+                left = mid + 1;
+            }
+        }
+        if (left > r) {
+            continue;
+        }
+        a = left;
+        
+        left = 0;
+        right = r;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (IsInside(mid, i, r) && IsInside(mid - 1, i, r) &&
+                IsInside(mid, i + 1, r) && IsInside(mid - 1, i + 1, r)) {
+                left = mid + 1;
+                // printf ("1: %d %d %d\n", i, a, left);
+            } else {
+                right = mid - 1;
+            }
+        }
+        // printf ("%d %d %d\n", i, a, right);
+        b = right;
+        ans += b - a + 1;
+    }
+    cout << ans << endl;
 }

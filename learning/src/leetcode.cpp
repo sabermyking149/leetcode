@@ -22059,3 +22059,142 @@ int minMaxWeight(int n, vector<vector<int>>& edges, int threshold)
     }
     return left > maxVal ? -1 : left;
 }
+
+
+// LC3428
+int minMaxSums(vector<int>& nums, int k)
+{
+    int mod = 1e9 + 7;
+    int i, j;
+    int n = nums.size();
+    int len, cnt;
+    long long ans = 0;
+    vector<vector<long long>> prefix(n, vector<long long>(k)); // 从n个数取0 - k - 1个数的前缀和
+
+    prefix[0][0] = 1;
+    for (i = 1; i < n; i++) {
+        for (j = 0; j < k; j++) {
+            if (i < j) {
+                break;
+            }
+            if (j == 0) {
+                prefix[i][j] = 1;
+            } else if (j == 1) {
+                prefix[i][j] = prefix[i][j - 1] + i;
+            } else if (j == i) {
+                prefix[i][j] = prefix[i][j - 1] + 1;
+            } else {
+                // 组合数的性质
+                prefix[i][j] = (prefix[i][j - 1] + prefix[i - 1][j] - prefix[i - 1][j - 2] + mod) % mod;
+            }
+        }
+    }
+    sort(nums.begin(), nums.end());
+    for (i = 0; i < n; i++) {
+        // nums[i] 作为最小数 从i + 1 取 k - 1个数
+        len = n - 1 - i;
+        cnt = prefix[len][min(len, k - 1)];
+        ans = (ans + nums[i] * 1ll * cnt) % mod;
+
+        // nums[i] 作为最大数 从i - 1 取 k - 1个数
+        len = i;
+        cnt = prefix[len][min(len, k - 1)];
+        ans = (ans + nums[i] * 1ll * cnt) % mod;
+    }
+    return ans;
+}
+
+
+// LC3429
+long long minCost_LC3429(int n, vector<vector<int>>& cost)
+{
+    int i, j, k;
+    int jj, kk;
+    // dp[i][j][k] - 第i个房子和第n - 1 - i分别涂成j、k两种颜色的最低成本
+    vector<vector<vector<long long>>> dp(n / 2, vector<vector<long long>>(3, vector<long long>(3, LLONG_MAX / 2)));
+
+    for (j = 0; j < 3; j++) {
+        for (k = 0; k < 3; k++) {
+            if (j == k) {
+                continue;
+            }
+            dp[0][j][k] = cost[0][j] + cost[n - 1][k];
+        }
+    }
+    for (i = 1; i < n / 2; i++) {
+        for (j = 0; j < 3; j++) {
+            for (k = 0; k < 3; k++) {
+                if (k == j) {
+                    continue;
+                }
+                for (jj = 0; jj < 3; jj++) {
+                    for (kk = 0; kk < 3; kk++) {
+                        if (jj == kk || jj == j || kk == k) {
+                            continue;
+                        }
+                        dp[i][j][k] = min(dp[i][j][k], 
+                            dp[i - 1][jj][kk] + cost[i][j] + cost[n - 1 - i][k]);
+                    }
+                }
+            }
+        }
+    }
+    long long ans = LLONG_MAX / 2;
+    for (j = 0; j < 3; j++) {
+        for (k = 0; k < 3; k++) {
+            ans = min(ans, dp[n / 2 - 1][j][k]);
+        }
+    }
+    /*for (i = 0; i < n / 2; i++) {
+        for (j = 0; j < 3; j++) {
+            for (k = 0; k < 3; k++) {
+                cout << dp[i][j][k] << " ";
+            }
+        }
+        cout << endl;
+    }*/
+    return ans;
+}
+
+
+// LC2218
+int maxValueOfCoins(vector<vector<int>>& piles, int k)
+{
+    int i, j, p;
+    int n = piles.size();
+    int m;
+
+    vector<vector<int>> prefix(n); // 每个栈的前缀和
+    for (i = 0; i < n; i++) {
+        prefix[i].emplace_back(piles[i][0]);
+        m = piles[i].size();
+        for (j = 1; j < m; j++) {
+            prefix[i].emplace_back(prefix[i].back() + piles[i][j]);
+        }
+    }
+    // 问题转化为 : 每个栈有体积为 1 - m (piles[i].size()) 的物品 价值分别为prefix[i][0 - m] 求凑成体积k的最大选择
+    vector<vector<int>> dp(n, vector<int>(k + 1, -1)); // 前n个pile取k个最大面值和
+    for (i = 0; i < n; i++) {
+        dp[i][0] = 0;
+    }
+    m = prefix[0].size();
+    for (i = 0; i < min(m, k); i++) {
+        dp[0][i + 1] = prefix[0][i];
+    }
+    for (i = 1; i <= k; i++) {
+        for (j = 1; j < n; j++) {
+            m = prefix[j].size();
+            dp[j][i] = dp[j - 1][i]; // 不选第j个栈
+            for (p = 0; p < m; p++) {
+                if (i - (p + 1) >= 0 && dp[j - 1][i - (p + 1)] != -1) {
+                    dp[j][i] = max(dp[j][i], dp[j - 1][i - (p + 1)] + prefix[j][p]);
+                }
+            }
+        }
+    }
+    int ans = 0;
+    for (i = 0; i < n; i++) {
+        ans = max(ans, dp[i][k]);
+    }
+    return ans;
+}
