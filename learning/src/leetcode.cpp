@@ -22198,3 +22198,259 @@ int maxValueOfCoins(vector<vector<int>>& piles, int k)
     }
     return ans;
 }
+
+
+// LC2378
+long long maxScore_LC2378(vector<vector<int>>& edges)
+{
+    // 类似"打家劫舍III", 只不过此处是边的权重
+    int i;
+    int n = edges.size();
+    vector<vector<pair<int, long long>>> e(n);
+    for (i = 1; i < n; i++) {
+        e[edges[i][0]].push_back({i, edges[i][1]});
+        e[i].push_back({edges[i][0], edges[i][1]});
+    }
+
+    vector<vector<long long>> vals(n, vector<long long>(2, -1)); // vals[i][0 - 1] 节点i的父节点是否被选择所得到的最大权之和
+    function<long long (int, int, int)> dfs = [&dfs, &e, &vals](int cur, int parent, int taken) {
+        int i, j;
+        long long val1, val2;
+        long long ret = 0;
+        if (vals[cur][taken] != -1) {
+            return vals[cur][taken];
+        }
+        if (e[cur].size() == 1 && e[cur][0].first == parent) {
+            vals[cur][taken] = 0;
+            return 0ll;
+        }
+
+        vector<pair<int, long long>> nodes;
+        if (taken == 0) {
+            for (auto it : e[cur]) {
+                if (it.first != parent) {
+                    nodes.push_back(it);
+                }
+            }
+            if (nodes.size() == 1) {
+                ret = max({ret, dfs(nodes[0].first, cur, 1) + nodes[0].second, 
+                    dfs(nodes[0].first, cur, 0)});
+            } else {
+                // 取其中一条边
+                for (i = 0; i < nodes.size(); i++) {
+                    val1 = dfs(nodes[i].first, cur, 1) + nodes[i].second;
+                    for (j = 0; j < nodes.size(); j++) {
+                        if (i == j) {
+                            continue;
+                        }
+                        val2 = dfs(nodes[j].first, cur, 0);
+                        if (val2 > 0) {
+                            val1 += val2;
+                        }
+
+                    }
+                    ret = max(ret, val1);
+                }
+                // 都不取
+                val1 = 0;
+                for (i = 0; i < nodes.size(); i++) {
+                    val2 = dfs(nodes[i].first, cur, 0);
+                    if (val2 > 0) {
+                        val1 += val2;
+                    }
+                }
+                ret = max(ret, val1);
+            }
+        } else {
+            val1 = 0;
+            for (auto it : e[cur]) {
+                if (it.first != parent) {
+                    val2 = dfs(it.first, cur, 0);
+                    if (val2 > 0) {
+                        val1 += val2;
+                    }
+                }
+            }
+            ret = val1;
+        }
+        vals[cur][taken] = ret;
+        return ret;
+    };
+
+    return max(dfs(0, -1, 0), dfs(0, -1, 1));
+}
+
+
+// LC879
+int profitableSchemes(int n, int minProfit, vector<int>& group, vector<int>& profit)
+{
+    int i, j, k;
+    int mod = 1e9 + 7;
+    int m = profit.size();
+    // dp[i][j][k] - 前i个项目雇佣k个人且盈利j的方案数
+    vector<vector<vector<long long>>> dp(m + 1, vector<vector<long long>>(minProfit + 1, vector<long long>(n + 1, -1)));
+
+    long long ans = 0;
+
+    dp[0][0][0] = 1;
+    for (j = 0; j <= minProfit; j++) {
+        for (k = 0; k <= n; k++) {
+            for (i = 1; i <= m; i++) {
+                if (dp[i - 1][j][k] != -1) {
+                    // 不选profit[i - 1]
+                    if (dp[i][j][k] == -1) {
+                        dp[i][j][k] = dp[i - 1][j][k];
+                    } else {
+                        dp[i][j][k] = (dp[i][j][k] + dp[i - 1][j][k]) % mod;
+                    }
+                    // 选择profit[i - 1]
+                    if (group[i - 1] + k <= n) {
+                        auto jj = min(j + profit[i - 1], minProfit);
+                        // auto jjj = max(j + profit[i - 1], minProfit);
+                        if (dp[i][jj][group[i - 1] + k] == -1) {
+                            dp[i][jj][group[i - 1] + k] = dp[i - 1][j][k];
+                        } else {
+                            dp[i][jj][group[i - 1] + k] = (dp[i][jj][group[i - 1] + k] + dp[i - 1][j][k]) % mod;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for (i = 0; i <= n; i++) {
+        // cout << dp[m][minProfit][i] << " ";
+        if (dp[m][minProfit][i] != -1) {
+            ans = (ans + dp[m][minProfit][i]) % mod;
+        }
+    }
+    return ans;
+}
+
+
+// LC2412
+long long minimumMoney(vector<vector<int>>& transactions)
+{
+    int n, i;
+    int tt; // 不赔钱交易需要的最大初始金额
+    long long left, right, mid;
+    long long cur, ans;
+    vector<vector<int>> v;
+
+    tt = 0;
+    for (auto t : transactions) {
+        if (t[0] > t[1]) {
+            v.emplace_back(t);
+        } else {
+            tt = max(tt, t[0]);
+        }
+    }
+    if (v.empty()) {
+        return tt;
+    }
+
+    sort(v.begin(), v.end(), [](vector<int>& a, vector<int>& b) {
+        if (a[1] == b[1]) {
+            return a[0] > b[0];
+        }
+        return a[1] < b[1];
+    });
+
+    left = 0;
+    right = 1e15;
+    n = v.size();
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        cur = mid;
+        for (i = 0; i < n; i++) {
+            if (cur < v[i][0]) {
+                left = mid + 1;
+                break;
+            } else {
+                cur = cur - v[i][0] + v[i][1];
+            }
+        }
+        if (i == n) {
+            right = mid - 1;
+        }
+    }
+    ans = left;
+    cur = v[n - 1][1];
+    if (cur < tt) {
+        ans += tt - cur;
+    }
+    return ans;
+}
+
+
+// LC40
+vector<vector<int>> combinationSum2(vector<int>& candidates, int target)
+{
+    sort(candidates.begin(), candidates.end());
+
+    int i, sum;
+    int n = candidates.size();
+    vector<int> record;
+    vector<vector<int>> ans;
+    vector<int> prefix(n);
+
+    i = 0;
+    sum = 0;
+    for (auto it : candidates) {
+        sum += it;
+        prefix[i] = sum;
+        i++;
+    }
+    if (sum < target) {
+        return {};
+    } else if (sum == target) {
+        return {candidates};
+    }
+
+    unordered_set<string> us;
+    function<void (int, int)> dfs = [&dfs, &record, &target, &candidates, &prefix, 
+        &us, &ans](int idx, int cur) {
+        int i, j;
+        int n = candidates.size();
+        int m;
+        string t;
+        if (cur == target) {
+            // 去重 形如 [1,2,5] [1,7] [1,2,5]
+            t.clear();
+            for (auto it : record) {
+                t += to_string(it) + "_";
+            } 
+            if (us.count(t) == 0) {
+                ans.emplace_back(record);
+                us.emplace(t);
+            }
+            return;
+        } else if (cur > target) {
+            return;
+        }
+        if (idx != 0 && cur + prefix[n - 1] - prefix[idx - 1] < target) {
+            return;
+        }
+        
+        for (i = idx; i < n; i++) {
+            // 关键去重
+            if (!ans.empty() && !record.empty() && ans.back().size() > record.size()) {
+                m = record.size();
+                for (j = 0; j < m; j++) {
+                    if (ans.back()[j] != record[j]) {
+                        break;
+                    }
+                }
+                if (j == m && ans.back()[m] == candidates[i]) {
+                    continue;
+                }
+            }
+            record.push_back(candidates[i]);
+            dfs(i + 1, cur + candidates[i]);
+            record.pop_back();
+        }
+    };
+
+    dfs(0, 0);
+    return ans;
+}
