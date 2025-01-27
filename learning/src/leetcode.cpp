@@ -22454,3 +22454,149 @@ vector<vector<int>> combinationSum2(vector<int>& candidates, int target)
     dfs(0, 0);
     return ans;
 }
+
+
+// LC1192
+vector<vector<int>> criticalConnections(int n, vector<vector<int>>& connections)
+{
+    // Tarjan
+    int i;
+    int idx;
+    vector<vector<int>> bridges;
+    vector<int> visited(n, 0);
+    vector<int> dfs_num(n);
+    vector<int> low(n);
+
+    vector<vector<int>> edges(n);
+    for (auto c : connections) {
+        edges[c[0]].emplace_back(c[1]);
+        edges[c[1]].emplace_back(c[0]);
+    }
+
+    idx = 0;
+    function<void (int, int)> dfs = [&dfs, &idx, &visited, &dfs_num, &low, &edges, &bridges]
+    (int cur, int parent) {
+        visited[cur] = 1;
+        dfs_num[cur] = low[cur] = idx;
+        idx++;
+
+        for (auto it : edges[cur]) {
+            if (it == parent) {
+                continue;
+            }
+            if (visited[it] == 0) {
+                dfs(it, cur);
+                low[cur] = min(low[cur], low[it]);
+                if (dfs_num[cur] < low[it]) {
+                    bridges.push_back({cur, it});
+                }
+            } else {
+                low[cur] = min(low[cur], dfs_num[it]);
+            }
+        }
+    };
+
+    for (i = 0; i < n; i++) {
+        if (visited[i] == 0) {
+            dfs(i, - 1);
+        }
+    }
+    return bridges;
+}
+
+
+// LC45
+int jump(vector<int>& nums)
+{
+    // dijkstra
+    int i;
+    int idx;
+    int n = nums.size();
+    vector<int> dist(n, INT_MAX);
+    queue<pair<int, int>> q;
+
+    q.push({0, 0});
+    while (q.size()) {
+        auto [idx, step] = q.front();
+        q.pop();
+        if (dist[idx] < step) {
+            continue;
+        }
+        dist[idx] = step;
+        for (i = 1; i <= nums[idx]; i++) {
+            if (idx + i < n && step + 1 < dist[idx + i]) {
+                dist[idx + i] = step + 1;
+                q.push({idx + i, step + 1});
+            }
+        }
+    }
+    return dist[n - 1];
+}
+
+
+// LC1514
+double maxProbability(int n, vector<vector<int>>& edges, vector<double>& succProb, int start_node, int end_node)
+{
+    // dijkstra 与上题类似
+    int i;
+    int m = edges.size();
+    vector<double> dist(n, 0.0);
+    queue<pair<int, double>> q;
+    vector<vector<pair<int, double>>> e(n);
+    for (i = 0; i < m; i++) {
+        e[edges[i][0]].push_back({edges[i][1], succProb[i]});
+        e[edges[i][1]].push_back({edges[i][0], succProb[i]});
+    }
+
+    q.push({start_node, 1.0});
+    while (q.size()) {
+        auto [node, val] = q.front();
+        q.pop();
+        if (dist[node] > val) {
+            continue;
+        }
+        dist[node] = val;
+        for (auto next : e[node]) {
+            if (val * next.second > dist[next.first]) {
+                dist[next.first] = val * next.second;
+                q.push({next.first, dist[next.first]});
+            }
+        }
+    }
+    return dist[end_node];
+}
+
+
+// LC1546
+int maxNonOverlapping(vector<int>& nums, int target)
+{
+    int i;
+    int n = nums.size();
+    int ans = 0;
+    vector<int> dp(n, 0); // dp[i] - 以nums[i]结尾的最大子数组数
+    vector<int> prefix(n, 0);
+    unordered_map<int, int> sumIdx; // 子数组和的最后下标
+
+    sumIdx[nums[0]] = 0;
+    prefix[0] = nums[0];
+    if (nums[0] == target) {
+        dp[0] = 1;
+        ans = 1;
+    }
+    for (i = 1; i < n; i++) {
+        dp[i] = dp[i - 1];
+        prefix[i] = nums[i] + prefix[i - 1];
+        if (prefix[i] == target) {
+            dp[i] = max(dp[i], 1);
+        }
+        if (nums[i] == target) {
+            dp[i] = max(dp[i], dp[i - 1] + 1);
+        }
+        if (sumIdx.count(prefix[i] - target)) {
+            dp[i] = max(dp[i], dp[sumIdx[prefix[i] - target]] + 1);
+        }
+        sumIdx[prefix[i]] = i;
+        ans = max(ans, dp[i]);
+    }
+    return ans;
+}
