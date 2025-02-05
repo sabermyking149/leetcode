@@ -63,6 +63,7 @@
         "sstream": "cpp",
         "stdexcept": "cpp",
         "stop_token": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "optional": "cpp"
     }
 }

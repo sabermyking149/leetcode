@@ -14,6 +14,7 @@
 #include <functional>
 #include <numeric>
 #include <list>
+#include <optional>
 
 #include "pub.h"
 
@@ -22599,4 +22600,192 @@ int maxNonOverlapping(vector<int>& nums, int target)
         ans = max(ans, dp[i]);
     }
     return ans;
+}
+
+
+// LC3440
+int maxFreeTime(int eventTime, vector<int>& startTime, vector<int>& endTime)
+{
+    int i;
+    int n = startTime.size();
+    int diff;
+    vector<int> freeTime;
+    map<int, int> dist; // dist[距离] = 个数
+
+    dist[startTime[0]]++;
+    freeTime.emplace_back(startTime[0]);
+    for (i = 1; i < n; i++) {
+        diff = startTime[i] - endTime[i - 1];
+        freeTime.emplace_back(diff);
+        dist[diff]++;
+    }
+    diff = eventTime - endTime[n - 1];
+    dist[diff]++;
+    freeTime.emplace_back(diff);
+
+    int ans = 0;
+    int cur, len;
+    for (i = 0; i < n; i++) {
+        if (i != 0 && i != n - 1) {
+            cur = startTime[i + 1] - endTime[i - 1];
+            if (cur <= ans) {
+                continue;
+            }
+        }
+        cur = freeTime[i] + freeTime[i + 1];
+        // printf ("cur = %d\n", cur);
+        len = endTime[i] - startTime[i];
+        if (dist[freeTime[i]] == 1) {
+            dist.erase(freeTime[i]);
+        } else {
+            dist[freeTime[i]]--;
+        }
+        if (dist[freeTime[i + 1]] == 1) {
+            dist.erase(freeTime[i + 1]);
+        } else {
+            dist[freeTime[i + 1]]--;
+        }
+        // 还有能匹配len的空间
+        if (dist.lower_bound(len) != dist.end()) {
+            if (i == 0) {
+                cur = startTime[i + 1];
+            } else if (i == n - 1) {
+                cur = eventTime - endTime[n - 2];
+            } else {
+                cur = startTime[i + 1] - endTime[i - 1];
+            }
+        }
+        ans = max(ans, cur);
+        dist[freeTime[i]]++;
+        dist[freeTime[i + 1]]++;
+    }
+    return ans;
+}
+
+
+// LC3443
+int maxDistance(string s, int k)
+{
+    int i;
+    int n = s.size();
+    int t, a, b, cur;
+    vector<int> v;
+    vector<vector<int>> dir(n, vector<int>(4, 0));
+    int ans = 0;
+    for (i = 0; i < n; i++) {
+        if (i != 0) {
+            dir[i] = dir[i - 1];
+        }
+        if (s[i] == 'E') {
+            dir[i][0]++;
+        } else if (s[i] == 'W') {
+            dir[i][1]++;
+        } else if (s[i] == 'N') {
+            dir[i][2]++;
+        } else {
+            dir[i][3]++;
+        }
+        v = dir[i];
+        t = k;
+        cur = 0;
+        a = min(v[0], v[1]);
+        b = max(v[0], v[1]);
+        if (a < t) {
+            cur += b + a;
+            t -= a;
+        } else {
+            cur += b + t - (a - t);
+            t = 0;
+        }
+        if (t != 0) {
+            a = min(v[2], v[3]);
+            b = max(v[2], v[3]);
+            if (a < t) {
+                cur += b + a;
+                t -= a;
+            } else {
+                cur += b + t - (a - t);
+                t = 0;
+            }
+        } else {
+            cur += abs(v[2] - v[3]);
+        }
+        ans = max(ans, cur);
+    }
+    return ans;
+}
+
+
+// 面试题 16.26. 计算器
+int calculate(string s)
+{
+    auto Trim = [](string &s, char separate) {
+        string ans;
+        for (auto ch : s) {
+            if (ch == separate) {
+                continue;
+            }
+            ans += ch;
+        }
+        return ans;
+    };
+    auto Calc = [](int a, int b, char sign) -> optional<int> {
+        switch (sign) {
+            case '+' : return a + b;
+            case '-' : return a - b;
+            case '*' : return a * b;
+            case '/' : {
+                if (b == 0) {
+                    return nullopt;
+                }
+                return a / b;
+            }
+            default : return nullopt;
+        }
+    };
+
+    string t = Trim(s, ' ');
+    stack<char> sign;
+    stack<int> nums;
+    int i, num;
+    int n = t.size();
+    int a, b;
+
+    num = 0;
+    for (i = 0; i < n; i++) {
+        if (isdigit(t[i])) {
+            num = num * 10 + (t[i] - '0');
+        } else {
+            nums.push(num);
+            num = 0;
+            while (!sign.empty()) {
+                auto last_sign = sign.top();
+                if (t[i] == '*' || t[i] == '/') {
+                    if (last_sign == '+' || last_sign == '-') {
+                        break;
+                    }
+                }
+                a = nums.top();
+                nums.pop();
+                b = nums.top();
+                nums.pop();
+                auto c = Calc(b, a, last_sign);
+                sign.pop();
+                nums.push(*c);
+            }
+            sign.push(t[i]);
+        }
+    }
+    nums.push(num);
+    while (!sign.empty()) {
+        auto last_sign = sign.top();
+        a = nums.top();
+        nums.pop();
+        b = nums.top();
+        nums.pop();
+        auto c = Calc(b, a, last_sign);
+        sign.pop();
+        nums.push(*c);
+    }
+    return nums.top();
 }
