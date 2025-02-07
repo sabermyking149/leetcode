@@ -1544,3 +1544,189 @@ void ABC_389_D()
     }
     cout << ans << endl;
 }
+
+
+void ABC_391_D()
+{
+    int i;
+    int x, y;
+    int n, w, q, t, a;
+
+    cin >> n >> w;
+
+    vector<vector<pair<int, int>>> pos(w + 1);
+    for (i = 1; i <= n; i++) {
+        cin >> x >> y;
+        pos[x].push_back({y, i});
+    }
+    for (i = 1; i <= w; i++) {
+        sort(pos[i].begin(), pos[i].end());
+    }
+    vector<int> finalTime(n + 1, 0x3f3f3f3f); // 每个block最后落下的时间
+    int idx = 0;
+    int maxTime;
+    bool stable = false;
+    while (1) {
+        stable = false;
+        maxTime = 0;
+        for (i = 1; i <= w; i++) {
+            if (pos[i].size() < idx + 1) { // 保持稳定, 以后都不会消掉
+                // printf ("%d\n", i);
+                stable = true;
+                break;
+            }
+            maxTime = max(maxTime, pos[i][idx].first);
+        }
+        if (stable) {
+            break;
+        }
+        for (i = 1; i <= w; i++) {
+            finalTime[pos[i][idx].second] = maxTime;
+        }
+        idx++;
+    }
+    cin >> q;
+    for (i = 0; i < q; i++) {
+        cin >> t >> a;
+        if (finalTime[a] > t) {
+            cout << "Yes\n";
+        } else {
+            cout << "No\n";
+        }
+    }
+}
+
+
+struct TriTreeNode {
+    int val;
+    int no; // 编号
+    TriTreeNode *left;
+    TriTreeNode *mid;
+    TriTreeNode *right;
+    TriTreeNode(int val, int no) : val(val), no(no), left(nullptr), mid(nullptr), right(nullptr) {};
+    ~TriTreeNode() {
+        delete left;
+        delete mid;
+        delete right;
+    }
+};
+vector<string> trans(string& s)
+{
+    int i;
+    int n;
+    int cnt0, cnt1;
+    string t;
+    vector<string> res;
+
+    res.emplace_back(s);
+    while (1) {
+        if (s.size() < 3) {
+            break;
+        }
+        t.clear();
+        n = s.size();
+        for (i = 0; i < n; i += 3) {
+            cnt0 = cnt1 = 0;
+            if (s[i] == '0') {
+                cnt0++;
+            } else {
+                cnt1++;
+            }
+            if (s[i + 1] == '0') {
+                cnt0++;
+            } else {
+                cnt1++;
+            }
+            if (s[i + 2] == '0') {
+                cnt0++;
+            } else {
+                cnt1++;
+            }
+            if (cnt0 > cnt1) {
+                t.append(1, '0');
+            } else {
+                t.append(1, '1');
+            }
+        }
+        res.emplace_back(t);
+        s = t;
+    }
+    return res;
+}
+void ABC_391_E()
+{
+    int j;
+    int n, m, layer, no;
+    string s;
+
+    cin >> n >> s;
+
+    vector<string> res = trans(s);
+    unordered_map<TriTreeNode *, int> nodesNo;
+    reverse(res.begin(), res.end());
+    n = res.size();
+    // 构建3叉树
+    TriTreeNode *root = new TriTreeNode(res[0][0] - '0', 0);
+    nodesNo[root] = 0;
+    queue<TriTreeNode *> q;
+    q.push(root);
+    layer = 1;
+    no = 1;
+    while (!q.empty()) {
+        if (layer == n) {
+            break;
+        }
+        m = q.size();
+        for (j = 0; j < m; j++) {
+            auto node = q.front();
+            q.pop();
+            node->left = new TriTreeNode(res[layer][j * 3] - '0', no);
+            q.push(node->left);
+            nodesNo[node->left] = no;
+            no++;
+
+            node->mid = new TriTreeNode(res[layer][j * 3 + 1] - '0', no);
+            q.push(node->mid);
+            nodesNo[node->mid] = no;
+            no++;
+
+            node->right = new TriTreeNode(res[layer][j * 3 + 2] - '0', no);
+            q.push(node->right);
+            nodesNo[node->right] = no;
+            no++;
+        }
+        layer++;
+    }
+    // dp(node, i) - 将node值改变成i的最小操作次数
+    vector<vector<int>> dp(no, vector<int>(2, -1));
+    function<int (TriTreeNode *, int)> dfs = [&dfs, &dp, &nodesNo](TriTreeNode *node, int val) {
+        if (dp[nodesNo[node]][val] != -1) {
+            return dp[nodesNo[node]][val];
+        }
+        if (node->left == nullptr && node->mid == nullptr && node->right == nullptr) {
+            if (node->val == val) {
+                dp[nodesNo[node]][val] = 0;
+            } else {
+                dp[nodesNo[node]][val] = 1;
+            }
+            return dp[nodesNo[node]][val];
+        }
+        int ans = 0x3f3f3f3f;
+        if (val == 0) {
+            ans = min({ans, dfs(node->left, 0) + dfs(node->mid, 0) + dfs(node->right, 0),
+                            dfs(node->left, 1) + dfs(node->mid, 0) + dfs(node->right, 0),
+                            dfs(node->left, 0) + dfs(node->mid, 1) + dfs(node->right, 0),
+                            dfs(node->left, 0) + dfs(node->mid, 0) + dfs(node->right, 1)});
+        } else {
+            ans = min({ans, dfs(node->left, 1) + dfs(node->mid, 1) + dfs(node->right, 1),
+                            dfs(node->left, 1) + dfs(node->mid, 1) + dfs(node->right, 0),
+                            dfs(node->left, 0) + dfs(node->mid, 1) + dfs(node->right, 1),
+                            dfs(node->left, 1) + dfs(node->mid, 0) + dfs(node->right, 1)});
+        }
+        dp[nodesNo[node]][val] = ans;
+        return ans;
+    };
+    int ans = dfs(root, 1 - root->val);
+    cout << ans << endl;
+    delete root;
+}
