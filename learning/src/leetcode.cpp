@@ -22789,3 +22789,269 @@ int calculate(string s)
     }
     return nums.top();
 }
+
+
+// LC1234
+int balancedString(string s)
+{
+    int i, j;
+    int n = s.size();
+    int limit = n / 4;
+    int cnt;
+    vector<vector<int>> prefix(n, vector<int>(4, 0));
+    for (i = 0; i < n; i++) {
+        if (i != 0) {
+            prefix[i] = prefix[i - 1];
+        }
+        if (s[i] == 'Q') {
+            prefix[i][0]++;
+        } else if (s[i] == 'W') {
+            prefix[i][1]++;
+        } else if (s[i] == 'E') {
+            prefix[i][2]++;
+        } else {
+            prefix[i][3]++;
+        }
+    }
+    if (prefix[n - 1][0] == limit &&
+        prefix[n - 1][1] == limit &&
+        prefix[n - 1][2] == limit &&
+        prefix[n - 1][3] == limit) {
+        return 0;
+    }
+
+    int left, right, mid;
+    int ans = n;
+    for (i = 0; i < n; i++) {
+        if (i > 0) {
+            for (j = 0; j < 4; j++) {
+                if (prefix[i - 1][j] > limit) {
+                    break;
+                }
+            }
+            if (j != 4) {
+                break;
+            }
+        }
+        left = i;
+        right = n - 1;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            for (j = 0; j < 4; j++) {
+                if (i == 0) {
+                    cnt = prefix[n - 1][j] - prefix[mid][j];
+                } else {
+                    cnt = prefix[i - 1][j] + prefix[n - 1][j] - prefix[mid][j];
+                }
+                if (cnt > limit) {
+                    left = mid + 1;
+                    break;
+                }
+            }
+            if (j == 4) {
+                right = mid - 1;
+            }
+        }
+        ans = min(ans, left - i + 1);
+    }
+    return ans;
+}
+
+
+// LC3447
+vector<int> assignElements(vector<int>& groups, vector<int>& elements)
+{
+    int i, j;
+    int n = groups.size();
+    int m = elements.size();
+    vector<int> ans(n, -1);
+    unordered_map<int, int> p;
+
+    for (i = 0; i < m; i++) {
+        if (p.count(elements[i]) == 0) {
+            p[elements[i]] = i;
+        }
+    }
+
+    for (i = 0; i < n; i++) {
+        if (p.count(groups[i])) {
+            ans[i] = p[groups[i]];
+        }
+        for (j = 1; j <= sqrt(groups[i]); j++) {
+            if (groups[i] % j == 0 && p.count(j)) { 
+                if (ans[i] == -1) {
+                    ans[i] = m;
+                }
+                ans[i] = min(ans[i], p[j]);
+            }
+            if (groups[i] % j == 0 && p.count(groups[i] / j)) {
+                if (ans[i] == -1) {
+                    ans[i] = m;
+                }
+                ans[i] = min(ans[i], p[groups[i] / j]);
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LC3448
+long long countSubstrings(string s)
+{
+    // 思路无误, 时间复杂度无误, 然而oj卡常, 使用传统malloc + free可过
+    int i, j, k;
+    int n = s.size();
+    int d;
+    long long ans;
+    // dp[i][1 - 9][0 - 9] - 第i位结束能被 1 - 9 整除的余数为0 - 9的字符串总数
+    vector<vector<vector<long long>>> dp(n, vector<vector<long long>>(10, vector<long long>(10, 0)));
+
+    ans = 0;
+    for (i = 0; i < n; i++) {
+        d = s[i] - '0';
+        for (j = 1; j <= 9; j++) {
+            dp[i][j][d % j] = 1;
+            if (i == 0) {
+                continue;
+            }
+            for (k = 0; k <= 9; k++) {
+                if (k >= j) {
+                    break;
+                }
+                if (j == 2 && k == 1) {
+                    auto tt =12;
+                }
+                dp[i][j][(k * 10 + d) % j] += dp[i - 1][j][k];
+            }
+        }
+        ans += dp[i][d][0];
+    }
+    return ans;
+}
+
+
+// LC3453 浮点数二分
+double separateSquares(vector<vector<int>>& squares)
+{
+    double left, right, mid;
+    right = 0.0;
+    // 测试数据出现卡常, 要么传统下标, 要么引用
+    for (auto& it : squares) {
+        right = max(right, it[1] * 1.0 + it[2]);
+    }
+
+    double top, bottom, square, part;
+
+    left = 0.0;
+    while (fabs(right - left) > 1e-5) {
+        mid = (right - left) / 2 + left;
+        top = bottom = 0.0;
+        for (auto& it : squares) {
+            square = it[2] * 1.0 * it[2];
+            if (it[1] - mid > 1e-5 || fabs(it[1] - mid) < 1e-5) {
+                top += square;
+            } else if (it[1] + it[2] - mid < 1e-5 || fabs(it[1] + it[2] - mid) < 1e-5) {
+                bottom += square;
+            } else {
+                part = square * (mid - it[1]) / it[2];
+                bottom += part;
+                top += square - part;
+            }
+        }
+
+        if (top > bottom) {
+            left = mid;
+        } else {
+            right = mid;
+        }
+        if (fabs(right - left) < 1e-5) {
+            break;
+        }
+    }
+    return right;
+}
+
+
+// LC3458
+bool maxSubstringLength(string s, int k)
+{
+    if (k == 0) {
+        return true;
+    }
+
+    int i, j;
+    int n = s.size();
+
+    vector<vector<int>> ranges(26, vector<int>(2, - 1));
+    for (i = 0; i < n; i++) {
+        if (ranges[s[i] - 'a'][0] == -1) {
+            ranges[s[i] - 'a'][0] = i;
+            ranges[s[i] - 'a'][1] = i;
+        } else {
+            ranges[s[i] - 'a'][1] = i;
+        }
+    }
+
+    // 查找每个字符的特殊子字符串边界, 注意扩边
+    set<vector<int>> r; // 方便去重
+    int left, right;
+    int flag;
+    for (i = 0; i < 26; i++) {
+        if (ranges[i][0] == -1) {
+            continue;
+        }
+        left = ranges[i][0];
+        right = ranges[i][1];
+        flag = 1;
+        while (flag) {
+            for (j = left; j <= right; j++) {
+                if (ranges[s[j] - 'a'][0] < left) {
+                    left = ranges[s[j] - 'a'][0];
+                    right = max(right, ranges[s[j] - 'a'][1]);
+                    break;
+                }
+                if (ranges[s[j] - 'a'][1] > right) {
+                    right = ranges[s[j] - 'a'][1];
+                    break;
+                }
+            }
+            if (j == right + 1) {
+                flag = 0;
+            }
+        }
+        // printf ("%c %d %d\n", 'a' + i, left, right);
+        if (left == 0 && right == n - 1) {
+            continue;
+        }
+        r.insert({left, right});
+    }
+    vector<vector<int>> vt;
+    for (auto it : r) {
+        vt.emplace_back(it);
+    }
+
+    // 当前即判断vt中有无k个不重叠区间
+    n = vt.size();
+    if (vt.empty() || n < k) {
+        return false;
+    }
+    if (k == 1) {
+        return true;
+    }
+    // dp[i] - 以vt[i]结束能得到的最大不重叠区间数
+    vector<int> dp(n, 0);
+    dp[0] = 1;
+    for (i = 1; i < n; i++) {
+        dp[i] = 1;
+        for (j = i - 1; j >= 0; j--) {
+            if (vt[i][0] >= vt[j][1]) {
+                dp[i] = max(dp[i], dp[j] + 1); 
+            }
+        }
+        if (dp[i] >= k) {
+            return true;
+        }
+    }
+    return false;
+}

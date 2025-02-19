@@ -1730,3 +1730,102 @@ void ABC_391_E()
     cout << ans << endl;
     delete root;
 }
+
+
+void ABC_393_D()
+{
+    int i;
+    int n, idx;
+    string s;
+    int cnt1, cnt0, mid;
+
+    cin >> n >> s;
+    cnt1 = 0;
+    for (i = 0; i < n; i++) {
+        if (s[i] == '1') {
+            cnt1++;
+        }
+    }
+    mid = (cnt1  + 1) / 2;
+    cnt1 = 0;
+    for (i = 0; i < n; i++) {
+        if (s[i] == '1') {
+            cnt1++;
+            if (cnt1 == mid) {
+                idx = i;
+                break;
+            }
+        }
+    }
+    long long ans = 0;
+    cnt0 = 0;
+    for (i = idx - 1; i >= 0; i--) {
+        if (s[i] == '0') {
+            cnt0++;
+        } else {
+            ans += cnt0;
+        }
+    }
+    cnt0 = 0;
+    for (i = idx + 1; i < n; i++) {
+        if (s[i] == '0') {
+            cnt0++;
+        } else {
+            ans += cnt0;
+        }
+    }
+    cout << ans << endl;
+}
+
+
+void ABC_393_E()
+{
+    int i, j;
+    int n, k, t;
+    int cur;
+    unordered_map<int, int> cnt;
+
+    cin >> n >> k;
+
+    vector<int> nums(n);
+    for (i = 0; i < n; i++) {
+        cin >> nums[i];
+        cnt[nums[i]]++;
+    }
+
+    int d = *max_element(nums.begin(), nums.end());
+    // ans[i] - 包含i的k个最大gcd
+    vector<int> ans(d + 1, 1);
+
+    for (i = 1; i <= d; i++) {
+        j = 1;
+        t = i;
+        cur = 0;
+        while (1) {
+            t = i * j;
+            if  (t > d) {
+                break;
+            }
+            if (cnt.count(t)) {
+                cur += cnt[t];
+            }
+            j++;
+        }
+        // i的倍数一定都有公约数i
+        if (cur >= k) {
+            t = i;
+            j = 1;
+            while (1) {
+                t = i * j;
+                if (t > d) {
+                    break;
+                }
+                ans[t] = i;
+                j++;
+            }
+        }
+    }
+    for (auto n : nums) {
+        cout << ans[n] << endl;
+    }
+}
