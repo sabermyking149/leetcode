@@ -23055,3 +23055,123 @@ bool maxSubstringLength(string s, int k)
     }
     return false;
 }
+
+
+// LC1036
+bool isEscapePossible(vector<vector<int>>& blocked, vector<int>& source, vector<int>& target)
+{
+    int n = blocked.size();
+    // 长度为n的block最多能围城的面积(三角形) sum = 1 + 2 + 3 + ... + n - 1
+    // 即起点和终点能达到的点大于sum则无法被包围
+    int sum;
+    int len = 1e6;
+    unordered_set<long long> visited;
+    unordered_set<long long> block;
+
+    for (auto b : blocked) {
+        block.emplace(b[0]* 1ll * len + b[1]);
+    }
+
+    sum = n * (n - 1) / 2;
+    auto BFS = [&len, &block, &visited](int row, int col, int limit, vector<int>& target) {
+        queue<pair<int, int>> q;
+        q.push({row, col});
+        visited.emplace(row * 1ll * len + col);
+        while (!q.empty()) {
+            auto [row, col] = q.front();
+            q.pop();
+            if (target[0] == row && target[1] == col) {
+                return true;
+            }
+
+            int i;
+            int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+            for (i = 0; i < 4; i++) {
+                auto nr = row + directions[i][0];
+                auto nc = col + directions[i][1];
+                if (nr < 0 || nr >= len || nc < 0 || nc >= len || visited.count(nr * 1ll * len + nc) || 
+                    block.count(nr * 1ll * len + nc)) {
+                    continue;
+                }
+                q.push({nr, nc});
+                visited.emplace(nr * 1ll * len + nc);
+                if (visited.size() > limit) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+
+    visited.clear();
+    bool f1 = BFS(source[0], source[1], sum, target);
+
+    visited.clear();
+    bool f2 = BFS(target[0], target[1], sum, source);
+
+    return f1 && f2;
+}
+
+
+// LC474
+int findMaxForm(vector<string>& strs, int m, int n)
+{
+    int i, j, k;
+    int len = strs.size();
+    int cnt0, cnt1;
+    vector<vector<int>> dp(m + 1, vector<int>(n + 1, 0));
+
+    for (i = 0; i < len; i++) {
+        cnt0 = cnt1 = 0;
+        for (auto ch : strs[i]) {
+            if (ch == '0') {
+                cnt0++;
+            } else {
+                cnt1++;
+            }
+        }
+        for (j = m; j >= cnt0; j--) {
+            for (k = n ; k >= cnt1; k--) {
+                dp[j][k] = max(dp[j][k], dp[j - cnt0][k - cnt1] + 1);
+            }
+        }
+    }
+    return dp[m][n];
+}
+
+
+// LC3469
+int minCost_LC3469(vector<int>& nums)
+{
+    int i, j;
+    int n = nums.size();
+    if (n == 1) {
+        return nums[0];
+    } else if (n == 2) {
+        return max(nums[0], nums[1]);
+    }
+
+    // dp[i][j] - 以nums[i]结尾, 前面删除余下nums[j]的最小cost
+    vector<vector<int>> dp(n, vector<int>(n, 0x3f3f3f3f));
+    dp[2][0] = max(nums[1], nums[2]);
+    dp[2][1] = max(nums[0], nums[2]);
+    dp[2][2] = max(nums[0], nums[1]);
+    for (i = 4; i < n; i += 2) {
+        for (j = 0; j <= i - 2; j++) {
+            dp[i][j] = dp[i - 2][j] + max(nums[i], nums[i - 1]);
+            dp[i][i - 1] = min(dp[i][i - 1], dp[i - 2][j] + max(nums[i], nums[j]));
+            dp[i][i] = min(dp[i][i], dp[i - 2][j] + max(nums[i - 1], nums[j]));
+        }
+    }
+    int ans = 0x3f3f3f3f;
+    if (n % 2 == 0) {
+        for (j = 0; j <= n - 2; j++) {
+            ans = min(ans, dp[n - 2][j] + max(nums[j], nums[n - 1]));
+        }
+    } else {
+        for (j = 0; j < n; j++) {
+            ans = min(ans, dp[n - 1][j] + nums[j]);
+        }
+    }
+    return ans;
+}
