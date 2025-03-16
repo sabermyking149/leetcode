@@ -23175,3 +23175,161 @@ int minCost_LC3469(vector<int>& nums)
     }
     return ans;
 }
+
+
+// LC3478
+vector<long long> findMaxSum(vector<int>& nums1, vector<int>& nums2, int k)
+{
+    int i;
+    int n = nums1.size();
+    vector<vector<int>> p;
+    vector<long long> ans(n);
+    for (i = 0; i < n; i++) {
+        p.push_back({nums1[i], nums2[i], i});
+    }
+    sort(p.begin(), p.end(), [](vector<int>& a, vector<int>& b) {
+        if (a[0] == b[0]) {
+            return a[1] > b[1];
+        }
+        return a[0] < b[0];
+    });
+
+    priority_queue<int, vector<int>, greater<>> pq;
+    long long cur = 0;
+    bool equal;
+    for (i = 0; i < n; i++) {
+        if (i == 0) {
+            ans[p[i][2]] = 0;
+            pq.push(p[i][1]);
+            cur += p[i][1];
+        } else {
+            equal = false;
+            if (p[i][0] == p[i - 1][0]) {
+                ans[p[i][2]] = ans[p[i - 1][2]];
+                equal = true;
+            }
+            // 虽然有相等的情况, 当前最大和还是需要更新
+            if (pq.size() < k) {
+                if (!equal) {
+                    ans[p[i][2]] = cur;
+                    // printf ("i = %d, cur = %lld\n",i,cur);
+                }
+                cur += p[i][1];
+                pq.push(p[i][1]);
+            } else {
+                if (!equal) {
+                    ans[p[i][2]] = cur;
+                }
+                auto t = pq.top();
+                if (t < p[i][1]) {
+                    pq.pop();
+                    pq.push(p[i][1]);
+                    cur = cur - t + p[i][1];
+                }
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LC3481
+string applySubstitutions(vector<vector<string>>& replacements, string text)
+{
+    unordered_map<char, string> dict;
+    for (auto& r : replacements) {
+        dict[r[0][0]] = r[1];
+    }
+
+    function<string (string &)> dfs = [&dfs, &dict](string& cur) {
+        int i;
+        int n = cur.size();
+        string ans;
+        for (i = 0; i < n; i++) {
+            if (cur[i] == '%') {
+                ans += dfs(dict[cur[i + 1]]);
+                i += 2;
+            } else {
+                ans += cur[i];
+            }
+        }
+        return ans;
+    };
+
+    return dfs(text);
+}
+
+
+// LC891
+int sumSubseqWidths(vector<int>& nums)
+{
+    int i;
+    int n = nums.size();
+    int mod = 1e9 + 7;
+
+    sort (nums.begin(), nums.end());
+
+    long long small, big;
+    small = big = 0;
+    for (i = 0; i < n; i++) {
+        // 以nums[i] 作为最小数的子序列个数
+        small = (small + nums[i] * 1ll * FastPow(2, n - 1 - i)) % mod;
+
+        // 以nums[i] 作为最大数的子序列个数
+        big = (big + nums[i] * 1ll * FastPow(2, i)) % mod;
+    }
+    return (big + mod - small) % mod;
+}
+
+
+// LC3306
+long long countOfSubstrings(string word, int k)
+{
+    // to do
+}
+
+
+// LC3489
+int minZeroArray_LC3489(vector<int>& nums, vector<vector<int>>& queries)
+{
+    int i, j, k;
+    int n = nums.size();
+    int m = queries.size();
+    int cnt, ans;
+    vector<int> w;
+    vector<bool> dp;
+    // 针对每一个nums[i]找最小的queries, 所求所有queries最大值
+    ans = 0;
+    for (i = 0; i < n; i++) {
+        if (nums[i] == 0) {
+            continue;
+        }
+        w.clear();
+        for (k = 0; k < m; k++) {
+            if (queries[k][0] > i || queries[k][1] < i) {
+                w.emplace_back(0); // 贡献为0
+            } else {
+                w.emplace_back(queries[k][2]);
+            }
+        }
+        cnt = 0x3f3f3f3f;
+        dp.assign(nums[i] + 1, false);
+        dp[0] = true;
+        for (j = 0; j < m; j++) {
+            for (k = nums[i]; k >= w[j]; k--) {
+                if (dp[k - w[j]]) {
+                    dp[k] = true;
+                    if (k == nums[i]) {
+                        cnt = min(cnt, j + 1);
+                    }
+                }
+            }
+        }
+        if (dp[nums[i]] == false) {
+            return -1;
+        }
+        // cout << cnt << endl;
+        ans = max(ans, cnt);
+    }
+    return ans;
+}

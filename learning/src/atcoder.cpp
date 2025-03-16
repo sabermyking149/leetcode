@@ -1829,3 +1829,32 @@ void ABC_393_E()
         cout << ans[n] << endl;
     }
 }
+
+
+void ABC_397_D()
+{
+    long long i;
+    long long n;
+    cin >> n;
+
+    // x^3 - y^3 = (x - y)[(x - y)^2 + 3xy] = n; 如果n能分解成 a * b 那么必然 x - y 对应小的那个因子
+    // 且 x - y 的范围在[1, n^(1/3)]
+    long long diff, multiply;
+    for (i = 1; i <= 1e6; i++) {
+        if (n % i != 0) {
+            continue;
+        }
+        if (n / i <= i * i || (n / i - i * i) % 3 != 0) {
+            continue;
+        }
+        diff = i;
+        multiply = (n / i - i * i) / 3;
+        // 由 x - y 和 xy 凑 x + y
+        long long sum = sqrt(diff * diff + multiply * 4);
+        if (sum * sum == diff * diff + multiply * 4) {
+            cout << (sum + diff) / 2 << " " << (sum - diff) / 2 << endl;
+            return;
+        }
+    }
+    cout << -1 << endl;
+}
