@@ -29,6 +29,39 @@ int MyGcd(int a, int b)
 }
 
 
+bool isVowel(unsigned char c)
+{
+    c = tolower(c);
+    return c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u';
+}
+
+
+// 埃拉托斯特尼筛法
+vector<int> GetPrimes(int n)
+{
+    int i, p;
+    vector<bool> isPrime(n + 1, true);
+    vector<int> primes;
+    isPrime[0] = isPrime[1] = false; // 0 和 1 不是质数
+ 
+    for (p = 2; p <= sqrt(n); p++) {
+        if (isPrime[p]) {
+            for (i = p * p; i <= n; i += p) {
+                isPrime[i] = false;
+            }
+        }
+    }
+ 
+    for (p = 2; p <= n; ++p) {
+        if (isPrime[p]) {
+            primes.push_back(p);
+        }
+    }
+ 
+    return primes;
+}
+
+
 // 求组合数
 long long Combine(int m, int n, map<pair<int, int>, long long>& combineData)
 {
@@ -23285,7 +23318,132 @@ int sumSubseqWidths(vector<int>& nums)
 // LC3306
 long long countOfSubstrings(string word, int k)
 {
-    // to do
+    int i, j;
+    int n = word.size();
+    vector<vector<int>> prefix(n, vector<int>(6, 0));
+    unordered_map<int, set<int>> vowelIdx;
+    for (i = 0; i < n; i++) {
+        if (i > 0) {
+            prefix[i] = prefix[i - 1];
+        }
+        if (word[i] == 'a') {
+            prefix[i][0]++;
+            vowelIdx[0].emplace(i);
+        } else if (word[i] == 'e') {
+            prefix[i][1]++;
+            vowelIdx[1].emplace(i);
+        } else if (word[i] == 'i') {
+            prefix[i][2]++;
+            vowelIdx[2].emplace(i);
+        } else if (word[i] == 'o') {
+            prefix[i][3]++;
+            vowelIdx[3].emplace(i);
+        } else if (word[i] == 'u') {
+            prefix[i][4]++;
+            vowelIdx[4].emplace(i);
+        } else {
+            prefix[i][5]++;
+        }
+    }
+    // 边界
+    if (prefix[n - 1][5] < k) {
+        return 0;
+    }
+    for (i = 0; i < 5; i++) {
+        if (prefix[n - 1][i] == 0) {
+            return 0;
+        }
+    }
+    int leftRange, rightRange;
+    int left, right, mid;
+    int idx;
+    long long ans = 0;
+    for (i = 0; i < n; i++) {
+        if (i > 0) {
+            for (j = 0; j < 5; j++) {
+                if (prefix[n - 1][j] - prefix[i - 1][j] == 0) {
+                    return ans;
+                }
+            }
+        }
+        // 二分分别找左右界(k个辅音)
+        left = i;
+        right = n - 1;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (i == 0) {
+                if (prefix[mid][5] < k) {
+                    left = mid + 1;
+                } else {
+                    right = mid - 1;
+                }
+            } else {
+                if (prefix[mid][5] - prefix[i - 1][5] < k) {
+                    left = mid + 1;
+                } else {
+                    right = mid - 1;
+                }
+            }
+        }
+        if (left == n) {
+            break;
+        }
+        leftRange = left;
+
+        left = i;
+        right = n - 1;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (i == 0) {
+                if (prefix[mid][5] < k + 1) {
+                    left = mid + 1;
+                } else {
+                    right = mid - 1;
+                }
+            } else {
+                if (prefix[mid][5] - prefix[i - 1][5] < k + 1) {
+                    left = mid + 1;
+                } else {
+                    right = mid - 1;
+                }
+            }
+        }
+        if (left == n) {
+            rightRange = n - 1;
+        } else {
+            rightRange = left - 1;
+        }
+        // [leftRange, rightRange] 满足的个数
+        int start = leftRange;
+        if (i == 0) {
+            for (j = 0; j < 5; j++) {
+                if (prefix[leftRange][j] == 0) {
+                    auto it = vowelIdx[j].upper_bound(leftRange);
+                    if (it == vowelIdx[j].end() || *it > rightRange) {
+                        break;
+                    }
+                    start = max(start, *it);
+                }
+            }
+            if (j == 5) {
+                ans += rightRange - start + 1;
+            }
+        } else {
+            for (j = 0; j < 5; j++) {
+                if (prefix[leftRange][j] - prefix[i - 1][j] == 0) {
+                    auto it = vowelIdx[j].upper_bound(leftRange);
+                    if (it == vowelIdx[j].end() || *it > rightRange) {
+                        break;
+                    }
+                    start = max(start, *it);
+                }
+            }
+            if (j == 5) {
+                ans += rightRange - start + 1;
+            }
+        }
+    }
+    return ans;
 }
 
 
@@ -23332,4 +23490,109 @@ int minZeroArray_LC3489(vector<int>& nums, vector<vector<int>>& queries)
         ans = max(ans, cnt);
     }
     return ans;
+}
+
+
+// LC3494
+long long minTime(vector<int>& skill, vector<int>& mana)
+{
+    int i, j;
+    int n = skill.size();
+    int m = mana.size();
+    vector<long long> w(n);
+    // 第一瓶药水完成时间, 也即每个巫师最初空闲时间
+    for (i = 0; i < n; i++) {
+        if (i == 0) {
+            w[i] = skill[i] * 1ll * mana[0];
+        } else {
+            w[i] = w[i - 1] + skill[i] * 1ll * mana[0];
+        }
+    }
+
+    long long cur;
+    for (i = 1; i < m; i++) {
+        cur = w[0];
+        for (j = 1; j < n; j++) {
+            cur = max(cur + skill[j - 1] * 1ll * mana[i], w[j]);
+        }
+        // 最后一个巫师的空闲时间
+        cur += skill[n - 1] * 1ll * mana[i];
+        // 从cur反推w[0, n - 2]
+        w[n - 1] = cur;
+        for (j = n - 2; j >= 0; j--) {
+            w[j] = w[j + 1] - skill[j + 1] * 1ll * mana[i];
+        }
+    }
+    return w[n - 1];
+}
+
+
+// LC3495
+long long minOperations_LC3495(vector<vector<int>>& queries)
+{
+    int i;
+    long long ans = 0;
+    long long sum;
+    long long l, r;
+    vector<long long> log4cnt(16);
+
+    for (i = 1; i <= 15; i++) {
+        log4cnt[i] = pow(4, i) - pow(4, i - 1);
+    }
+    for (auto& q : queries) {
+        l = log(q[0]) / log(4) + 1;
+        r = log(q[1]) / log(4) + 1;
+
+        // cout << l << " " << r << endl;
+
+        if (l == r) {
+            sum = (q[1] - q[0] + 1) * l;
+        } else {
+            sum = l * (pow(4, l) - q[0]) + r * (q[1] - pow(4, r - 1) + 1);
+            for (i = l + 1; i <= r - 1; i++) {
+                sum += i * log4cnt[i];
+            }
+        }
+        // cout << sum << endl;
+        ans += (sum + 1) / 2;
+    }
+    return ans;
+}
+
+
+// LC656
+vector<int> cheapestJump(vector<int>& coins, int maxJump)
+{
+    int i, j, k;
+    int n = coins.size();
+    // 考虑到最小字典序, 路径不能用string存储
+    vector<pair<int, vector<int>>> dp(n, {0x3f3f3f3f, {}});
+
+    dp[0] = {coins[0], {1}};
+    for (i = 1; i < n; i++) {
+        if (coins[i] == -1) {
+            continue;
+        }
+        for (j = i - 1; j >= (i - maxJump < 0 ? 0 : i - maxJump); j--) {
+            if (coins[j] == -1) {
+                continue;
+            }
+            if (coins[i] + dp[j].first < dp[i].first) {
+                auto idx = dp[j].second;
+                idx.emplace_back(i + 1);
+                dp[i] = {coins[i] + dp[j].first, idx};
+            } else if (coins[i] + dp[j].first == dp[i].first) {
+                auto idx = dp[j].second;
+                idx.emplace_back(i + 1);
+                auto len = min(dp[i].second.size(), idx.size());
+                for (k = 0; k < len; k++) {
+                    if (dp[i].second[k] > idx[k]) {
+                        dp[i] = {dp[i].first, idx};
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    return dp[n - 1].second;
 }

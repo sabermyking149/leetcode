@@ -1858,3 +1858,49 @@ void ABC_397_D()
     }
     cout << -1 << endl;
 }
+
+
+void ABC_398_D()
+{
+    int i;
+    int n, r, c;
+    int curR, curC;
+    string s;
+
+    cin >> n >> r >> c >> s;
+
+    vector<int> prer(n, 0), prec(n, 0);
+    set<pair<int, int>> diff;
+    string ans;
+ 
+    curR = curC = 0;
+    for (i = 0; i < n; i++) {
+        if (s[i] == 'N') {
+            prer[i] = (i > 0 ? prer[i - 1] - 1 : -1);
+            prec[i] = (i > 0 ? prec[i - 1] : 0);
+            curR--;
+        } else if (s[i] == 'W') {
+            prer[i] = (i > 0 ? prer[i - 1] : 0);
+            prec[i] = (i > 0 ? prec[i - 1] - 1 : -1);
+            curC--;
+        }  else if (s[i] == 'S') {
+            prer[i] = (i > 0 ? prer[i - 1] + 1 : 1);
+            prec[i] = (i > 0 ? prec[i - 1] : 0);
+            curR++;
+        }  else {
+            prer[i] = (i > 0 ? prer[i - 1] : 0);
+            prec[i] = (i > 0 ? prec[i - 1] + 1 : 1);
+            curC++;
+        }
+        if (curR == r && curC == c) {
+            ans.push_back('1');
+        } else if (diff.count({curR - r, curC - c})) {
+            ans.push_back('1');
+        } else {
+            ans.push_back('0');
+        }
+        // cout << prer[i] << " " << prec[i] << endl;
+        diff.insert({prer[i], prec[i]});
+    }
+    cout << ans << endl;
+}
