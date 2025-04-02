@@ -23596,3 +23596,143 @@ vector<int> cheapestJump(vector<int>& coins, int maxJump)
     }
     return dp[n - 1].second;
 }
+
+
+// LC1692
+int waysToDistribute(int n, int k)
+{
+    int i, j;
+    int mod = 1e9 + 7;
+    // dp[n][k] = k * dp[n - 1][k] + dp[n - 1][k - 1];
+    vector<vector<long long>> dp(n + 1, vector<long long>(k + 1, 0));
+    dp[0][0] = 1;
+    for (i = 1; i <= n; i++) {
+        for (j = 1; j <= min(i, k); j++) {
+            if (j == i) {
+                dp[i][j] = 1;
+            } else {
+                dp[i][j] = (j * dp[i - 1][j] % mod + dp[i - 1][j - 1]) % mod;
+            }
+        }
+    }
+    return dp[n][k];
+}
+
+
+// LC3499
+int maxActiveSectionsAfterTrade(string s)
+{
+    s = "1" + s + "1";
+    int i;
+    int n = s.size();
+    int start;
+    int find = 0;
+    vector<vector<int>> range;
+    for (i = 1; i < n - 1; i++) {
+        if (s[i] == '0') {
+            if (find == 0) {
+                find = 1;
+                start = i;
+            }
+        } else {
+            if (find == 1) {
+                find = 0;
+                range.push_back({start, i - 1});
+            }
+        }
+    }
+    if (find) {
+        range.push_back({start, n - 2});
+    }
+    // for (auto r : range) cout << r[0] << " " << r[1] << endl;
+    int cnt = 0;
+    int m = range.size();
+    for (i = 0; i < n; i++) {
+        if (s[i] == '1') {
+            cnt++;
+        }
+    }
+    if (m < 2) {
+        return cnt - 2;
+    }
+    int ans = 0;
+    for (i = 1; i < m; i++) {
+        ans = max(ans, range[i - 1][1] - range[i - 1][0] + 1 + 
+            range[i][1] - range[i][0] + 1 + cnt);
+    }
+    return ans - 2;
+}
+
+
+// LC317
+int shortestDistance(vector<vector<int>>& grid)
+{
+    int i, j;
+    int m = grid.size();
+    int n = grid[0].size();
+    // 相当于对每个已存在的建筑物到所有点的最短距离
+    // dijkstra
+    vector<vector<vector<int>>> tol_dist;
+    auto dij = [&grid, &tol_dist](int row, int col) {
+        int i;
+        int m = grid.size();
+        int n = grid[0].size();
+        int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+        vector<vector<int>> dist(m, vector<int>(n, 0x3f3f3f3f));
+        queue<pair<int, int>> q;
+
+        q.push({row * n + col, 0});
+        while (q.size()) {
+            auto [pos, d] = q.front();
+            q.pop();
+            auto r = pos / n;
+            auto c = pos % n;
+            if (dist[r][c] < d) {
+                continue;
+            }
+            dist[r][c] = d;
+            for (i = 0; i < 4; i++) {
+                auto nr = r + directions[i][0];
+                auto nc = c + directions[i][1];
+                if (nr < 0 || nr >= m || nc < 0 || nc >= n || grid[nr][nc] != 0) {
+                    continue;
+                }
+                if (d + 1 < dist[nr][nc]) {
+                    dist[nr][nc] = d + 1;
+                    q.push({nr * n + nc, d + 1});
+                }
+            }
+        }
+        tol_dist.emplace_back(dist);
+    };
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            if (grid[i][j] == 1) {
+                dij(i, j);
+            }
+        }
+    }
+    int ans = 0x3f3f3f3f;
+    int cur;
+    bool reach = true;
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            if (grid[i][j] != 0) {
+                continue;
+            }
+            reach = true;
+            cur = 0;
+            for (auto& dist : tol_dist) {
+                if (dist[i][j] == 0x3f3f3f3f) {
+                    reach = false;
+                    break;
+                }
+                cur += dist[i][j];
+            }
+            if (reach) {
+                ans = min(ans, cur);
+            }
+        }
+    }
+    return ans == 0x3f3f3f3f ? -1 : ans;
+}
