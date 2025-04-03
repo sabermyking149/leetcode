@@ -2529,27 +2529,34 @@ vector<string> removeSubfolders(vector<string>& folder)
 }
 
 
-// dp[i][j] 从i到j的最长偶数子序列
-int longestPalindromeSubseq(string s) // 有问题
+// LC1682
+int longestPalindromeSubseq(string s)
 {
-    int i, j;
     int n = s.size();
-    vector<vector<int>> dp(n, vector<int>(n, 0));
-
-    for (i = 1; i < n; i++) {
-        for (j = i - 1; j >= 0; j--) {
-            if (s[i] == s[j]) {
-                if (i + 1 < j - 1) {
-                    dp[i][j] = dp[i + 1][j - 1] + 2;
-                } else {
-                    dp[i][j] = 2;
-                }
-            } else {
-                dp[i][j] = max(dp[i + 1][j], dp[i][j - 1]);
-            }
+    vector<vector<vector<int>>> record(n, vector<vector<int>>(n, vector<int>(27, -1)));
+    function<int (int, int, char)> dfs = [&dfs, &s, &record](int left, int right, char outer) {
+        if (left + 1 > right) {
+            return 0;
         }
-    }
-    return dp[0][n - 1];
+        if (record[left][right][outer - 'a'] != -1) {
+            return record[left][right][outer - 'a'];
+        }
+
+        int ans = 0;
+        if (s[left] == s[right]) {
+            if (s[left] != outer) {
+                ans = dfs(left + 1, right - 1, s[left]) + 2;
+            } else {
+                ans = dfs(left + 1, right - 1, s[left]);
+            }
+        } else {
+            ans = max(dfs(left + 1, right, outer), dfs(left, right - 1, outer));
+        }
+        return record[left][right][outer - 'a'] = ans;
+        return ans;
+    };
+    int len = dfs(0, n - 1, '{'); // 此处用'{'是因为它是'z'的下一个ascii码
+    return len;
 }
 
 
@@ -5553,8 +5560,8 @@ vector<int> getSubarrayBeauty(vector<int>& nums, int k, int x)
     return ans;
 }
 
-// LC241 有问题
-void DivideExpression(string& expression, vector<int>& nums, vector<char>& signs)
+// LC241
+void DivideExpression(string& expression, vector<int>& nums)
 {
     int i;
     int curIdx;
@@ -5564,81 +5571,102 @@ void DivideExpression(string& expression, vector<int>& nums, vector<char>& signs
     curIdx = 0;
     for (i = 0; i < n; i++) {
         if (sign.count(expression[i]) == 1) {
-            signs.emplace_back(expression[i]);
             nums.emplace_back(atoi(expression.substr(curIdx, i - curIdx).c_str()));
+            if (expression[i] == '+') {
+                nums.emplace_back(-1);
+            } else if (expression[i] == '-') {
+                nums.emplace_back(-2);
+            } else {
+                nums.emplace_back(-3);
+            }
             curIdx = i + 1;
         }
     }
     nums.emplace_back(atoi(expression.substr(curIdx).c_str()));
 }
-void BFAllPossibleExpression(int n, vector<int>& record, vector<bool>& visited, 
-    vector<tuple<char, int , int>>& expressionData, set<vector<int>>& possibleAns)
+
+void Calc(vector<int>& nums, vector<int>& ans)
 {
-    int i;
-    int no, t, a, b;
-    char sign;
-    vector<int> middleAns;
-    if (record.size() == n) {
-        middleAns.clear();
-        auto tmpExpressionData = expressionData;
-        for (i = 0; i < record.size(); i++) {
-            no = record[i];
-            sign = get<0>(tmpExpressionData[no]);
-            a = get<1>(tmpExpressionData[no]);
-            b = get<2>(tmpExpressionData[no]);
-            if (sign == '+') {
-                t = a + b;
-            } else if (sign == '-') {
-                t = a - b;
-            } else {
-                t = a * b;
-            }
-            middleAns.emplace_back(t);
-            if (no >= 1) {
-                get<2>(tmpExpressionData[no - 1]) = t;
-            }
-            if (no < n - 1) {
-                get<1>(tmpExpressionData[no + 1]) = t;
-            }
+    int i, j;
+    int n = nums.size();
+    if (nums.size() == 3) {
+        if (nums[1] == -1) {
+            ans.emplace_back(nums[0] + nums[2]);
+        } else if (nums[1] == -2) {
+            ans.emplace_back(nums[0] - nums[2]);
+        } else {
+            ans.emplace_back(nums[0] * nums[2]);
         }
-        possibleAns.emplace(middleAns);
         return;
     }
-    for (i = 0; i < n ; i++) {
-        if (visited[i] == false) {
-            visited[i] = true;
-            record.emplace_back(i);
-            BFAllPossibleExpression(n, record, visited, expressionData, possibleAns);
-            visited[i] = false;
-            record.pop_back();
+    vector<int> v;
+    int t;
+    for (i = 1; i < n; i += 2) {
+        if (nums[i] == -1) {
+            t = nums[i - 1] + nums[i + 1];
+        } else if (nums[i] == -2) {
+            t = nums[i - 1] - nums[i + 1];
+        } else {
+            t = nums[i - 1] * nums[i + 1];
+        }
+        v.clear();
+        for (j = 0; j < i - 1; j++) {
+            v.emplace_back(nums[j]);
+        }
+        v.emplace_back(t);
+        for (j = i + 1 + 1; j < n; j++) {
+            v.emplace_back(nums[j]);
+        }
+        Calc(v, ans);
+    }
+}
+vector<int> Calc1(int left, int right, vector<vector<vector<int>>>& dp, vector<int>& nums)
+{
+    if (left > right || left >= nums.size()) {
+        return {};
+    }
+    if (!dp[left][right].empty()) {
+        return dp[left][right];
+    }
+    int i, j, k;
+    int m, n;
+    vector<int> leftV, rightV;
+    if (left == right) {
+        dp[left][right].emplace_back(nums[left]);
+        return dp[left][right];
+    }
+    for (i = left; i <= right; i += 2) {
+        leftV = Calc1(left, i, dp, nums);
+        rightV = Calc1(i + 2, right, dp, nums);
+        m = leftV.size();
+        n = rightV.size();
+        for (j = 0; j < m; j++) {
+            for (k = 0; k < n; k++) {
+                if (nums[i + 1] == -1) {
+                    dp[left][right].emplace_back(leftV[j] + rightV[k]);
+                } else if (nums[i + 1] == -2) {
+                    dp[left][right].emplace_back(leftV[j] - rightV[k]);
+                } else {
+                    dp[left][right].emplace_back(leftV[j] * rightV[k]);
+                }
+            }
         }
     }
+    return dp[left][right];
 }
 vector<int> diffWaysToCompute(string expression)
 {
     int i;
-    vector<int> ans;
+    int n;
     vector<int> nums;
-    vector<char> signs;
+    vector<int> ans;
+    DivideExpression(expression, nums);
 
-    DivideExpression(expression, nums, signs);
-    if (signs.size() == 0) {
-        return nums;
-    }
-    vector<tuple<char, int , int>> expressionData;
-    for (i = 0; i < signs.size(); i++) {
-        expressionData.push_back({signs[i], nums[i], nums[i + 1]});
-    }
-    // 根据signs大小枚举所有运算顺序, 共 (signs.size())!种
-    int n = signs.size();
-    set<vector<int>> possibleAns;
-    vector<int> record;
-    vector<bool> visited(n, false);
-    BFAllPossibleExpression(n, record, visited, expressionData, possibleAns);
-    for (auto it : possibleAns) {
-        ans.emplace_back(it[it.size() - 1]);
-    }
-    return ans;
+    n = nums.size();
+    vector<vector<vector<int>>> dp(n, vector<vector<int>>(n, vector<int>())); // dp[l][r] 在l-r间的所有答案
+    // Calc(nums, ans);
+    Calc1(0, n - 1, dp, nums);
+    return dp[0][n - 1];
 }
 
 
@@ -23735,4 +23763,90 @@ int shortestDistance(vector<vector<int>>& grid)
         }
     }
     return ans == 0x3f3f3f3f ? -1 : ans;
+}
+
+
+// LC1199 LC3506
+int minBuildTime(vector<int>& blocks, int split)
+{
+    int i;
+    int n = blocks.size();
+    int a, b;
+
+    if (n == 1) {
+        return blocks[0];
+    }
+    priority_queue<int, vector<int>, greater<>> pq;
+    for (i = 0; i < n; i++) {
+        pq.push(blocks[i]);
+    }
+    while (pq.size() > 1) {
+        a = pq.top();
+        pq.pop();
+        b = pq.top();
+        pq.pop();
+        pq.push(split + max(a, b));
+    }
+    return pq.top();
+}
+
+
+// LC1259
+int numberOfWays(int numPeople)
+{
+    int i, j;
+    int mod = 1e9 + 7;
+    vector<long long> dp(numPeople + 1);
+
+    dp[2] = 1;
+    for (i = 4; i <= numPeople; i += 2) {
+        dp[i] = dp[i - 2] * 2; // 分为两部分
+        for (j = 2; j < i - 2; j+= 2) { // 三部分
+            dp[i] = (dp[i] + dp[j] * dp[i - 2 - j]) % mod;
+        }
+    }
+    return dp[numPeople];
+}
+
+
+// LC2093
+int minimumCost(int n, vector<vector<int>>& highways, int discounts)
+{
+    int i;
+    int m = highways.size();
+    vector<vector<pair<int, int>>> edges(n);
+    // dists[i][j] - 从城市0到城市i使用j次折扣的最小花费, dijkstra
+    vector<vector<int>> dists(n, vector<int>(discounts + 1, 0x3f3f3f3f));
+
+    for (i = 0; i < m; i++) {
+        edges[highways[i][0]].push_back({highways[i][1], highways[i][2]});
+        edges[highways[i][1]].push_back({highways[i][0], highways[i][2]});
+    }
+    auto cmp = [](tuple<int, int, int>& a, tuple<int, int, int>& b) {
+        return get<1>(a) > get<1>(b);
+    };
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, decltype(cmp)> pq(cmp);
+
+    pq.push({0, 0, 0});
+    while (!pq.empty()) {
+        auto [city, dist, discount] = pq.top();
+        pq.pop();
+
+        if (dists[city][discount] < dist) {
+            continue;
+        }
+        dists[city][discount] = dist;
+        for (auto& it : edges[city]) {
+            if (it.second + dist < dists[it.first][discount]) {
+                dists[it.first][discount] = it.second + dist;
+                pq.push({it.first, dists[it.first][discount], discount});
+            }
+            if (discount + 1 <= discounts && it.second / 2 + dist < dists[it.first][discount + 1]) {
+                dists[it.first][discount + 1] = it.second / 2 + dist;
+                pq.push({it.first, dists[it.first][discount + 1], discount + 1});
+            }
+        }
+    }
+    int cost = *min_element(dists[n - 1].begin(), dists[n - 1].end());
+    return cost == 0x3f3f3f3f ? -1 : cost;
 }
