@@ -7193,7 +7193,7 @@ int maximumSafenessFactor(vector<vector<int>>& grid)
         return 0;
     }
     
-    unordered_set<pair<int, int>, MyHash<int, int>> thieves;
+    unordered_set<pair<int, int>, MyHash<int, int, int>> thieves;
     for (i = 0; i < m; i++) {
         for (j = 0; j < n; j++) {
             if (grid[i][j] == 1) {
@@ -13323,7 +13323,7 @@ long long countPrefixSuffixPairs(vector<string>& words)
     int mod1, mod2;
     long long ans;
     // 双哈希
-    unordered_map<pair<long long, long long>, int, MyHash<long long, long long>> hashCnt;
+    unordered_map<pair<long long, long long>, int, MyHash<long long, long long, long long>> hashCnt;
     vector<pair<long long, long long>> prefixHash(1e5), suffixHash(1e5);
 
     base1 = 137;
@@ -23849,4 +23849,284 @@ int minimumCost(int n, vector<vector<int>>& highways, int discounts)
     }
     int cost = *min_element(dists[n - 1].begin(), dists[n - 1].end());
     return cost == 0x3f3f3f3f ? -1 : cost;
+}
+
+
+// LC632
+vector<int> smallestRange(vector<vector<int>>& nums)
+{
+    int i, j;
+    int n;
+    int k = nums.size();
+    int rightEdge = 1e5;
+    queue<int> q;
+    vector<pair<int, int>> vp;
+    for (i = 0; i < k; i++) {
+        n = nums[i].size();
+        for (j = 0; j < n; j++) {
+            vp.push_back({nums[i][j], i});
+        }
+        rightEdge = min(rightEdge, nums[i][n - 1]);
+    }
+
+    sort(vp.begin(), vp.end());
+
+    int right, prev;
+    vector<int> ans = {100000, 300000};
+    right = -1e5;
+    for (i = 0; i < vp.size(); i++) {
+        if (vp[i].first > rightEdge) {
+            break;
+        }
+        if (i == 0) {
+            for (j = 0; j < k; j++) {
+                auto it = lower_bound(nums[j].begin(), nums[j].end(), vp[i].first);
+                if (it == nums[j].end()) {
+                    return ans;
+                }
+                right = max(right, *it);
+            }
+        } else {
+            if (vp[i].first == vp[i - 1].first) {
+                q.push(vp[i - 1].second); // 如果有多个组有相同值, 则滑窗时要一起考虑右边界
+                continue;
+            }
+            q.push(vp[i - 1].second);
+            while (q.size()) {
+                prev = q.front();
+                q.pop();
+                auto it = lower_bound(nums[prev].begin(), nums[prev].end(), vp[i].first);
+                if (it == nums[prev].end()) {
+                    // cout << vp.size() << " " << i << endl;
+                    return ans;
+                }
+                right = max(right, *it);
+            }
+        }
+        if ((right - vp[i].first < ans[1] - ans[0]) || 
+            (right - vp[i].first == ans[1] - ans[0] && vp[i].first < ans[0])) {
+            ans = {vp[i].first, right};
+        }
+    }
+    // cout << vp.size() << " " << i << endl;
+    return ans;
+}
+
+
+// LC3508
+class Router {
+public:
+    int memoryLimit;
+    deque<vector<int>> dq;
+    unordered_set<tuple<int, int, int>, MyHash<int, int, int>> memory;
+    unordered_map<int, deque<int>> data;
+    Router(int memoryLimit)
+    {
+        this->memoryLimit = memoryLimit;
+    }
+    bool addPacket(int source, int destination, int timestamp)
+    {
+        tuple<int, int, int> t = {source, destination, timestamp};
+        vector<int> front;
+        if (memory.count(t)) {
+            return false;
+        }
+        if (dq.size() == memoryLimit) {
+            front = dq.front();
+            tuple<int, int, int> f = {front[0], front[1], front[2]};
+            memory.erase(f);
+            data[front[1]].pop_front();
+            if (data[front[1]].empty()) {
+                data.erase(front[1]);
+            }
+            dq.pop_front();
+            dq.push_back({source, destination, timestamp});
+            memory.emplace(t);
+            data[destination].push_back(timestamp);
+        } else {
+            dq.push_back({source, destination, timestamp});
+            memory.emplace(t);
+            data[destination].push_back(timestamp);
+        }
+        return true;
+    }
+
+    vector<int> forwardPacket()
+    {
+        if (dq.empty()) {
+            return {};
+        }
+        vector<int> ans = dq.front();
+        data[ans[1]].pop_front();
+        if (data[ans[1]].empty()) {
+            data.erase(ans[1]);
+        }
+        dq.pop_front();
+        tuple<int, int, int> a = {ans[0], ans[1], ans[2]};
+        memory.erase(a);
+        return ans;
+    }
+
+    int getCount(int destination, int startTime, int endTime)
+    {
+        if (data.count(destination) == 0) {
+            return 0;
+        }
+        // deque<int> t = data[destination]; 效率极低, 要么改成引用方式 deque<int>& t
+        auto it1 = lower_bound(data[destination].begin(), data[destination].end(), startTime);
+        if (it1 == data[destination].end()) {
+            return 0;
+        }
+        auto it2 = upper_bound(data[destination].begin(), data[destination].end(), endTime);
+        // cout << it2 - it1 << endl;
+        return it2 - it1;
+    }
+};
+
+
+// LC1918
+int kthSmallestSubarraySum(vector<int>& nums, int k)
+{
+    int i;
+    int cnt, start, end;
+    int n = nums.size();
+    long long left, right, mid;
+    long long cur;
+
+    left = *min_element(nums.begin(), nums.end());
+    right = accumulate(nums.begin(), nums.end(), 0);;
+    while (left <= right) {
+        // 子数组和小于等于mid的子数组个数
+        mid = (right - left) / 2 + left;
+        cnt = cur = 0;
+        start = end = 0;
+        while (start < n) {
+            if (cur + nums[end] <= mid) {
+                cur += nums[end];
+                end++;
+                if (end == n) { // 从start开始的子数组和都小于等于mid
+                    end--;
+                    cnt += (end - start + 1) * (end - start + 2) / 2;
+                    break;
+                }
+            } else {
+                end--;
+                if (end >= start) {
+                    cnt += end - start + 1;
+                    cur -= nums[start];
+                    start++;
+                    end++;
+                } else {
+                    start++;
+                    end = start;
+                }
+            }
+        }
+        if (cnt < k) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    return left;
+}
+
+
+// LC1548
+vector<int> mostSimilar(int n, vector<vector<int>>& roads, vector<string>& names, vector<string>& targetPath)
+{
+    int i, j, k;
+    int m = roads.size();
+    vector<vector<int>> edges(n);
+    for (i = 0; i < m; i++) {
+        edges[roads[i][0]].emplace_back(roads[i][1]);
+        edges[roads[i][1]].emplace_back(roads[i][0]);
+    }
+    int len = targetPath.size();
+    // dp[i][j][k] - 第i个target为names[j]且上一个target为names[k]的最小编辑距离
+    vector<vector<vector<int>>> dp(len, vector<vector<int>>(n, vector<int>(n, 0x3f3f3f3f)));
+
+    auto f = [](string& a, string& b) {
+        return a == b ? 0 : 1;
+    };
+    // g[i][j] - 第i个target为names[j]的最小编辑距离
+    vector<vector<int>> g(len, vector<int>(n, 0x3f3f3f3f));
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            dp[0][i][j] = f(targetPath[0], names[i]);
+            g[0][i] = min(g[0][i], dp[0][i][j]);
+        }
+    }
+    for (i = 1; i < len; i++) {
+        for (j = 0; j < n; j++) {
+            for (auto& it : edges[j]) {
+                dp[i][j][it] = f(targetPath[i], names[j]) + g[i - 1][it];
+                g[i][j] = min(g[i][j], dp[i][j][it]);
+            }
+        }
+    }
+    cout << *min_element(g[len - 1].begin(), g[len - 1].end());
+
+    // 回溯找路径
+    vector<int> ans;
+    int cur = 0x3f3f3f3f;
+    int a, b;
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            if (dp[len - 1][i][j] < cur) {
+                cur = dp[len - 1][i][j];
+                a = i;
+                b = j;
+            }
+        }
+    }
+    ans.emplace_back(a);
+    if (len == 1) {
+        return ans;
+    }
+    ans.emplace_back(b);
+    a = b;
+
+    int t = len - 2;
+    while (t >= 1) {
+        cur = 0x3f3f3f3f;
+        for (i = 0; i < n; i++) {
+            if (dp[t][a][i] < cur) {
+                cur = dp[t][a][i];
+                b = i;
+            }
+        }
+        ans.emplace_back(b);
+        a = b;
+        t--;
+    }
+    reverse(ans.begin(), ans.end());
+    return ans;
+}
+
+
+// LC568
+int maxVacationDays(vector<vector<int>>& flights, vector<vector<int>>& days)
+{
+    int i, j, k;
+    int weeks = days[0].size();
+    int n = flights.size(); // days.size()
+
+    // dp[i][j] - 第i周在j市停留的最大休假天数
+    vector<vector<int>> dp(weeks, vector<int>(n, -1));
+    for (i = 0; i < n; i++) {
+        if (flights[0][i] == 1 || i == 0) {
+            dp[0][i] = days[i][0];
+        }
+    }
+    for (i = 1; i < weeks; i++) {
+        for (j = 0; j < n; j++) { // 当前是j, 从k来
+            for (k = 0; k < n; k++) {
+                if ((flights[k][j] == 1 || j == k) && dp[i - 1][k] != -1) { // 旅行或停留不移动
+                    dp[i][j] = max(dp[i][j], dp[i - 1][k] + days[j][i]);
+                }
+            }
+        }
+    }
+    return *max_element(dp[weeks - 1].begin(), dp[weeks - 1].end());
 }

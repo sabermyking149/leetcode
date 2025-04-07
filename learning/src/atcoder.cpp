@@ -1904,3 +1904,106 @@ void ABC_398_D()
     }
     cout << ans << endl;
 }
+
+
+void ABC_400_C()
+{
+    unsigned long long n;
+    unsigned long long left, right, mid;
+    long long cnt = 0;
+    long long cur = 2;
+
+    cin >> n;
+
+    while (1) {
+        left = 1;
+        right = 1e9;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            // 注意精度
+            if (LLONG_MAX / mid / cur < mid || mid * mid * cur > n) {
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        cnt += (right + 1) / 2;
+        cur <<= 1;
+        if (cur > n) {
+            break;
+        }
+    }
+    cout << cnt << endl;
+}
+
+
+void ABC_400_D()
+{
+    // dijkstra
+    int i;
+    int h, w;
+    
+    cin >> h >> w;
+    
+    vector<string> grid(h);
+    for (i = 0; i < h; i++) {
+        cin >> grid[i];
+    }
+
+    int sx, sy, dx, dy;
+
+    cin >> sx >> sy >> dx >> dy;
+
+    int pos;
+    int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+    vector<vector<int>> cost(h, vector<int>(w, 0x3f3f3f3f));
+    // [已使用front kick次数, 位置, 上一次的移动方向, 如果已凿墙的次数]
+    priority_queue<tuple<int, int, int, int>, vector<tuple<int, int, int, int>>, greater<>> pq;
+
+    pos = (sx - 1) * w + (sy - 1);
+    pq.push({0, pos, -1, 0});
+    while (pq.size()) {
+        auto [c, pos, dir, cnt] = pq.top();
+        pq.pop();
+        auto row = pos / w;
+        auto col = pos % w;
+        if (cost[row][col] < c) {
+            continue;
+        }
+        cost[row][col] = c;
+        for (i = 0; i < 4; i++) {
+            auto nr = row + directions[i][0];
+            auto nc = col + directions[i][1];
+            if (nr < 0 || nr >= h || nc < 0 || nc >= w) {
+                continue;
+            }
+            auto npos = nr * w + nc;
+            if (grid[nr][nc] == '#') {
+                if (cnt == 0) {
+                    if (c + 1 < cost[nr][nc]) {
+                        cost[nr][nc] = c + 1;
+                        pq.push({c + 1, npos, i, 1}); 
+                    }
+                } else {
+                    if (dir == i) { // 同方向上一次已经凿了一面墙
+                        if (cost[nr][nc] > c) {
+                            cost[nr][nc] = c;
+                            pq.push({c, npos, i, 0});
+                        }
+                    } else {
+                        if (c + 1 < cost[nr][nc]) {
+                            cost[nr][nc] = c + 1;
+                            pq.push({c + 1, npos, i, 1}); 
+                        }
+                    }
+                }
+            } else {
+                if (cost[nr][nc] > c) {
+                    cost[nr][nc] = c;
+                    pq.push({c, npos, i, 0});
+                }
+            }
+        }
+    }
+    cout << cost[dx - 1][dy - 1] << endl;
+}

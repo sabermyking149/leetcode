@@ -76,7 +76,7 @@ private:
 
 
 // 自定义哈希仿函数
-template <typename T1, typename T2>
+template <typename T1, typename T2, typename T3>
 class MyHash {
 public:
     size_t operator() (const pair<T1, T2>& a) const
@@ -84,7 +84,21 @@ public:
         // return reinterpret_cast<size_t>(a.first);
         return hash<T1>()(a.first) ^ hash<T2>()(a.second);
     }
+    size_t operator() (const tuple<T1, T2, T3>& a) const
+    {
+        size_t seed = 0;
+        hash_combine(seed, get<0>(a));
+        hash_combine(seed, get<1>(a));
+        hash_combine(seed, get<2>(a));
+        return seed;
+    }
+    template <class T>
+    static void hash_combine(size_t& seed, const T& v)
+    {
+        seed ^= hash<T>()(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    }
 };
+
 
 template <typename T>
 struct VectorHash {
