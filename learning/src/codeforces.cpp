@@ -294,3 +294,107 @@ void CR_995_D()
     }
     cout << ans << endl;
 }
+
+
+// 找规律
+void CR_1016_D()
+{
+    auto CalcVal = [](int x, int y, int n) {
+        int i;
+        int direction[4][2] = {{0, 0}, {1, 1}, {1, 0}, {0, 1}};
+        vector<int> v1, v2;
+        long long t = (1ll << (n - 1));
+        long long d;
+        while (n - 1) {
+            for (i = 3; i >= 0; i--) {
+                if (x - i * t > 0) {
+                    x -= i * t;
+                    v1.emplace_back(i);
+                    break;
+                }
+            }
+            for (i = 3; i >= 0; i--) {
+                if (y - i * t > 0) {
+                    y -= i * t;
+                    v2.emplace_back(i);
+                    break;
+                }
+            }
+            n--;
+            t = (1ll << (n - 1));
+        }
+        reverse(v1.begin(), v1.end());
+        reverse(v2.begin(), v2.end());
+        if (x == 1 && y == 1) {
+            d = 1;
+        } else if (x == 2 && y == 2) {
+            d = 2;
+        } else if (x == 2 && y == 1) {
+            d = 3;
+        } else {
+            d = 4;
+        }
+        for (i = 0; i < v1.size(); i++) {
+            for (int j = 0; j < 4; j++) {
+                if (v1[i] == direction[j][0] && v2[i] == direction[j][1]) {
+                    d += j * (1ll << (i + 1)) * (1ll << (i + 1));
+                    break;
+                }
+            }
+        }
+        cout << d << endl;
+    };
+    auto CalcPos = [](long long d, int n) {
+        long long t = (1ll << (n - 1)) * (1ll << (n - 1));
+        vector<int> v;
+        int x, y;
+        while (n - 1) {
+            for (int i = 3; i >= 0; i--) {
+                if (d - i * t > 0) {
+                    d -= i * t;
+                    v.emplace_back(i);
+                    break;
+                }
+            }
+            n--;
+            t = (1ll << (n - 1)) * (1ll << (n - 1));
+        }
+        // for (auto a : v) cout << a << " ";
+        reverse(v.begin(), v.end());
+        if (d == 1) {
+            x = 1;
+            y = 1;
+        } else if (d == 2) {
+            x = 2;
+            y = 2;
+        } else if (d == 3) {
+            x = 2;
+            y = 1;
+        } else {
+            x = 1;
+            y = 2;
+        }
+        int direction[4][2] = {{0, 0}, {1, 1}, {1, 0}, {0, 1}};
+        for (int i = 0; i < v.size(); i++) {
+            x += direction[v[i]][0] * (1 << (i + 1));
+            y += direction[v[i]][1] * (1 << (i + 1));
+        }
+        cout << x << " " << y << endl;
+    };
+
+    int i;
+    int n, q;
+    long long x, y, d;
+    cin >> n >> q;
+    string type;
+    for (i = 0; i < q; i++) {
+        cin >> type;
+        if (type == "->") {
+            cin >> x >> y;
+            CalcVal(x, y, n);
+        } else {
+            cin >> d;
+            CalcPos(d, n);
+        }
+    };
+}

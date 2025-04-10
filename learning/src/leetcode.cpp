@@ -24130,3 +24130,261 @@ int maxVacationDays(vector<vector<int>>& flights, vector<vector<int>>& days)
     }
     return *max_element(dp[weeks - 1].begin(), dp[weeks - 1].end());
 }
+
+
+// LC2247
+int maximumCost(int n, vector<vector<int>>& highways, int k)
+{
+    if (k >= n) {
+        return -1;
+    }
+
+    int i, j;
+    // dp[i][j] -当前城市是i, 形成的二进制状态路线j的最大旅行费用
+    vector<vector<int>> dp(n, vector<int>(1 << n, -1));
+    // data[i][j] - 经过j条公路到达第i个城市的二进制状态路线;
+    vector<vector<unordered_set<int>>> data(n, vector<unordered_set<int>>(k + 1));
+    for (i = 0; i < n; i++) {
+        dp[i][1 << i] = 0;
+        data[i][0].emplace(1 << i);
+    }
+
+    int m = highways.size();
+    vector<vector<pair<int, int>>> edges(n);
+    for (i = 0; i < m; i++) {
+        edges[highways[i][0]].push_back({highways[i][1], highways[i][2]});
+        edges[highways[i][1]].push_back({highways[i][0], highways[i][2]});
+    }
+
+    int ans = -1;
+    for (i = 1; i <= k; i++) {
+        for (j = 0; j < n; j++) { // 当前城市j, 上一个城市是it.first
+            for (auto& it : edges[j]) {
+                for (auto& way : data[it.first][i - 1]) {
+                    if ((way & (1 << j)) == (1 << j)) { // 城市j已访问过
+                        continue;
+                    }
+                    dp[j][way | (1 << j)] = max(dp[j][way | (1 << j)], dp[it.first][way] + it.second);
+                    data[j][i].emplace(way | (1 << j));
+                    if (i == k) {
+                        ans = max(ans, dp[j][way | (1 << j)]);
+                    }
+                }
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LC1473
+int minCost(vector<int>& houses, vector<vector<int>>& cost, int m, int n, int target)
+{
+    int i, j, k, t;
+    // dp[i][j][t] - 第i个房子涂成color j 且形成t个街区的最小花费
+    vector<vector<vector<int>>> dp(m, vector<vector<int>>(n + 1, vector<int>(target + 1, 0x3f3f3f3f)));
+    if (houses[0] != 0) {
+        dp[0][houses[0]][1] = 0;
+    } else {
+        for (i = 1; i <= n; i++) {
+            dp[0][i][1] = cost[0][i - 1];
+        }
+    }
+    for (i = 1; i < m; i++) {
+        if (houses[i] != 0) {
+            for (j = 1; j <= n; j++) {
+                for (t = 1; t <= target; t++) {
+                    if (dp[i - 1][j][t] == 0x3f3f3f3f) {
+                        continue;
+                    }
+                    if (j == houses[i]) {
+                        dp[i][houses[i]][t] = min(dp[i][houses[i]][t], dp[i - 1][j][t]);
+                    } else {
+                        if (t + 1 <= target) {
+                            dp[i][houses[i]][t + 1] = min(dp[i][houses[i]][t + 1], dp[i - 1][j][t]);
+                        }
+                    }
+                }
+            }
+        } else {
+            for (j = 1; j <= n; j++) {
+                for (k = 1; k <= n; k++) {
+                    for (t = 1; t <= target; t++) {
+                        if (dp[i - 1][j][t] == 0x3f3f3f3f) {
+                            continue;
+                        }
+                        if (j == k) {
+                            dp[i][k][t] = min(dp[i][k][t], dp[i - 1][j][t] + cost[i][k - 1]);
+                        } else {
+                            if (t + 1 <= target) {
+                                dp[i][k][t + 1] = min(dp[i][k][t + 1], dp[i - 1][j][t] + cost[i][k - 1]);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    int ans = 0x3f3f3f3f;
+    for (i = 1; i <= n; i++) {
+        ans = min(ans, dp[m - 1][i][target]);
+    }
+    return ans == 0x3f3f3f3f ? -1 : ans;
+}
+
+
+// LC1976
+int countPaths(int n, vector<vector<int>>& roads)
+{
+    int i;
+    int m = roads.size();
+    int mod = 1e9 + 7;
+    vector<vector<pair<int, int>>> edges(n);
+
+    for (i = 0; i < m; i++) {
+        edges[roads[i][0]].push_back({roads[i][1], roads[i][2]});
+        edges[roads[i][1]].push_back({roads[i][0], roads[i][2]});
+    }
+    // dijkstra
+    vector<long long> dist(n, LLONG_MAX);
+    vector<long long> cnt(n, 0);
+    // 此处用普通队列会漏记数
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<>> q;
+    q.push({0, 0});
+    cnt[0] = 1;
+    while (!q.empty()) {
+        auto [cost, cur] = q.top();
+        q.pop();
+        if (dist[cur] < cost) {
+            continue;
+        }
+        dist[cur] = cost;
+        for (auto& it : edges[cur]) {
+            if (cost + it.second < dist[it.first]) {
+                dist[it.first] = cost + it.second;
+                cnt[it.first] = cnt[cur];
+                q.push({dist[it.first], it.first});
+            } else if (cost + it.second == dist[it.first]) {
+                cnt[it.first] = (cnt[it.first] + cnt[cur]) % mod;
+            }
+        }
+    }
+    // for (auto d : dist) cout << d << " "; cout << endl;
+    // for (auto c : cnt) cout << c << " "; cout << endl;
+    return cnt[n - 1];
+}
+
+
+// LC2714  与LC2093类似
+int shortestPathWithHops(int n, vector<vector<int>>& edges, int s, int d, int k)
+{
+    int i;
+    int m = edges.size();
+    vector<vector<pair<int, int>>> edgesWithWeight(n);
+    // dists[i][j] - 从城市0到城市i使用j次折扣的最小花费, dijkstra
+    vector<vector<int>> dists(n, vector<int>(k + 1, 0x3f3f3f3f));
+
+    for (i = 0; i < m; i++) {
+        edgesWithWeight[edges[i][0]].push_back({edges[i][1], edges[i][2]});
+        edgesWithWeight[edges[i][1]].push_back({edges[i][0], edges[i][2]});
+    }
+    auto cmp = [](tuple<int, int, int>& a, tuple<int, int, int>& b) {
+        return get<1>(a) > get<1>(b);
+    };
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, decltype(cmp)> pq(cmp);
+
+    pq.push({s, 0, 0});
+    while (!pq.empty()) {
+        auto [city, dist, discount] = pq.top();
+        pq.pop();
+
+        if (dists[city][discount] < dist) {
+            continue;
+        }
+        dists[city][discount] = dist;
+        for (auto& it : edgesWithWeight[city]) {
+            if (it.second + dist < dists[it.first][discount]) {
+                dists[it.first][discount] = it.second + dist;
+                pq.push({it.first, dists[it.first][discount], discount});
+            }
+            if (discount + 1 <= k && dist < dists[it.first][discount + 1]) {
+                dists[it.first][discount + 1] = dist;
+                pq.push({it.first, dists[it.first][discount + 1], discount + 1});
+            }
+        }
+    }
+    int cost = *min_element(dists[d].begin(), dists[d].end());
+    return cost;
+}
+
+
+// LC2814
+int minimumSeconds(vector<vector<string>>& land)
+{
+    int i, j;
+    int n = land.size();
+    int m = land[0].size();
+    int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+
+    auto bfs = [&land](queue<pair<int, int>>& q, vector<vector<int>>& dist) {
+        int i, k;
+        int n = land.size();
+        int m = land[0].size();
+        int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+        int cur = 0;
+        while (q.size()) {
+            int size = q.size();
+            for (i = 0; i < size; i++) {
+                auto [x, y] = q.front();
+                q.pop();
+                for (k = 0; k < 4; k++) {
+                    auto nx = x + directions[k][0];
+                    auto ny = y + directions[k][1];
+                    if (nx < 0 || nx >= n || ny < 0 || ny >= m || land[nx][ny] == "X" || 
+                        land[nx][ny] == "D" || land[nx][ny] == "*") {
+                        continue;
+                    }
+                    if (dist[nx][ny] > cur + 1) {
+                        dist[nx][ny] = cur + 1;
+                        q.push({nx, ny});
+                    }
+                }
+            }
+            cur++;
+        }
+    };
+    vector<vector<int>> distWater(n, vector<int>(m, 0x3f3f3f3f));
+    vector<vector<int>> distPerson(n, vector<int>(m, 0x3f3f3f3f));
+    queue<pair<int, int>> qw, qp;
+    int x, y;
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < m; j++) {
+            if (land[i][j] == "*") {
+                qw.push({i, j});
+                distWater[i][j] = 0;
+            } else if (land[i][j] == "S") {
+                qp.push({i, j});
+                distPerson[i][j] = 0;
+            } else if (land[i][j] == "D") {
+                x = i;
+                y = j;
+            }
+        }
+    }
+    bfs(qw, distWater);
+    bfs(qp, distPerson);
+
+    int ans = 0x3f3f3f3f;
+    for (i = 0; i < 4; i++) {
+        auto nx = x + directions[i][0];
+        auto ny = y + directions[i][1];
+        if (nx < 0 || nx >= n || ny < 0 || ny >= m || land[nx][ny] == "*" || land[nx][ny] == "X") {
+            continue;
+        }
+        if (distPerson[nx][ny] < distWater[nx][ny]) {
+            ans = min(ans, distPerson[nx][ny] + 1);
+        }
+    }
+    return ans == 0x3f3f3f3f ? -1 : ans;
+}
