@@ -13,6 +13,7 @@
 #include <functional>
 #include <climits>
 #include <iomanip>
+#include <numeric>
 using namespace std;
 
 void CR_981_D()
@@ -397,4 +398,58 @@ void CR_1016_D()
             CalcPos(d, n);
         }
     };
+}
+
+
+void CR_1017_E()
+{
+    int i;
+    int n, cnt;
+
+    cin >> n;
+
+    long long t;
+    vector<long long> a(n);
+    vector<vector<int>> bits(31, vector<int>(2, 0));
+    for (i = 0; i < n; i++) {
+        cin >> a[i];
+        t = a[i];
+        cnt = 0;
+        while (cnt < 31) {
+            bits[cnt][t % 2]++;
+            t >>= 1;
+            cnt++;
+        }
+    }
+
+    long long contribute, maxVal;
+    long long ak;
+    maxVal = -1;
+    for (i = 0; i < n; i++) {
+        t = a[i];
+        contribute = 0;
+        cnt = 0;
+        while (cnt < 31) {
+            if (t % 2 == 0) {
+                contribute += bits[cnt][1] * (1ll << cnt);
+            } else {
+                contribute += bits[cnt][0] * (1ll << cnt);
+            }
+            t >>= 1;
+            cnt++;
+        }
+        // cout << contribute << " ";
+        if (contribute > maxVal) {
+            ak = a[i];
+            maxVal = contribute;
+        }
+    }
+
+    // cout << "ak = " << ak << endl;
+    // 此处maxVal其实就是最终结果
+    long long sum = 0;
+    for (i = 0; i < n; i++) {
+        sum += (ak ^ a[i]);
+    }
+    cout << sum << endl;
 }

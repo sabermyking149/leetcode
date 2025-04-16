@@ -24388,3 +24388,141 @@ int minimumSeconds(vector<vector<string>>& land)
     }
     return ans == 0x3f3f3f3f ? -1 : ans;
 }
+
+
+// LC1950
+vector<int> findMaximums(vector<int>& nums)
+{
+    // 对于每一个nums[i]的左右分别找到第一个小于nums[i]的下标l, r, 则 r - l + 1长度的子数组对于nums[i]都成立
+    // 单调递增栈
+    int i;
+    int n = nums.size();
+    stack<int> st;
+    vector<int> l(n), r(n);
+    // nums[i]的右边界
+    for (i = 0; i < n; i++) {
+        if (st.empty()) {
+            st.push(i);
+            continue;
+        }
+        auto idx = st.top();
+        while (nums[idx] > nums[i]) {
+            st.pop();
+            r[idx] = i;
+            if (st.empty()) {
+                break;
+            }
+            idx = st.top();
+        }
+        st.push(i);
+    }
+    while (!st.empty()) {
+        r[st.top()] = n;
+        st.pop();
+    }
+
+    // nums[i]的左边界
+    for (i = n - 1; i >= 0; i--) {
+        if (st.empty()) {
+            st.push(i);
+            continue;
+        }
+        auto idx = st.top();
+        while (nums[idx] > nums[i]) {
+            st.pop();
+            l[idx] = i;
+            if (st.empty()) {
+                break;
+            }
+            idx = st.top();
+        }
+        st.push(i);
+    }
+    while (!st.empty()) {
+        l[st.top()] = -1;
+        st.pop();
+    }
+    for (i = 0; i < n; i++) printf ("[%d %d]\n", l[i], r[i]);
+
+    // 对于每一个nums[i], 它可以成为长度[1, r[i] - l[i] - 1]区间的子数组最小值
+    map<int, int, greater<>> subarrVal;
+    for (i = 0; i < n; i++) {
+        subarrVal[nums[i]] = max(subarrVal[nums[i]], r[i] - l[i] - 1);
+    }
+    vector<int> ans(n);
+    int curId = 0;
+    for (auto& it : subarrVal) {
+        if (it.second <= curId) {
+            continue;
+        }
+        for (i = curId; i < it.second; i++) {
+            ans[i] = it.first;
+        }
+        curId = i;
+    }
+    return ans;
+}
+
+
+// LC3511
+int makeArrayPositive(vector<int>& nums)
+{
+    int i;
+    int n = nums.size();
+    int cnt = 0;
+
+    long long cur, minSum = 1e18;
+    for (i = 2; i < n;) {
+        cur = nums[i];
+        cur += nums[i - 1] + nums[i - 2];
+        minSum = min(minSum + nums[i], cur);
+        if (minSum <= 0) {
+            cnt++;
+            minSum = 1e18;
+            i += 3;
+        } else {
+            i++;
+        }
+    }
+    return cnt;
+}
+
+
+// LC644
+double findMaxAverage(vector<int>& nums, int k)
+{
+    int i;
+    int n = nums.size();
+    double left, right, mid;
+    double sum, prev, minVal;
+
+    left = *min_element(nums.begin(), nums.end());
+    right = *max_element(nums.begin(), nums.end());
+
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        sum = prev = 0.0;
+        minVal = 1e5;
+        for (i = 0; i < k; i++) {
+            sum += nums[i] - mid;
+        }
+        if (sum >= 0) {
+            left = mid + 1e-5;
+        } else {
+            for (i = k; i < n; i++) {
+                sum += nums[i] - mid;
+                prev += nums[i - k] - mid;
+                minVal = min(minVal, prev);
+                // sum比从下标0开始的最小子数组前缀和大
+                if (sum >= 0 || sum >= minVal) {
+                    left = mid + 1e-5;
+                    break;
+                }
+            }
+            if (i == n) {
+                right = mid - 1e-5;
+            }
+        }
+    }
+    return right;
+}
