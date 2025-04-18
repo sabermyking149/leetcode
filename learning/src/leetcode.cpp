@@ -24526,3 +24526,162 @@ double findMaxAverage(vector<int>& nums, int k)
     }
     return right;
 }
+
+
+// LC499
+string findShortestWay(vector<vector<int>>& maze, vector<int>& ball, vector<int>& hole)
+{
+    int i, j;
+    int m = maze.size();
+    int n = maze[0].size();
+    int x = ball[0];
+    int y = ball[1];
+    int nx, ny, dist;
+    int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+    vector<vector<vector<int>>> visited(m, vector<vector<int>>(n, vector<int>(4, 0)));
+    vector<string> dir = {"r", "d", "l", "u"};
+    queue<tuple<int, int, int, string>> q;
+
+    for (i = 0; i < 4; i++) {
+        nx = x + directions[i][0];
+        ny = y + directions[i][1];
+        if (nx < 0 || nx >= m || ny < 0 || ny >= n || maze[nx][ny] == 1) {
+            continue;
+        }
+        q.push({nx, ny, i, dir[i]});
+    }
+
+    vector<pair<int, string>> route;
+    dist = 0;
+    while (q.size()) {
+        int size = q.size();
+        for (i = 0; i < size; i++) {
+            auto [row, col, d, r] = q.front();
+            q.pop();
+            if (row == hole[0] && col == hole[1]) {
+                route.push_back({dist, r});
+                continue;
+            }
+            visited[row][col][d] = 1;
+            nx = row + directions[d][0];
+            ny = col + directions[d][1];
+            if (nx < 0 || nx >= m || ny < 0 || ny >= n || maze[nx][ny] == 1 || visited[nx][ny][d]) { // 换方向
+                for (j = 0; j < 4; j++) {
+                    if (j == d) {
+                        continue;
+                    }
+                    nx = row + directions[j][0];
+                    ny = col + directions[j][1];
+                    if (nx < 0 || nx >= m || ny < 0 || ny >= n || maze[nx][ny] == 1 || visited[nx][ny][j]) {
+                        continue;
+                    }
+                    q.push({nx, ny, j, r + dir[j]});
+                }
+            } else {
+                q.push({nx, ny, d, r});
+            }
+        }
+        dist++;
+    }
+    if (route.empty()) {
+        return "impossible";
+    }
+    sort(route.begin(), route.end());
+
+    // for (auto p : route) cout << p.first << " " << p.second << endl;
+    return route[0].second;
+}
+
+
+// LC2184
+int buildWall(int height, int width, vector<int>& bricks)
+{
+    int i, j, k;
+    int mod = 1e9 + 7;
+    // 由于width <= 10, 可先用bitmask表示每一层可能的铺设方式
+    vector<int> bitmask;
+    function<void (int, int, int)> dfs = [&dfs, &bricks, &bitmask](int cur, int bit, int len) {
+        if (cur == 0) {
+            bitmask.emplace_back(bit);
+        }
+        int i;
+        int n = bricks.size();
+        for (i = 0; i < n; i++) {
+            if (cur - bricks[i] >= 0) {
+                dfs(cur - bricks[i], bit + (1 << (len + bricks[i])), len + bricks[i]);
+            }
+        }
+    };
+    dfs(width, 0, 0);
+    int n = bitmask.size();
+    if (height == 1) {
+        return n;
+    }
+    // dp[height][i] - 第height层是bitmask[i]的铺设方式的方案数, 所求 sum(dp[height - 1][0 ~ n - 1])
+    vector<vector<long long>> dp(height, vector<long long>(n, 0));
+    for (i = 0; i < n; i++) {
+        dp[0][i] = 1;
+    }
+    long long ans = 0;
+    for (i = 1; i < height; i++) {
+        for (j = 0; j < n; j++) {
+            for (k = 0; k < n; k++) {
+                if ((bitmask[j] & bitmask[k]) == (1 << width)) {
+                    dp[i][j] = (dp[i][j] + dp[i - 1][k]) % mod;
+                }
+            }
+            if (i == height - 1) {
+                ans = (ans + dp[i][j]) % mod;
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LC2403
+long long minimumTime(vector<int>& power)
+{
+    // power.size() <= 17 可用二进制bit表示杀死怪物状态, 比如 1001 -> 1011
+    // 从两个怪物到第三个怪物
+    int i, j;
+    int n = power.size();
+    vector<long long> dp(1 << n, LLONG_MAX);
+    vector<unordered_set<int>> bitmask(n);
+    for (i = 0; i < n; i++) {
+        dp[1 << i] = power[i];
+        bitmask[0].emplace(1 << i);
+    }
+    for (i = 1; i < n; i++) {
+        for (auto& bit : bitmask[i - 1]) {
+            for (j = 0; j < n; j++) {
+                if ((bit & (1 << j)) == 0) {
+                    dp[bit | (1 << j)] = min(dp[bit | (1 << j)], 
+                        static_cast<long long>(ceil(power[j] * 1.0 / (i + 1))) + dp[bit]);
+                    bitmask[i].emplace(bit | (1 << j));
+                }
+            }
+        }
+    }
+    return dp[(1 << n) - 1];
+}
+long long minimumTime_betterWay(vector<int>& power)
+{
+    int i, j;
+    int n = power.size();
+    vector<long long> dp(1 << n, LLONG_MAX);
+    dp[0] = 0;
+    for (i = 0; i < (1 << n); i++) {
+        if (dp[i] == LLONG_MAX) {
+            continue;
+        }
+        int k = __builtin_popcount(i);
+        for (j = 0; j < n; j++) {
+            if ((i & (1 << j)) == 0) {
+                dp[i | (1 << j)] = min(dp[i | (1 << j)], 
+                    dp[i] + static_cast<long long>(ceil(power[j] * 1.0 / (k + 1))));
+            }
+        }
+    }
+    return dp[(1 << n) - 1];
+}
