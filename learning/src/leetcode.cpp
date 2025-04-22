@@ -24685,3 +24685,112 @@ long long minimumTime_betterWay(vector<int>& power)
     }
     return dp[(1 << n) - 1];
 }
+
+
+// LC2709
+bool canTraverseAllPairs(vector<int>& nums)
+{
+    int i, j;
+    int t;
+    int n = nums.size();
+
+    if (n == 1) {
+        return true;
+    }
+    for (i = 0; i < n; i++) {
+        if (nums[i] == 1) {
+            return false;
+        }
+    }
+    UnionFind uf = UnionFind(100001);
+    for (i = 0; i < n; i++) {
+        t = nums[i];
+        if (nums[i] == 2) {
+            uf.unionSets(nums[i], 2);
+        } else if (nums[i] == 3) {
+            uf.unionSets(nums[i], 3);
+        }
+        // 将质因数与nums[i]合并
+        for (j = 2; j <= sqrt(nums[i]); j++) {
+            if (t % j == 0) {
+                uf.unionSets(nums[i], j);
+                while (t % j == 0) {
+                    t /= j;
+                }
+            }
+        }
+        if (t != 1) {
+            uf.unionSets(nums[i], t);
+        }
+    }
+    int no = uf.findSet(nums[0]);
+    for (i = 1; i < n; i++) {
+        // cout << uf.findSet(nums[i])  << " ";
+        if (no != uf.findSet(nums[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+// LC1866
+int rearrangeSticks(int n, int k)
+{
+    int i, j;
+    int mod = 1e9 + 7;
+    // dp[n][k] - n根棍子从左侧看k根
+    vector<vector<long long>> dp(n + 1, vector<long long>(k + 1, 0));
+
+    dp[1][1] = 1;
+    for (i = 2; i <= n; i++) {
+        for (j = 1; j <= k; j++) {
+            if (j > i) {
+                break;
+            }
+            // 考虑 dp[n][k] - 长度为2 ~ n的排列方式 - dp[n - 1][k - 1], 现在放置长度1的木棍 组成 dp[n][k]
+            dp[i][j] = (dp[i - 1][j - 1] + dp[i - 1][j] * (i - 1)) % mod;
+        }
+    }
+    return dp[n][k];
+}
+
+
+// LC1883
+int minSkips(vector<int>& dist, int speed, int hoursBefore)
+{
+    int i, j;
+    int n = dist.size();
+    int ans = n;
+    const double epsilon = 1e-7;
+    // 注意精度
+    vector<vector<double>> cost(n, vector<double>(n + 1, 0x3f3f3f3f));
+
+    cost[0][0] = ceil(dist[0] * 1.0 / speed);
+    cost[0][1] = dist[0] * 1.0 / speed;
+    for (i = 1; i < n - 1; i++) {
+        for (j = 0; j <= i; j++) {
+            // 精度处理
+            auto t = cost[i - 1][j] + dist[i] * 1.0 / speed;
+            if (fabs(round(t) - t) < epsilon) {
+                t = round(t);
+            } else {
+                t = ceil(t);
+            }
+            cost[i][j] = min(cost[i][j], t); // 不跳过
+            cost[i][j + 1] = min(cost[i][j + 1], cost[i - 1][j] + dist[i] * 1.0 / speed); // 跳过
+        }
+    }
+    if (n > 1) {
+        for (i = 0; i <= n - 1; i++) {
+            cost[n - 1][i] = cost[n - 2][i] + dist[n - 1] * 1.0 / speed;
+        }
+    }
+    for (i = 0; i < n; i++) {
+        // cout << cost[n - 1][i] << endl;
+        if (cost[n - 1][i] <= hoursBefore) {
+            ans = min(ans, i);
+        }
+    }
+    return ans == n ? -1 : ans;
+}
