@@ -24794,3 +24794,176 @@ int minSkips(vector<int>& dist, int speed, int hoursBefore)
     }
     return ans == n ? -1 : ans;
 }
+
+
+// LC1931
+int colorTheGrid(int m, int n)
+{
+    int i, j, k;
+    int t, idx;
+    int mod = 1e9 + 7;
+    vector<int> v(m);
+    // 由于m <= 5, 则对每一列, 其组合数是有限的, 可以用bitmask压缩状态
+    // 为了方便代码书写, 可以把grid行列转置
+    vector<vector<int>> bits;
+    for (i = 0; i < pow(3, m); i++) {
+        t = i;
+        idx = 0;
+        while (idx < m) {
+            v[idx] = t % 3;
+            t /= 3;
+            if (idx > 0 && v[idx] == v[idx - 1]) {
+                break; // 约束条件
+            }
+            idx++;
+        }
+        if (idx == m) {
+            bits.emplace_back(v);
+        }
+    }
+
+    auto Check = [](vector<int>& a, vector<int>& b) {
+        int i;
+        int n = a.size();
+        for (i = 0; i < n; i++) {
+            if (a[i] == b[i]) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    int len = bits.size();
+    // cout << len << endl;
+
+    vector<vector<long long>> dp(n, vector<long long>(len, 0));
+    for (i = 0; i < len; i++) {
+        dp[0][i] = 1;
+    }
+    for (i = 1; i < n; i++) {
+        for (j = 0; j < len; j++) {
+            for (k = 0; k < len; k++) {
+                if (j == k || Check(bits[j], bits[k]) == false) {
+                    continue;
+                }
+                dp[i][j] = (dp[i][j] + dp[i - 1][k]) % mod;
+            }
+        }
+    }
+    long long ans = 0;
+    for (i = 0; i < len; i++) {
+        ans = (ans + dp[n - 1][i]) % mod;
+    }
+    return ans;
+}
+
+
+// LC2350
+int shortestSequence(vector<int>& rolls, int k)
+{
+    // 假设 k = 3, 则能满足所有长度为2的子序列rolls必然包含子序列 [1 2 3] [3 2 1]
+    // 同理长度为3, 则必包含 [1 2 3] [3 2 1] [2 1 3], 以此类推（中括表示里面的数可以以任意顺序排列）
+    int i;
+    int n = rolls.size();
+    int cnt, freq;
+    vector<int> visited(k + 1, 0);
+
+    cnt = 0;
+    freq = 1;
+    for (i = 0; i < n; i++) {
+        if (visited[rolls[i]] == freq) {
+            continue;
+        }
+        visited[rolls[i]] = freq;
+        cnt++;
+        if (cnt == k) {
+            freq++;
+            cnt = 0;
+        }
+    }
+    return freq;
+}
+
+
+// LC1601
+int maximumRequests(int n, vector<vector<int>>& requests)
+{
+    int i, j;
+    int m = requests.size();
+    int t, cnt, ans;
+    vector<int> bits(m);
+    vector<int> building;
+
+    ans = 0;
+    for (i = 1; i < (1 << m); i++) {
+        t = i;
+        cnt = 0;
+        while (cnt < m) {
+            bits[cnt] = t % 2;
+            t >>= 1;
+            cnt++;
+        }
+        building.assign(n, 0);
+        cnt = 0;
+        for (j = 0; j < m; j++) {
+            if (bits[j]) {
+                cnt++;
+                building[requests[j][0]]--;
+                building[requests[j][1]]++;
+            }
+        }
+        for (j = 0; j < n; j++) {
+            if (building[j] != 0) {
+                break;
+            }
+        }
+        if (j == n) {
+            ans = max(ans, cnt);
+        }
+    }
+    return ans;
+}
+
+
+// LC1691
+int maxHeight_LC1691(vector<vector<int>>& cuboids)
+{
+    int i, j;
+    int n = cuboids.size();
+    vector<vector<int>> cube;
+    // 长方体可旋转则它的放置总计有6种情况
+    for (i = 0; i < n; i++) {
+        cube.push_back({cuboids[i][0], cuboids[i][1], cuboids[i][2], i});
+        cube.push_back({cuboids[i][1], cuboids[i][0], cuboids[i][2], i});
+        cube.push_back({cuboids[i][0], cuboids[i][2], cuboids[i][1], i});
+        cube.push_back({cuboids[i][2], cuboids[i][0], cuboids[i][1], i});
+        cube.push_back({cuboids[i][1], cuboids[i][2], cuboids[i][0], i});
+        cube.push_back({cuboids[i][2], cuboids[i][1], cuboids[i][0], i});
+    }
+
+    sort (cube.rbegin(), cube.rend());
+    // for (auto c : cube) printf("%d %d %d %d\n", c[0],c[1],c[2],c[3]);
+
+    int ans = 0;
+    int m = cube.size();
+    vector<int> dp(m, 0);
+    vector<int> visited(n, 0);
+    for (i = 0; i < m; i++) {
+        dp[i] = cube[i][2]; // 只考虑一个长方体
+        ans = max(ans, dp[i]);
+    }
+    for (i = 1; i < m; i++) {
+        visited[cube[i][3]] = 1;
+        for (j = i - 1; j >= 0; j--) {
+            if (visited[cube[j][3]] || cube[i][0] > cube[j][0] ||
+                cube[i][1] > cube[j][1] ||
+                cube[i][2] > cube[j][2]) {
+                continue;
+            }
+            dp[i] = max(dp[i], dp[j] + cube[i][2]);
+            ans = max(ans, dp[i]);
+        }
+        visited[cube[i][3]] = 0;
+    }
+    return ans;
+}
