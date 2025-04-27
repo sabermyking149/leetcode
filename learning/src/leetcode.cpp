@@ -24967,3 +24967,128 @@ int maxHeight_LC1691(vector<vector<int>>& cuboids)
     }
     return ans;
 }
+
+
+// LC1665
+int minimumEffort(vector<vector<int>>& tasks)
+{
+    sort(tasks.begin(), tasks.end(), [](vector<int>& a, vector<int>& b) {
+        if (a[1] - a[0] == b[1] - b[0]) {
+            return a[1] > b[1];
+        }
+        return a[1] - a[0] > b[1] - b[0];
+    });
+
+    int i;
+    int n = tasks.size();
+    int cur;
+    int left, right, mid;
+    left = tasks[0][1];
+    right = 1e9 + 1;
+
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        cur = mid;
+        for (i = 0; i < n; i++) {
+            if (cur < tasks[i][1]) {
+                break;
+            }
+            cur -= tasks[i][0];
+        }
+        if (i != n) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    return left;
+}
+
+
+// LC1559
+bool containsCycle(vector<vector<char>>& grid)
+{
+    int i, j;
+    int m = grid.size();
+    int n = grid[0].size();
+    bool loop = false;
+    vector<vector<int>> visited(m, vector<int>(n, 0));
+
+    function<void (int, int)> dfs = [&dfs, &loop, &visited, &grid](int cur, int from) {
+        if (loop) {
+            return;
+        }
+
+        int m = grid.size();
+        int n = grid[0].size();
+        int x, y;
+
+        x = cur / n;
+        y = cur % n;
+        if (visited[x][y] == 1) {
+            loop = true;
+            return;
+        }
+        visited[x][y] = 1;
+
+        int i;
+        int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+
+        for (i = 0; i < 4; i++) {
+            auto nx = x + directions[i][0];
+            auto ny = y + directions[i][1];
+            auto npos = nx * n + ny;
+            if (nx < 0 || nx >= m || ny < 0 || ny >= n || grid[nx][ny] != grid[x][y] || npos == from) {
+                continue;
+            }
+            dfs(npos, cur);
+        }
+        visited[x][y] = 2;
+    };
+
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            if (visited[i][j] == 0) {
+                loop = false;
+                dfs(i * n + j, -1);
+                if (loop) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+
+// LC2444
+long long countSubarrays(vector<int>& nums, int minK, int maxK)
+{
+    int i;
+    int n = nums.size();
+    int minIdx, maxIdx;
+    int startIdx = 0;
+    long long ans = 0;
+    minIdx = maxIdx = -1;
+    // 找到最接近的minK, maxK下标,则它两区间及之前到startIdx的子数组都满足条件
+    // 如果当前nums[i]在两者之间且minIdx, maxIdx存在,则子数组个数与上面计算方式相同
+    for (i = 0; i < n; i++) {
+        if (nums[i] < minK || nums[i] > maxK) {
+            minIdx = maxIdx = -1;
+            startIdx = i + 1;
+            // cout << i << endl;
+            continue;
+        }
+        if (nums[i] == minK) {
+            minIdx = i;
+        }
+        if (nums[i] == maxK) { // 避免minK == maxK情况
+            maxIdx = i;
+        }
+        if (minIdx != -1 && maxIdx != -1) {
+            ans += min(minIdx, maxIdx) - startIdx + 1;
+        }
+    }
+    // cout << startIdx << endl;
+    return ans;
+}
