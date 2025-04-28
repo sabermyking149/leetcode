@@ -14,6 +14,7 @@
 #include <climits>
 #include <iomanip>
 #include <numeric>
+#include "pub.h"
 using namespace std;
 
 void ABC_346_D()
@@ -2006,4 +2007,64 @@ void ABC_400_D()
         }
     }
     cout << cost[dx - 1][dy - 1] << endl;
+}
+
+
+void ABC_403_D()
+{
+    int i;
+    int n, d;
+    int maxVal;
+    cin >> n >> d;
+    vector<int> nums(n);
+
+    map<int, int> data;
+    maxVal = 0;
+    for (i = 0; i < n; i++) {
+        cin >> nums[i];
+        data[nums[i]]++;
+        maxVal = max(maxVal, nums[i]);
+    }
+    int ans = 0;
+    if (d == 0) {
+        for (auto it : data) {
+            ans += it.second - 1;   
+        }
+        cout << ans << endl;
+        return;
+    }
+    // 查并集将相同间隔合并
+    UnionFind uf(max(maxVal + 1, n + 1));
+    for (auto it : data) {
+        if (data.count(it.first + d)) {
+            uf.unionSets(it.first, it.first + d);
+        }
+    }
+    unordered_map<int, vector<int>> cnt;
+    for (auto it : data) {
+        cnt[uf.findSet(it.first)].emplace_back(it.second);
+    }
+
+    int m;
+    for (auto it : cnt) {
+        if (it.second.size() == 1) {
+            continue;
+        }
+        // cout << it.first << ": ";
+        // for (auto val : it.second) cout << val << " "; cout << endl;
+        // 求最小的移除元素后使剩下元素不相邻的元素和, 相当于求最大不相邻元素和 -- 打家劫舍
+        m = it.second.size();
+        vector<int> dp(m);
+        int sum = 0;
+        dp[0] = it.second[0];
+        sum += dp[0];
+        dp[1] = max(it.second[1], it.second[0]);
+        sum += it.second[1];
+        for (i = 2; i < m; i++) {
+            dp[i] = max(dp[i - 1], dp[i - 2] + it.second[i]);
+            sum += it.second[i];
+        }
+        ans += sum - dp[m - 1];
+    }
+    cout << ans << endl;
 }

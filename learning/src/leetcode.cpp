@@ -15,6 +15,7 @@
 #include <numeric>
 #include <list>
 #include <optional>
+#include <bit>
 
 #include "pub.h"
 
@@ -25091,4 +25092,137 @@ long long countSubarrays(vector<int>& nums, int minK, int maxK)
     }
     // cout << startIdx << endl;
     return ans;
+}
+
+
+// LC1349
+int maxStudents(vector<vector<char>>& seats)
+{
+    // 回溯是条死路
+    // 采用状态压缩dp, 时间复杂度为 O(m * n * 2 ^ (2n))
+    int i, j, k;
+    int n = seats[0].size();
+    int cnt;
+    vector<int> bits(n);
+    // num对应的二进制状态是否能匹配seats[i]
+    auto Check = [&bits, &cnt](vector<char>& seat, int num) {
+        int n = seat.size();
+        int idx = 0;
+        while (idx < n) {
+            bits[idx] = num % 2;
+            num >>= 1;
+            if (bits[idx] == 0 && seat[idx] == '#') {
+                return false;
+            }
+            if (seat[idx] == '.' && bits[idx] == 1) {
+                if (idx > 0 && seat[idx - 1] != '#' && bits[idx - 1] == 1) {
+                    return false;
+                }
+                cnt++;
+            }
+            idx++;
+        }
+        return true;
+    };
+    int m = seats.size();
+    int ans = 0;
+    vector<vector<int>> dp(m, vector<int>(1 << n, -1));
+    for (i = 0; i < (1 << n); i++) {
+        cnt = 0;
+        if (Check(seats[0], i)) {
+            dp[0][i] = cnt;
+            ans = max(ans, cnt);
+        }
+    }
+    vector<int> bits1(n), bits2(n);
+    // 上下两行以num1, num2方式放置是否不冲突
+    auto Conflict = [&bits1, &bits2](vector<char>& seat1, vector<char>& seat2, int num1, int num2) {
+        int i;
+        int n = seat1.size();
+        int idx = 0;
+        while (idx < n) {
+            bits1[idx] = num1 % 2;
+            num1 >>= 1;
+            idx++;
+        }
+
+        idx = 0;
+        while (idx < n) {
+            bits2[idx] = num2 % 2;
+            num2 >>= 1;
+            idx++;
+        }
+
+        for (i = 0; i < n; i++) {
+            if (seat2[i] == '#') {
+                continue;
+            }
+            if (bits2[i] == 1) {
+                if (i > 0 && bits1[i - 1] == 1 && seat1[i - 1] == '.') {
+                    return false;
+                }
+                if (i < n - 1 && bits1[i + 1] == 1 && seat1[i + 1] == '.') {
+                    return false;
+                }
+            }
+        }
+        return true;
+    };
+
+    for (i = 1; i < m; i++) {
+        for (j = 0; j < (1 << n); j++) {
+            cnt = 0;
+            if (Check(seats[i], j) == false) {
+                continue;
+            }
+            for (k = 0; k < (1 << n); k++) {
+                if (dp[i - 1][k] == -1) {
+                    continue;
+                }
+                if (Conflict(seats[i - 1], seats[i], k, j)) {
+                    dp[i][j] = max(dp[i][j], dp[i - 1][k] + cnt);
+                }
+            }
+            if (i == m - 1) {
+                ans = max(ans, dp[i][j]);
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LC3530
+int maxProfit(int n, vector<vector<int>>& edges, vector<int>& score)
+{
+    int i, j, k;
+    int m;
+    vector<vector<int>> parent(n);
+    for (auto& edge : edges) {
+        parent[edge[1]].emplace_back(edge[0]);
+    }
+    vector<int> dp(1 << n, -1);
+    dp[0] = 0;
+    for (i = 0; i < (1 << n); i++) {
+        if (dp[i] == -1) {
+            continue;
+        }
+        for (j = 0; j < n; j++) {
+            if ((i & (1 << j)) != 0) {
+                continue;
+            }
+            m = parent[j].size();
+            for (k = 0; k < m; k++) {
+                if ((i & (1 << parent[j][k])) == 0) {
+                    break;
+                }
+            }
+            if (k == m) {
+                unsigned int state = (i | (1 << j));
+                dp[state] = max(dp[state], dp[i] + score[j] * popcount(state));
+            }
+        }
+    }
+    // for (auto d : dp) cout << d << " ";
+    return dp[(1 << n) - 1];
 }
