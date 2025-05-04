@@ -2068,3 +2068,63 @@ void ABC_403_D()
     }
     cout << ans << endl;
 }
+
+
+void ABC_404_D()
+{
+    int i, j;
+    int n, m, k;
+    cin >> n >> m;
+    vector<int> fee(n + 1);
+    for (i = 1; i <= n; i++) {
+        cin >> fee[i];
+    }
+
+    int z;
+    vector<vector<int>> zoos(n + 1);
+    for (i = 0; i < m; i++) {
+        cin >> k;
+        for (j = 0; j < k; j++) {
+            cin >> z;
+            zoos[z].emplace_back(i + 1);
+        }
+    }
+
+    int t;
+    int idx;
+    long long ans, cost;
+    vector<int> bits(n);
+    vector<int> cnt;
+    ans = LLONG_MAX;
+
+    for (i = 1; i < pow(3, n); i++) {
+        t = i;
+        idx = 0;
+        
+        while (idx < n) {
+            bits[idx] = t % 3;
+            t /= 3;
+            idx++;
+        }
+
+        cnt.assign(m + 1, 0);
+        cost = 0;
+        for (j = 0; j < n; j++) {
+            if (bits[j]) {
+                for (auto it : zoos[j + 1]) {
+                    cnt[it] += bits[j];
+                }
+                cost += fee[j + 1] * bits[j];
+            }
+        }
+        for (j = 1; j <= m; j++) {
+            if (cnt[j] < 2) {
+                break;
+            }
+        }
+        if (j == m + 1) {
+            ans = min(ans, cost);
+        }
+    }
+    cout << ans << endl;
+}

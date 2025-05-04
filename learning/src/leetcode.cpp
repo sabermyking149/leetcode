@@ -25226,3 +25226,181 @@ int maxProfit(int n, vector<vector<int>>& edges, vector<int>& score)
     // for (auto d : dp) cout << d << " ";
     return dp[(1 << n) - 1];
 }
+
+
+// LC3533
+vector<int> concatenatedDivisibility(vector<int>& nums, int k)
+{
+    int i, j, p;
+    int n = nums.size();
+    int remainder;
+    unsigned int state;
+    // dp[i][j] - 连接状态为i, 被k整除后余数为j是否存在
+    vector<vector<bool>> dp(1 << n, vector<bool>(k, false));
+    unordered_map<int, unordered_map<int, vector<int>>> data;
+
+    // 每连接一个数n, 余数要乘以pow(1, n的位数)
+    auto f = [](int n) {
+        int ans = 1;
+        while (n) {
+            ans *= 10;
+            n /= 10;
+        }
+        return ans;
+    };
+
+    dp[0][0] = true;
+    data[0][0] = {};
+    for (i = 0; i < (1 << n); i++) {
+        for (p = 0; p < k; p++) {
+            if (dp[i][p] == false) {
+                continue;
+            }
+            for (j = 0; j < n; j++) {
+                if ((i & (1 << j)) != 0) {
+                    continue;
+                }
+                state = (i | (1 << j));
+                remainder = (p * f(nums[j]) + nums[j]) % k;
+                dp[state][remainder] = true;
+                auto v = data[i][p];
+                v.emplace_back(nums[j]);
+                // printf ("s %d  r %d\n", state, remainder);
+                // for (auto vv : v) cout << vv << " "; cout << endl;
+                if (data[state].count(remainder)) {
+                    data[state][remainder] = min(data[state][remainder], v);
+                } else {
+                    data[state][remainder] = v;
+                }
+            }
+        }
+    }
+    return data[(1 << n) - 1][0];
+}
+
+
+// LC1627
+vector<bool> areConnected(int n, int threshold, vector<vector<int>>& queries)
+{
+    int i;
+    int m = queries.size();
+    vector<bool> ans(m);
+
+    if (threshold == 0) {
+        ans.assign(m, true);
+        return ans;
+    }
+    int p;
+    UnionFind uf = UnionFind(n + 1);
+    // 此处时间复杂度近似为O(nlog(n))
+    for (p = 2; p <= n; p++) {
+        for (i = p * 2; i <= n; i += p) {
+            if (p > threshold) {
+                uf.unionSets(p, i);
+            }
+        }
+    }
+    for (i = 0; i < m; i++) {
+        ans[i] = (uf.findSet(queries[i][0]) == uf.findSet(queries[i][1]));
+    }
+    return ans;
+}
+
+
+// LC1595
+int connectTwoGroups(vector<vector<int>>& cost)
+{
+    int i, j, k;
+    int size1 = cost.size();
+    int size2 = cost[0].size();
+
+    // size1 >= size2, 以size2状态压缩效率更高
+    // dp[i][j] - 第一组前i个点连接成为状态j的最小cost
+    vector<vector<int>> dp(size1 + 1, vector<int>(1 << size2, 0x3f3f3f3f));
+
+    dp[0][0] = 0;
+    for (i = 1; i <= size1; i++) {
+        for (j = 1; j < (1 << size2); j++) {
+            for (k = 0; k < size2; k++) {
+                if ((j & (1 << k)) != 0) {
+                    // dp[i - 1][j ^ (1 << k)] + cost[i - 1][k] k只与i - 1相连
+                    // dp[i - 1][j] + cost[i - 1][k] k与之前的点有相连
+                    // dp[i][j ^ (1 << k)] + cost[i - 1][k] i - 1这个点与非k点都相连
+                    dp[i][j] = min(dp[i][j], min({dp[i - 1][j ^ (1 << k)], dp[i - 1][j],
+                        dp[i][j ^ (1 << k)]}) + cost[i - 1][k]);
+                }
+            }
+        }
+    }
+    // for (auto d : dp[size1]) cout << d << " "; cout << endl;
+    return dp[size1][(1 << size2) - 1];
+}
+
+
+// LC1320
+int minimumDistance(string word)
+{
+    // 5 * 6键盘
+    int i, j, k;
+    int n = 6;
+    int len = word.size();
+
+    if (len <= 2) {
+        return 0;
+    }
+
+    // dp[i][0 ~ 1][k] - 第0 - 1个手指在word[i], 另一个手指在k的最小cost
+    vector<vector<vector<int>>> dp(len, vector<vector<int>>(2, vector<int>(26, 0x3f3f3f3f)));
+
+    auto Dist = [](char a, char b, int n) {
+        int x1, x2, y1, y2;
+        x1 = (a - 'A') / n;
+        y1 = (a - 'A') % n;
+        x2 = (b - 'A') / n;
+        y2 = (b - 'A') % n;
+        return abs(x1 - x2) + abs(y1 - y2);
+    };
+
+    for (i = 0; i < 26; i++) {
+        for (j = 0; j < 2; j++) {
+            dp[0][j][i] = 0;
+        }
+    }
+    for (k = 1; k < len; k++) {
+        for (i = 0; i < 26; i++) {
+            dp[k][0][i] = min({dp[k][0][i], dp[k - 1][0][i] + Dist(word[k - 1], word[k], n), 
+                dp[k - 1][1][word[k] - 'A'] + Dist(word[k - 1], i + 'A', n)});
+            dp[k][1][i] = min({dp[k][1][i], dp[k - 1][1][i] + Dist(word[k - 1], word[k], n), 
+                dp[k - 1][0][word[k] - 'A'] + Dist(word[k - 1], i + 'A', n)});
+        }
+    }
+    int ans = 0x3f3f3f3f;
+    for (i = 0; i < 26; i++) {
+        for (j = 0; j < 2; j++) {
+            ans = min(ans, dp[len - 1][j][i]);
+        }
+    }
+    return ans;
+}
+
+
+// LC3537
+vector<vector<int>> specialGrid(int N)
+{
+    vector<vector<int>> grid(1 << N , vector<int>(1 << N));
+    function<void (int, int, int, int)> dfs = [&dfs, &grid](int cur, int n, int x, int y) {
+        if (n == 0) {
+            // cout << x << " " << y << endl;
+            grid[x][y] = cur;
+            return;
+        }
+        int dist = (1 << (n - 1)) * (1 << (n - 1));
+        dfs(cur, n - 1, x, y + (1 << (n - 1)));
+        dfs(cur + dist, n - 1, x + (1 << (n - 1)), y + (1 << (n - 1)));
+        dfs(cur + dist * 2, n - 1, x + (1 << (n - 1)), y);
+        dfs(cur + dist * 3, n - 1, x, y);
+    };
+
+    dfs(0, N, 0, 0);
+    return grid;
+}
