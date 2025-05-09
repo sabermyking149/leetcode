@@ -11200,7 +11200,7 @@ private:
     int cursorPos;
     string text;
 };
-// 双向链表
+// 双向链表 更好的方法
 class TextEditor {
 public:
     struct ListNode {
@@ -25403,4 +25403,181 @@ vector<vector<int>> specialGrid(int N)
 
     dfs(0, N, 0, 0);
     return grid;
+}
+
+
+// LC472
+vector<string> findAllConcatenatedWordsInADict(vector<string>& words)
+{
+    int i, j, k;
+    int n = words.size();
+    int m;
+    unsigned long long base = 1337ull;
+    unsigned long long hash;
+    unordered_set<unsigned long long> hashcode; // words[i] 后缀hash
+    vector<string> ans;
+    for (i = 0; i < n; i++) {
+        m = words[i].size();
+        hash = 0;
+        for (j = m - 1; j >= 0; j--) {
+            hash = hash * base + (words[i][j] - 'a' + 1);
+        }
+        hashcode.emplace(hash);
+    }
+    vector<bool> dp;
+    for (i = 0; i < n; i++) {
+        m = words[i].size();
+        dp.assign(m + 1, false);
+        dp[0] = true;
+        for (j = 1; j <= m; j++) {
+            hash = 0;
+            for (k = j; k >= 1; k--) {
+                hash = hash * base + (words[i][k - 1] - 'a' + 1);
+                if (hashcode.count(hash) && dp[k - 1]) {
+                    if (!(j == m && k == 1)) { // 不是整个单词
+                        dp[j] = true;
+                        break;
+                    }
+                }
+            }
+        }
+        if (dp[m]) {
+            ans.emplace_back(words[i]);
+        }
+    }
+    return ans;
+}
+
+
+// LC1547
+int minCost_LC1547(int n, vector<int>& cuts)
+{
+    int i, j, k;
+    int m = cuts.size();
+    int cur = 0;
+    vector<int> v, prefix;
+
+    sort(cuts.begin(), cuts.end());
+    for (i = 0; i < m; i++) {
+        v.emplace_back(cuts[i] - cur);
+        if (i == 0) {
+            prefix.emplace_back(cuts[i] - cur);
+        } else {
+            prefix.emplace_back(prefix.back() + cuts[i] - cur);
+        }
+        cur = cuts[i];
+    }
+    v.emplace_back(n - cur);
+    prefix.emplace_back(prefix.back() + n - cur);
+
+    // 反过来分析, 将m + 1段合并为n的最小花费
+    // dp[i][j] - 合并i到j的最小花费
+    vector<vector<int>> dp(m + 1, vector<int>(m + 1, 0x3f3f3f3f));
+    auto f = [&prefix](int i, int j) {
+        if (i == 0) {
+            return prefix[j];
+        }
+        return prefix[j] - prefix[i - 1];
+    }; 
+    for (j = 0; j <= m; j++) {
+        for (i = j; i >= 0; i--) {
+            if (i == j) {
+                dp[i][j] = v[i];
+            } else if (i + 1 == j) {
+                dp[i][j] = v[i] + v[j];
+            } else {
+                for (k = i; k < j; k++) {
+                    if (k == i) {
+                        dp[i][j] = min(dp[i][j], f(i, j) + dp[k + 1][j]);
+                    } else if (k + 1 == j) {
+                        dp[i][j] = min(dp[i][j], f(i, j) + dp[i][k]);
+                    } else {
+                        dp[i][j] = min(dp[i][j], (dp[i][k] + dp[k + 1][j]) + f(i, j));
+                    }
+                    
+                }
+            }
+        }
+    }
+    return dp[0][m];
+}
+
+
+// LC960
+int minDeletionSize(vector<string>& strs)
+{
+    int i, j, k;
+    int n = strs.size();
+    int m = strs[0].size();
+    vector<int> dp(m, 0);
+
+    dp[0] = 1;
+    for (i = 1; i < m; i++) {
+        dp[i] = 1;
+        for (j = i - 1; j >= 0; j--) {
+            for (k = 0; k < n; k++) {
+                if (strs[k][i] < strs[k][j]) {
+                    break;
+                }
+            }
+            if (k == n) {
+                dp[i] = max(dp[i], dp[j] + 1);
+                // printf ("dp[%d] = %d\n", i, dp[i]);
+            }
+        }
+    }
+    int ans = m;
+    for (i = 0; i < m; i++) {
+        ans = min(ans, m - dp[i]);
+    }
+    return ans;
+}
+
+
+// LC689
+vector<int> maxSumOfThreeSubarrays(vector<int>& nums, int k)
+{
+    int i;
+    int n = nums.size();
+    auto cmp = [](const pair<int, int>& a, const pair<int, int>& b) {
+        if (a.first == b.first) {
+            return a.second > b.second;
+        }
+        return a.first < b.first;
+    };
+    priority_queue<pair<int, int>, vector<pair<int, int>>, decltype(cmp)> pqFront(cmp), pqTail(cmp);
+    vector<int> subsum(n - k + 1);
+    int sum = 0;
+    for (i = 0; i < k; i++) {
+        sum += nums[i];
+    }
+    subsum[0] = sum;
+    for (i = 1; i <= n - k; i++) {
+        subsum[i] = subsum[i - 1] - nums[i - 1] + nums[i + k - 1];
+    }
+
+    for (i = n - k; i >= 1; i--) {
+        pqTail.push({subsum[i], i});
+    }
+    int cur;
+    int maxSum = 0;
+    vector<int> ans(3);
+    for (i = k; i <= n - k - k; i++) {
+        pqFront.push({subsum[i - k], i - k});
+        auto front = pqFront.top();
+        auto tail = pqTail.top();
+        while (tail.second <= i + k - 1) {
+            pqTail.pop();
+            tail = pqTail.top();
+        }
+        cur = front.first + subsum[i] + tail.first;
+        // cout << i << " " << cur << endl;
+        if (cur > maxSum) {
+            maxSum = cur;
+            ans[0] = front.second;
+            ans[1] = i;
+            ans[2] = tail.second;
+        }
+    }
+    return ans;
 }
