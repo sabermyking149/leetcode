@@ -64,6 +64,10 @@ public:
     {
         root = new Trie<string>("/");
     }
+    ~FileSystem()
+    {
+        delete root;
+    }
 
     vector<string> ls(string path);
     void mkdir(string path);

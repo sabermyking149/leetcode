@@ -2128,3 +2128,50 @@ void ABC_404_D()
     }
     cout << ans << endl;
 }
+
+
+void ABC_405_D()
+{
+    int i, j;
+    int h, w;
+    int inf = 0x3f3f3f3f;
+
+    cin >> h >> w;
+
+    vector<string> grid(h);
+    vector<vector<int>> dist(h, vector<int>(w, inf));
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<>> q;
+    for (i = 0; i < h; i++) {
+        cin >> grid[i];
+        for (j = 0; j < w; j++) {
+            if (grid[i][j] == 'E') {
+                q.push({0, i, j});
+            }
+        }
+    }
+    int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+    char sign[5] = {'<', '^', '>', 'v'};
+    while (q.size()) {
+        auto [d, r, c] = q.top();
+        q.pop();
+        if (dist[r][c] < d) {
+            continue;
+        }
+        dist[r][c] = d;
+        for (i = 0; i < 4; i++) {
+            auto nr = r + directions[i][0];
+            auto nc = c + directions[i][1];
+            if (nr < 0 || nr >= h || nc < 0 || nc > w || grid[nr][nc] != '.') {
+                continue;
+            }
+            if (d + 1 < dist[nr][nc]) {
+                dist[nr][nc] = d + 1;
+                grid[nr][nc] = sign[i];
+                q.push({d + 1, nr, nc});
+            }
+        }
+    }
+    for (i = 0; i < h; i++) {
+        cout << grid[i] << endl;
+    }
+}

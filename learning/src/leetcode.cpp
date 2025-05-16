@@ -2055,6 +2055,7 @@ string longestWord(vector<string>& words)
             }
         }
     }
+    delete(root);
     return ans;
 }
 
@@ -4082,6 +4083,7 @@ int minimumLengthEncoding_1(vector<string>& words) // 后缀字典树
         Trie<char>::CreateWordTrie(root, word);
     }
     DFSScanTrieTree(root, 0, ans);
+    delete(root);
     return ans;
 }
 
@@ -14970,6 +14972,7 @@ vector<int> stringIndices(vector<string>& wordsContainer, vector<string>& wordsQ
         }
         id++;
     }
+    delete(root);
     return ans;
 }
 
@@ -25580,4 +25583,210 @@ vector<int> maxSumOfThreeSubarrays(vector<int>& nums, int k)
         }
     }
     return ans;
+}
+
+
+// LC3543
+int maxWeight(int n, vector<vector<int>>& edges, int k, int t)
+{
+    int i;
+    int m = edges.size();
+    vector<vector<pair<int, int>>> edgeWithWeight(n);
+
+    if (k == 0) {
+        return 0;
+    }
+
+    for (i = 0; i < m; i++) {
+        edgeWithWeight[edges[i][0]].push_back({edges[i][1], edges[i][2]});
+    }
+    vector<vector<int>> dist(n, vector<int>(k + 1, -1));
+    auto f = [&edgeWithWeight, &k, &t, &dist](int node, int len) {
+        int i;
+        int n = edgeWithWeight.size();
+        unordered_map<int, unordered_map<int, unordered_set<int>>> cnt;
+        int ans = -1;
+        queue<tuple<int, int, int>> pq;
+        pq.push({0, 0, node});
+        while (pq.size()) {
+            auto [d, e, curNode] = pq.front();
+            pq.pop();
+            if (e == k && d < t) {
+                dist[curNode][e] = max(dist[curNode][e], d);
+                ans = max(ans, dist[curNode][e]);
+                cnt[node][e].emplace(dist[curNode][e]);
+                continue;
+            } 
+            for (auto& it : edgeWithWeight[curNode]) {
+                if (e + 1 <= k && d + it.second < t && cnt[it.first][e + 1].count(d + it.second) == 0) {
+                    pq.push({d + it.second, e + 1, it.first});
+                    cnt[it.first][e + 1].emplace(d + it.second);
+                }
+            }
+        }
+        return ans;
+    };
+
+    int maxVal;
+    int ans = -1;
+    for (i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            dist[j].assign(k + 1, -1);
+        }
+        maxVal = f(i, 0);
+        // printf("i = %d, maxVal = %d\n", i, maxVal);
+        ans = max(ans, maxVal);
+    }
+    return ans;
+}
+
+
+// LC2156
+string subStrHash(string s, int power, int modulo, int k, int hashValue)
+{
+    int i;
+    int n = s.size();
+    int idx = -1;
+    long long val;
+    string ans;
+
+    val = 0;
+    for (i = n - 1; i >= n - k; i--) {
+        val = (val * power + (s[i] - 'a' + 1)) % modulo;
+    }
+    if (val == hashValue) {
+        idx = n - k;
+    }
+    for (i = n - k - 1; i >= 0; i--) {
+        val = ((val + modulo - (s[i + k] - 'a' + 1) * FastPow(power, k - 1, modulo) % modulo) * power
+            + (s[i] - 'a' + 1)) % modulo;
+        if (val == hashValue) {
+            idx = i;
+        }
+    }
+    if (idx == -1) {
+        return ans;
+    }
+
+    ans = s.substr(idx, k);
+    return ans;
+}
+
+
+// LC2681
+int sumOfPower(vector<int>& nums)
+{
+    // 既然是算全子序列, 则按贡献度方式统计
+    int i;
+    int n = nums.size();
+    int mod = 1e9 + 7;
+    long long ans, cur;
+    vector<long long> nums_ll(nums.begin(), nums.end());
+
+    sort(nums_ll.begin(), nums_ll.end());
+    ans = nums_ll[0] * nums_ll[0] % mod * nums_ll[0] % mod;
+    cur = nums_ll[0];
+    for (i = 1; i < n; i++) {
+        ans = (ans + nums_ll[i] * nums_ll[i] % mod * (cur + nums_ll[i]) % mod) % mod;
+        cur = (cur * 2 + nums_ll[i]) % mod;
+    }
+    return ans;
+}
+
+
+// LC1368
+int minCost_LC1368(vector<vector<int>>& grid)
+{
+    int i;
+    int m = grid.size();
+    int n = grid[0].size();
+    int directions[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+    vector<vector<int>> dist(m, vector<int>(n, 0x3f3f3f3f));
+
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<>> pq;
+    pq.push({0, 0, 0});
+    while (!pq.empty()) {
+        auto [d, r, c] = pq.top();
+        pq.pop();
+
+        if (dist[r][c] < d) {
+            continue;
+        }
+        dist[r][c] = d;
+        for (i = 0; i < 4; i++) {
+            auto nr = r + directions[i][0];
+            auto nc = c + directions[i][1];
+            if (nr < 0 || nr >= m || nc < 0 || nc >= n) {
+                continue;
+            }
+            if (i == grid[r][c] - 1) {
+                if (dist[nr][nc] > dist[r][c]) {
+                    dist[nr][nc] = dist[r][c];
+                    pq.push({dist[nr][nc], nr, nc});
+                }
+            } else {
+                if (dist[nr][nc] > dist[r][c] + 1) {
+                    dist[nr][nc] = dist[r][c] + 1;
+                    pq.push({dist[nr][nc], nr, nc});
+                }
+            }
+        }
+    }
+    return dist[m - 1][n - 1];
+}
+
+
+// LC2203
+long long minimumWeight(int n, vector<vector<int>>& edges, int src1, int src2, int dest)
+{
+    // 从src1出发经过src2到达dest的最短路径和
+    // 从src2出发经过src1到达dest的最短路径
+    // 分别从src1, src2出发汇聚到某一点再到达dest的最短距离之和 这三种情况的最小值
+    int i;
+    int m = edges.size();
+    vector<vector<pair<int, int>>> edgesWithWeight(n);
+
+    for (i = 0; i < m; i++) {
+        edgesWithWeight[edges[i][0]].push_back({edges[i][1], edges[i][2]});
+    }
+
+    // 反向边图, 方便计算dest到各点最短路径
+    vector<vector<pair<int, int>>> edgesWithWeight_rev(n);
+    for (i = 0; i < m; i++) {
+        edgesWithWeight_rev[edges[i][1]].push_back({edges[i][0], edges[i][2]});
+    }
+
+    auto dij = [n](int src, vector<vector<pair<int, int>>>& edgesWithWeight) {
+        vector<long long> dist(n, LLONG_MAX / 4);
+        priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<>> pq;
+
+        pq.push({0ll, src});
+        while (!pq.empty()) {
+            auto [d, node] = pq.top();
+            pq.pop();
+
+            if (dist[node] < d) {
+                continue;
+            }
+            dist[node] = d;
+            for (auto& e : edgesWithWeight[node]) {
+                if (dist[e.first] > d + e.second) {
+                    dist[e.first] = d + e.second;
+                    pq.push({dist[e.first], e.first});
+                }
+            }
+        }
+        return dist;
+    };
+
+    long long ans;
+    vector<long long> distSrc1 = dij(src1, edgesWithWeight);
+    vector<long long> distSrc2 = dij(src2, edgesWithWeight);
+    vector<long long> distDest = dij(dest, edgesWithWeight_rev);
+
+    ans = LLONG_MAX;
+    for (i = 0; i < n; i++) {
+        ans = min(ans, distDest[i] + distSrc1[i] + distSrc2[i]);
+    }
+    return ans >= LLONG_MAX / 4 ? -1 : ans;
 }
