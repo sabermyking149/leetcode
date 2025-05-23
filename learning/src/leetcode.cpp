@@ -25790,3 +25790,354 @@ long long minimumWeight(int n, vector<vector<int>>& edges, int src1, int src2, i
     }
     return ans >= LLONG_MAX / 4 ? -1 : ans;
 }
+
+
+// LC3552
+int minMoves(vector<string>& matrix)
+{
+    int i, j;
+    int m = matrix.size();
+    int n = matrix[0].size();
+
+    if (matrix[m - 1][n - 1] == '#') {
+        return -1;
+    }
+
+    int directions[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+    vector<vector<int>> dist(m, vector<int>(n, 0x3f3f3f3f));
+    unordered_map<char, vector<pair<int, int>>> gates;
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            if (isalpha(matrix[i][j])) {
+                gates[matrix[i][j]].push_back({i, j});
+            }
+        }
+    }
+
+    // [距离, r, c, 使用传送门状态]
+    priority_queue<tuple<int, int, int, int>, vector<tuple<int, int, int, int>>, greater<>> pq;
+
+    pq.push({0, 0, 0, 0});
+
+    while (!pq.empty()) {
+        auto [d, r, c, used] = pq.top();
+        pq.pop();
+
+        if (dist[r][c] < d) {
+            continue;
+        }
+        dist[r][c] = d;
+        if (r == m - 1 && c == n - 1) {
+            break;
+        }
+        if (isalpha(matrix[r][c]) && (used & 1 << (matrix[r][c] - 'A')) == 0) {
+            for (auto& p : gates[matrix[r][c]]) {
+                if (dist[p.first][p.second] > d) {
+                    dist[p.first][p.second] = d;
+                    used |= 1 << (matrix[r][c] - 'A');
+                    pq.push({d, p.first, p.second, used});
+                }
+            }
+        }
+        for (i = 0; i < 4; i++) {
+            auto nr = r + directions[i][0];
+            auto nc = c + directions[i][1];
+            if (nr < 0 || nr >= m || nc < 0 || nc >= n || matrix[nr][nc] == '#') {
+                continue;
+            }
+            if (dist[nr][nc] > d + 1) {
+                dist[nr][nc] = d + 1;
+                pq.push({d + 1, nr, nc, used});
+            }
+        }
+    }
+    return dist[m - 1][n - 1] == 0x3f3f3f3f ? -1 : dist[m - 1][n - 1];
+}
+
+
+// LC1590
+int minSubarray(vector<int>& nums, int p)
+{
+    int i;
+    int n = nums.size();
+    int remainder;
+    long long sum;
+
+    sum = 0;
+    for (i = 0; i < n; i++) {
+        sum += nums[i];
+    }
+    remainder = sum % p;
+    if (remainder == 0) {
+        return 0;
+    }
+
+    int t = 0;
+    int ans = n;
+    unordered_map<int, int> r;
+    // cout << remainder << endl;
+    for (i = 0; i < n; i++) {
+        if (nums[i] % p == remainder) {
+            return 1;
+        }
+        t = (t + nums[i]) % p;
+        if (t == 0) {
+            ans = min(ans, n - 1 - i);
+        } else if (t == remainder) {
+            ans = min(ans, i + 1);
+            if (r.count(t)) {
+                ans = min(ans, i - r[t] - 1);
+            }
+        } else if (r.count(t + p - remainder)) {
+            ans = min(ans, i - r[t + p - remainder]);
+        } else if (r.count(t - remainder)) {
+            ans = min(ans, i - r[t - remainder]);
+        }
+        // cout << t << endl;
+        r[t] = i;
+    }
+    return ans == n ? -1 : ans;
+}
+
+
+// LC321
+vector<int> maxNumber(vector<int>& nums1, vector<int>& nums2, int k)
+{
+    int i, j;
+    int m = nums1.size();
+    int n = nums2.size();
+
+    // 从nums选取长度为k的最大字典序子序列
+    auto FindMaxSubsquence = [](vector<int>& nums, int k) {
+        int i;
+        int n = nums.size();
+        vector<int> ans;
+        stack<int> st;
+        for (i = 0; i < n; i++) {
+            if (st.empty()) {
+                st.push(nums[i]);
+                continue;
+            }
+            auto t = st.top();
+            while (t < nums[i] && st.size() - 1 + n - i >= k) {
+                st.pop();
+                if (st.empty()) {
+                    break;
+                }
+                t = st.top();
+            }
+            if (st.size() < k) {
+                st.push(nums[i]);
+            }
+        }
+        while (!st.empty()) {
+            ans.emplace_back(st.top());
+            st.pop();
+        }
+        reverse(ans.begin(), ans.end());
+        return ans;
+    };
+
+    // 比较两个数组大小
+    auto Cmp = [](vector<int>& nums1, int idx1, vector<int>& nums2, int idx2) {
+        int i, j;
+        int m = nums1.size();
+        int n = nums2.size();
+
+        i = idx1;
+        j = idx2;
+        while (i < m && j < n) {
+            if (nums1[i] != nums2[j]) {
+                return nums1[i] > nums2[j];
+            }
+            i++;
+            j++;
+        }
+        if (i != m) {
+            return true;
+        }
+        return false;
+    };
+
+    // 合并两个数组使字典序最大
+    auto Combine = [&Cmp](vector<int>& nums1, vector<int>& nums2) {
+        int i, j;
+        int m = nums1.size();
+        int n = nums2.size();
+        vector<int> ans;
+
+        if (nums1.empty()) {
+            return nums2;
+        }
+        if (nums2.empty()) {
+            return nums1;
+        }
+
+        i = j = 0;
+        while (i < m && j < n) {
+            if (nums1[i] > nums2[j]) {
+                ans.emplace_back(nums1[i]);
+                i++;
+            } else if (nums1[i] < nums2[j]) {
+                ans.emplace_back(nums2[j]);
+                j++;
+            } else { // 出现相同数字, 字典序比较
+                if (Cmp(nums1, i, nums2, j)) {
+                    ans.emplace_back(nums1[i]);
+                    i++;
+                } else {
+                    ans.emplace_back(nums2[j]);
+                    j++;
+                }
+            }
+        }
+        while (i != m) {
+            ans.emplace_back(nums1[i]);
+            i++;
+        }
+        while (j != n) {
+            ans.emplace_back(nums2[j]);
+            j++;
+        }
+        return ans;
+    };
+
+    vector<vector<int>> subsequence1(m + 1);
+    vector<vector<int>> subsequence2(n + 1);
+
+    for (i = 1; i <= m; i++) {
+        subsequence1[i] = FindMaxSubsquence(nums1, i);
+    }
+    for (i = 1; i <= n; i++) {
+        subsequence2[i] = FindMaxSubsquence(nums2, i);
+    }
+    vector<int> ans(k, 0);
+    for (i = 0; i <= m; i++) {
+        if ((k - i > 0 && k - i <= n && !subsequence2[k - i].empty()) || (k - i == 0)) {
+            ans = max(ans, Combine(subsequence1[i], subsequence2[k - i]));
+        }
+    }
+    return ans;
+}
+
+
+// LC675
+int cutOffTree(vector<vector<int>>& forest)
+{
+    int i, j;
+    int m = forest.size();
+    int n = forest[0].size();
+    int d, ans;
+    queue<pair<int, int>> q;
+    vector<pair<int, int>> trees;
+
+    if (forest[0][0] == 0) {
+        return -1;
+    }
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            if (forest[i][j] > 1) {
+                trees.push_back({forest[i][j], i * n + j});
+            }
+        }
+    }
+
+    sort(trees.begin(), trees.end());
+
+    auto dij = [&forest](int start, int end) {
+        int i;
+        int m = forest.size();
+        int n = forest[0].size();
+        int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+        vector<vector<int>> dist(m, vector<int>(n, 0x3f3f3f3f));
+        priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
+
+        pq.push({0, start});
+        while (!pq.empty()) {
+            auto [d, pos] = pq.top();
+            pq.pop();
+
+            auto r = pos / n;
+            auto c = pos % n;
+            if (dist[r][c] < d) {
+                continue;
+            }
+
+            dist[r][c] = d;
+            for (i = 0; i < 4; i++) {
+                auto nr = r + directions[i][0];
+                auto nc = c + directions[i][1];
+                if (nr < 0 || nr >= m || nc < 0 || nc >= n || forest[nr][nc] == 0) {
+                    continue;
+                }
+                if (dist[nr][nc] > d + 1) {
+                    dist[nr][nc] = d + 1;
+                    pq.push({d + 1, nr * n + nc});
+                }
+            }
+        }
+        return dist[end / n][end % n];
+    };
+
+    n = trees.size();
+    // 从(0, 0)到最矮的树
+    d = dij(0, trees[0].second);
+    if (d == 0x3f3f3f3f) {
+        return -1;
+    }
+    ans = d;
+    for (i = 1; i < n; i++) {
+        d = dij(trees[i - 1].second, trees[i].second);
+        if (d == 0x3f3f3f3f) {
+            return -1;
+        }
+        ans += d;
+    }
+    return ans;
+}
+
+
+// LC1383
+int maxPerformance(int n, vector<int>& speed, vector<int>& efficiency, int k)
+{
+    int i;
+    int mod = 1e9 + 7;
+    long long curSum, multiply;
+    vector<pair<int, int>> vp;
+
+    for (i = 0; i < n; i++) {
+        vp.push_back({efficiency[i], speed[i]});
+    }
+
+    sort(vp.rbegin(), vp.rend());
+
+    auto cmp = [](const pair<int, int>& a, const pair<int, int>& b) {
+        return a.second > b.second;
+    };
+    priority_queue<pair<int, int>, vector<pair<int, int>>, decltype(cmp)> pq(cmp);
+
+    multiply = curSum = 0;
+    // 注意是最多k个
+    // efficiency - speed
+    for (i = 0; i < n; i++) {
+        if (i < k) {
+            curSum += vp[i].second;
+            pq.push(vp[i]);
+            multiply = max(multiply, curSum * vp[i].first);
+            continue;
+        }
+        
+        auto t = pq.top();
+        if (t.second >= vp[i].second) {
+            continue;
+        }
+
+        // 更大的curSum
+        curSum = curSum - t.second + vp[i].second;
+        pq.pop();
+        pq.push(vp[i]);
+
+        multiply = max(multiply, curSum * vp[i].first);
+    }
+    return multiply % mod;
+}

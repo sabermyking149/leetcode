@@ -2175,3 +2175,54 @@ void ABC_405_D()
         cout << grid[i] << endl;
     }
 }
+
+
+void ABC_406_D()
+{
+    int i;
+    int h, w, n;
+    int x, y;
+    unordered_map<int, unordered_set<int>> row, col;
+
+    cin >> h >> w >> n;
+
+    for (i = 0; i < n; i++) {
+        cin >> x >> y;
+        row[x].emplace(y);
+        col[y].emplace(x);
+    }
+
+    int q, type, num;
+
+    cin >> q;
+    for (i = 0; i < q; i++) {
+        cin >> type >> num;
+        if (type == 1) {
+            if (row.count(num)) {
+                cout << row[num].size() << endl;
+                for (auto& it : row[num]) {
+                    col[it].erase(num);
+                    if (col[it].empty()) {
+                        col.erase(it);
+                    }
+                }
+                row.erase(num);
+            } else {
+                cout << 0 << endl;
+            }
+        } else {
+            if (col.count(num)) {
+                cout << col[num].size() << endl;
+                for (auto& it : col[num]) {
+                    row[it].erase(num);
+                    if (row[it].empty()) {
+                        row.erase(it);
+                    }
+                }
+                col.erase(num);
+            } else {
+                cout << 0 << endl;
+            }
+        }
+    }
+}
