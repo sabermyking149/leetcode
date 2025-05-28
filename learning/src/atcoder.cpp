@@ -2226,3 +2226,80 @@ void ABC_406_D()
         }
     }
 }
+
+
+void PlaceDominoes(int r, int c, vector<vector<long long>>& a, vector<vector<int>>& visited, long long xorSum, long long& maxXorSum)
+{
+    int i, j;
+    int h = visited.size();
+    int w = visited[0].size();
+    int startCol;
+    // 横放
+    if (c + 1 < w && visited[r][c + 1] == 0) {
+        maxXorSum = max(maxXorSum, xorSum ^ a[r][c] ^ a[r][c + 1]);
+        visited[r][c] = 1;
+        visited[r][c + 1] = 1;
+        for (i = r; i < h; i++) {
+            if (i == r) {
+                startCol = c + 2;
+            } else {
+                startCol = 0;
+            }
+            for (j = startCol; j < w; j++) {
+                if (visited[i][j] == 0) {
+                    PlaceDominoes(i, j, a, visited, xorSum ^ a[r][c] ^ a[r][c + 1], maxXorSum);
+                }
+            }
+        }
+        visited[r][c] = 0;
+        visited[r][c + 1] = 0;
+    }
+
+    // 竖放
+    if (r + 1 < h && visited[r + 1][c] == 0) {
+        maxXorSum = max(maxXorSum, xorSum ^ a[r][c] ^ a[r + 1][c]);
+        visited[r][c] = 1;
+        visited[r + 1][c] = 1;
+        for (i = r; i < h; i++) {
+            if (i == r) {
+                startCol = c + 1;
+            } else {
+                startCol = 0;
+            }
+            for (j = startCol; j < w; j++) {
+                if (visited[i][j] == 0) {
+                    PlaceDominoes(i, j, a, visited, xorSum ^ a[r][c] ^ a[r + 1][c], maxXorSum);
+                }
+            }
+        }
+        visited[r][c] = 0;
+        visited[r + 1][c] = 0;
+    }
+}
+void ABC_407_D()
+{
+    int i, j;
+    int h, w;
+    long long x, ans;
+
+    cin >> h >> w;
+
+    vector<vector<long long>> a(h, vector<long long>(w));
+    vector<vector<int>> visited(h, vector<int>(w, 0));
+
+    x = 0;
+    for (i = 0; i < h; i++) {
+        for (j = 0; j < w; j++) {
+            cin >> a[i][j];
+            x ^= a[i][j];
+        }
+    }
+
+    ans = x;
+    for (i = 0; i < h; i++) {
+        for (j = 0; j < w; j++) {
+            PlaceDominoes(i, j, a, visited, x, ans);
+        }
+    }
+    cout << ans << endl;
+}

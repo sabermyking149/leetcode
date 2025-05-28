@@ -26141,3 +26141,71 @@ int maxPerformance(int n, vector<int>& speed, vector<int>& efficiency, int k)
     }
     return multiply % mod;
 }
+
+
+// LC864
+int shortestPathAllKeys(vector<string>& grid)
+{
+    int i, j;
+    int k;
+    int m = grid.size();
+    int n = grid[0].size();
+    int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+    priority_queue<tuple<int, int, int, int>, vector<tuple<int, int, int, int>>, greater<>> pq;
+
+    k = 0;
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            if (grid[i][j] == '@') {
+                pq.push({0, i, j, 0});
+            } else if (islower(grid[i][j])) {
+                k++;
+            }
+        }
+    }
+    vector<vector<vector<int>>> dist(m, vector<vector<int>>(n, vector<int>(1 << k, 0x3f3f3f3f)));
+
+    while (!pq.empty()) {
+        // state 获取钥匙状态
+        auto [d, r, c, state] = pq.top();
+        pq.pop();
+
+        if (dist[r][c][state] < d) {
+            continue;
+        }
+        dist[r][c][state] = d;
+        if (state == (1 << k) - 1) {
+            return dist[r][c][state];
+        }
+        for (i = 0; i < 4; i++) {
+            auto nr = r + directions[i][0];
+            auto nc = c + directions[i][1];
+            if (nr < 0 || nr >= m || nc < 0 || nc >= n || grid[nr][nc] == '#') {
+                continue;
+            }
+            if (isupper(grid[nr][nc])) {
+                // 还没找到锁grid[nr][nc]的钥匙
+                if ((1 << (grid[nr][nc] - 'A') & state) == 0) {
+                    continue;
+                }
+                if (dist[nr][nc][state] > d + 1) {
+                    dist[nr][nc][state] = d + 1;
+                    pq.push({d + 1, nr, nc, state});
+                }
+            } else if (islower(grid[nr][nc])) {
+                auto n_state = 1 << (grid[nr][nc] - 'a') | state;
+                if (dist[nr][nc][n_state] > d + 1) {
+                    dist[nr][nc][n_state] = d + 1;
+                    pq.push({d + 1, nr, nc, n_state});
+                }
+            } else {
+                if (dist[nr][nc][state] > d + 1) {
+                    dist[nr][nc][state] = d + 1;
+                    pq.push({d + 1, nr, nc, state});
+                }
+            }
+        }
+    }
+
+    return -1;
+}
