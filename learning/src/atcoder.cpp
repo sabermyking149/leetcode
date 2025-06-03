@@ -2303,3 +2303,46 @@ void ABC_407_D()
     }
     cout << ans << endl;
 }
+
+
+// 类似于leetcode "秋叶收藏集"
+void ABC_408_D()
+{
+    int i;
+    int n;
+    string s;
+    cin >> n >> s;
+
+    if (n <= 2) {
+        cout << 0 << endl;
+        return;
+    }
+
+    // 组成形式 000111000 其中每一段的字符个数都可以为0
+    vector<vector<int>> dp(n, vector<int>(3, 0x3f3f3f3f));
+
+    int ans = n;
+    if (s[0] == '0') {
+        dp[0][0] = 0;
+        dp[0][1] = 1;
+        dp[0][2] = 0;
+    } else {
+        dp[0][0] = 1;
+        dp[0][1] = 0;
+        dp[0][2] = 1;
+    }
+    for (i = 1; i < n; i++) {
+        if (s[i] == '0') {
+            dp[i][0] = dp[i - 1][0];
+            dp[i][1] = min(dp[i - 1][0], dp[i - 1][1]) + 1;
+            dp[i][2] = min(dp[i - 1][1], dp[i - 1][2]);
+        } else {
+            dp[i][0] = dp[i - 1][0] + 1;
+            dp[i][1] = min(dp[i - 1][0], dp[i - 1][1]);
+            dp[i][2] = min(dp[i - 1][1], dp[i - 1][2]) + 1;
+        }
+    }
+    ans = min({dp[n - 1][0], dp[n - 1][1], dp[n - 1][2]});
+    // cout << "ans = " << ans << endl;
+    cout << ans << endl;
+}

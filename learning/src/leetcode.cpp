@@ -25507,7 +25507,7 @@ int minCost_LC1547(int n, vector<int>& cuts)
 
 
 // LC960
-int minDeletionSize(vector<string>& strs)
+int minDeletionSize_LC960(vector<string>& strs)
 {
     int i, j, k;
     int n = strs.size();
@@ -26208,4 +26208,320 @@ int shortestPathAllKeys(vector<string>& grid)
     }
 
     return -1;
+}
+
+
+// LC909
+int snakesAndLadders(vector<vector<int>>& board)
+{
+    int i, j;
+    int n = board.size();
+    int cur = n * n;
+    int limit;
+    int inf = 0x3f3f3f3f;
+    vector<vector<int>> grid(n, vector<int>(n));
+
+    // 构建n * n折线棋盘
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            grid[i][j] = cur;
+            cur--;
+        }
+    }
+    // 根据n反转grid的行
+    if (n % 2 == 0) {
+        for (i = 1; i < n; i += 2) {
+            reverse(grid[i].begin(), grid[i].end());
+        }
+    } else {
+        for (i = 0; i < n; i += 2) {
+            reverse(grid[i].begin(), grid[i].end());
+        }
+    }
+
+    vector<vector<int>> edges(n * n + 1);
+    vector<pair<int, int>> pos(n * n + 1);
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            pos[grid[i][j]] = {i, j};
+            if (board[i][j] != -1) {
+                edges[grid[i][j]].emplace_back(board[i][j]);
+                // edges[board[i][j]].emplace_back(grid[i][j]); 梯子和蛇都是单向
+            }
+        }
+    }
+
+    vector<vector<int>> dist(n, vector<int>(n, inf));
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
+
+    pq.push({0, 1});
+    limit = n * n;
+    while (!pq.empty()) {
+        auto [d, p] = pq.top();
+        pq.pop();
+
+        auto x = pos[p].first;
+        auto y = pos[p].second;
+
+        if (dist[x][y] < d) {
+            continue;
+        }
+
+        dist[x][y] = d;
+        for (i = p + 1; i <= p + 6; i++) {
+            if (i > limit) {
+                break;
+            }
+            auto nx = pos[i].first;
+            auto ny = pos[i].second;
+            if (!edges[i].empty()) {
+                for (auto& node : edges[i]) {
+                    nx = pos[node].first;
+                    ny = pos[node].second;
+                    if (d + 1 < dist[nx][ny]) {
+                        dist[nx][ny] = d + 1;
+                        pq.push({d + 1, grid[nx][ny]});
+                    }
+                }
+            } else {
+                if (d + 1 < dist[nx][ny]) {
+                    dist[nx][ny] = d + 1;
+                    pq.push({d + 1, grid[nx][ny]});
+                }
+            }
+        }
+    }
+
+    auto ex = pos[limit].first;
+    auto ey = pos[limit].second;
+    return dist[ex][ey] == inf ? -1 : dist[ex][ey];
+}
+
+
+// LC2467
+int mostProfitablePath(vector<vector<int>>& edges, int bob, vector<int>& amount)
+{
+    int i, j;
+    int m;
+    int n = edges.size() + 1;
+    int inf = 0x3f3f3f3f;
+    vector<vector<int>> e(n);
+
+    for (auto& edge : edges) {
+        e[edge[0]].emplace_back(edge[1]);
+        e[edge[1]].emplace_back(edge[0]);
+    }
+
+    vector<int> route, record;
+    function<void (int, int, int)> dfs = [&dfs, &e, &record, &route](int cur, int parent, int target) {
+        if (cur == target) {
+            record.emplace_back(cur);
+            route = record;
+            return;
+        }
+        record.emplace_back(cur);
+        for (auto& node : e[cur]) {
+            if (node != parent) {
+                dfs(node, cur, target);
+            }
+        }
+        record.pop_back();
+    };
+
+    dfs(0, -1, bob);
+    reverse(route.begin(), route.end());
+
+    vector<int> bobsRoute(n, inf);
+    m = route.size();
+    for (i = 0; i < m; i++) {
+        bobsRoute[route[i]] = i;
+    }
+
+    int step = 0;
+    int ans = -inf;
+    queue<tuple<int, int, int>> q;
+    q.push({0, -1, 0});
+    while (!q.empty()) {
+        int size = q.size();
+        for (i = 0; i < size; i++) {
+            auto [cur, parent, val] = q.front();
+            // cout << cur << " " << parent << " " << val << " " << step << endl;
+            q.pop();
+            m = e[cur].size();
+            if (bobsRoute[cur] == inf || step < bobsRoute[cur]) {
+                if (m == 1 && e[cur][0] == parent) {
+                    ans = max(ans, val + amount[cur]);
+                    continue;
+                }
+                for (j = 0; j < m; j++) {
+                    if (e[cur][j] == parent) {
+                        continue;
+                    }
+                    q.push({e[cur][j], cur, val + amount[cur]});
+                }
+            } else if (bobsRoute[cur] == step) {
+                if (m == 1 && e[cur][0] == parent) {
+                    ans = max(ans, val + amount[cur] / 2);
+                    continue;
+                }
+                for (j = 0; j < m; j++) {
+                    if (e[cur][j] == parent) {
+                        continue;
+                    }
+                    q.push({e[cur][j], cur, val + amount[cur] / 2});
+                }
+            } else {
+                if (m == 1 && e[cur][0] == parent) {
+                    ans = max(ans, val);
+                    continue;
+                }
+                for (j = 0; j < m; j++) {
+                    if (e[cur][j] == parent) {
+                        continue;
+                    }
+                    q.push({e[cur][j], cur, val});
+                }
+            }
+        }
+        step++;
+    }
+    return ans;
+}
+
+
+// LC3568
+int minMoves(vector<string>& classroom, int energy)
+{
+    int i, j;
+    int inf = 0x3f3f3f3f;
+    int m = classroom.size();
+    int n = classroom[0].size();
+    int pos, start, cnt;
+    int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+    vector<int> litter(m * n);
+    cnt = 0;
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            if (classroom[i][j] == 'L') {
+                pos = i * n + j;
+                litter[pos] = cnt;
+                cnt++;
+            } else if (classroom[i][j] == 'S') {
+                start = i * n + j; 
+            }
+        }
+    }
+    if (cnt == 0) {
+        return 0;
+    }
+    // [当前移动次数, 剩余能量, 位置, 垃圾是否清理(二进制压缩)]
+    priority_queue<tuple<int, int, int, int>, vector<tuple<int, int, int, int>>, greater<>> pq;
+    pq.emplace(0, energy, start, 0);
+    vector<vector<vector<int>>> dist(m * n, vector<vector<int>>(energy + 1, vector<int>(1 << cnt, inf)));
+    vector<vector<int>> data(m * n, vector<int>(1 << cnt, -1)); 
+    while (!pq.empty()) {
+        auto [step, e, p, val] = pq.top();
+        pq.pop();
+        // printf ("%d %d %d %d\n", step, e, p, val);
+
+        if (dist[p][e][val] < step) {
+            continue;
+        }
+        dist[p][e][val] = step;
+        if (val == (1 << cnt) - 1) {
+            return step;
+        }
+        // 剪枝
+        if (data[p][val] == -1) {
+            data[p][val] = e;
+        } else if (data[p][val] > e) {
+            continue;
+        }
+        for (i = 0; i < 4; i++) {
+            auto x = p / n;
+            auto y = p % n;
+            auto nx = x + directions[i][0];
+            auto ny = y + directions[i][1];
+            if (nx < 0 || nx >= m || ny < 0 || ny >= n || classroom[nx][ny] == 'X') {
+                continue;
+            }
+            auto npos = nx * n + ny;
+            if (classroom[nx][ny] == 'R') {
+                if (e > 0 && dist[npos][energy][val] > step + 1) {
+                    dist[npos][energy][val] = step + 1;
+                    pq.emplace(step + 1, energy, npos, val);
+                }
+            } else if (classroom[nx][ny] == 'L') {
+                auto nval = (val | (1 << litter[npos]));
+                if (e > 0 && dist[npos][e - 1][nval] > step + 1) {
+                    dist[npos][e - 1][nval] = step + 1;
+                    pq.emplace(step + 1, e - 1, npos, nval);
+                }
+            } else {
+                if (e > 0 && dist[npos][e - 1][val] > step + 1) {
+                    dist[npos][e - 1][val] = step + 1;
+                    pq.emplace(step + 1, e - 1, npos, val);
+                }
+            }
+        }
+    }
+    return -1;
+}
+
+
+// LCP 03. 机器人大冒险
+bool robot(string command, vector<vector<int>>& obstacles, int x, int y)
+{
+    int i;
+    int len = command.size();
+    int u, r;
+
+    u = r = 0;
+    for (i = 0; i < len; i++) {
+        if (command[i] == 'U') {
+            u++;
+        } else {
+            r++;
+        }
+    }
+
+    auto CanReach = [](int x, int y, int u, int r, string& command) {
+        int i;
+        int len = command.size();
+        int m = x / r;
+        int n = y / u;
+
+        m = min(m, n);
+
+        int ex = x - m * r;
+        int ey = y - m * u;
+        int sx, sy;
+
+        sx = sy = 0;
+        if (sx == ex && sy == ey) {
+            return true;
+        }
+        for (i = 0; i < len; i++) {
+            if (command[i] == 'U') {
+                sy++;
+            } else {
+                sx++;
+            }
+            if (sx == ex && sy == ey) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    for (auto& o : obstacles) {
+        // 障碍物在终点之后
+        if (o[0] > x || o[1] > y) {
+            continue;
+        }
+        if (CanReach(o[0], o[1], u, r, command)) {
+            return false;
+        }
+    }
+    return CanReach(x, y, u, r, command);
 }
