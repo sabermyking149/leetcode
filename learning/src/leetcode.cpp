@@ -26525,3 +26525,163 @@ bool robot(string command, vector<vector<int>>& obstacles, int x, int y)
     }
     return CanReach(x, y, u, r, command);
 }
+
+
+// LC3573
+long long maximumProfit(vector<int>& prices, int k)
+{
+    int i, j;
+    int n = prices.size();
+    long long inf = LLONG_MIN / 2;
+    long long ans = inf;
+
+    // dp[n][k][0 ~ 2] - 已经进行了k次交易, 在第n天是否进行交易的最大利润 0 - 不持有股票
+    // 1 - 进行普通交易 2 - 做空交易
+    vector<vector<vector<long long>>> dp(n, vector<vector<long long>>(k + 1,
+        vector<long long>(3, inf)));
+
+    dp[0][0][0] = 0;
+    dp[0][1][1] = -prices[0];
+    dp[0][1][2] = prices[0];
+    for (i = 1; i < n; i++) {
+        for (j = 0; j <= k; j++) {
+            if (j > 0) {
+                dp[i][j][1] = dp[i - 1][j][1];
+                dp[i][j][2] = dp[i - 1][j][2];
+                if (dp[i - 1][j - 1][0] != inf) {
+                    dp[i][j][1] = max(dp[i][j][1], dp[i - 1][j - 1][0] - prices[i]);
+                    dp[i][j][2] = max(dp[i][j][2], dp[i - 1][j - 1][0] + prices[i]);
+                }
+            }
+
+            dp[i][j][0] = dp[i - 1][j][0];
+            if (dp[i - 1][j][1] != inf) {
+                dp[i][j][0] = max(dp[i][j][0], dp[i - 1][j][1] + prices[i]);
+            }
+            if (dp[i - 1][j][2] != inf) {
+                dp[i][j][0] = max(dp[i][j][0], dp[i - 1][j][2] - prices[i]);
+            }
+            ans = max(ans, dp[i][j][0]);
+        }
+    }
+    return ans;
+}
+
+
+// LC2472
+int maxPalindromes(string s, int k)
+{
+    // 类似LC5先找所有大于等于k的回文串
+    int i, j;
+    int n = s.size();
+    int ans;
+    vector<vector<bool>> dp(n, vector<bool>(n, false));
+    vector<vector<int>> ranges;
+
+    for (j = 0; j < n; j++) {
+        for (i = j; i >= 0; i--) {
+            if (s[i] != s[j]) {
+                continue;
+            }
+            if (i == j || i + 1 == j) {
+                dp[i][j] = true;
+            } else if (dp[i + 1][j - 1]) {
+                dp[i][j] = true;
+            }
+            if (dp[i][j] && j - i + 1 >= k) {
+                ranges.push_back({i, j});
+            }
+        }
+    }
+
+    if (ranges.empty()) {
+        return 0;
+    }
+
+    // 按右边界排序
+    sort(ranges.begin(), ranges.end(), [](const vector<int>& a, const vector<int>& b) {
+        return a[1] < b[1];
+    });
+
+    int right;
+
+    n = ranges.size();
+    ans = 1;
+    right = ranges[0][1];
+    for (i = 1; i < n; i++) {
+        if (ranges[i][0] > right) {
+            ans++;
+            right = ranges[i][1];
+        }
+    }
+    return ans;
+}
+
+
+// LC2392
+vector<vector<int>> buildMatrix(int k, vector<vector<int>>& rowConditions, vector<vector<int>>& colConditions)
+{
+    // 分别满足rowConditions和colConditions, 且两个condition都不能形成环
+    auto CreateGraph = [](vector<vector<int>>& conditions, vector<vector<int>>& edges, vector<int>& indegree) {
+        for (auto& c : conditions) {
+            edges[c[0]].emplace_back(c[1]);
+            indegree[c[1]]++;
+        }
+    };
+
+    auto TopoOrder = [](vector<vector<int>>& edges, vector<int>& indegree, vector<int>& order) {
+        queue<int> q;
+        int i;
+        int n = indegree.size();
+        for (i = 1; i < n; i++) {
+            if (indegree[i] == 0) {
+                q.push(i);
+            }
+        }
+        while (!q.empty()) {
+            auto t = q.front();
+            q.pop();
+
+            order.emplace_back(t);
+            for (auto& next : edges[t]) {
+                indegree[next]--;
+                if (indegree[next] == 0) {
+                    q.emplace(next);
+                }
+            }
+        }
+    };
+
+    vector<vector<int>> edgesR(k + 1);
+    vector<int> indegreeR(k + 1, 0);
+    vector<int> orderR;
+
+    CreateGraph(rowConditions, edgesR, indegreeR);
+    TopoOrder(edgesR, indegreeR, orderR);
+    // 有环则orderR节点数量不等于k
+    if (orderR.size() != k) {
+        return {};
+    }
+
+    vector<vector<int>> edgesC(k + 1);
+    vector<int> indegreeC(k + 1, 0);
+    vector<int> orderC;
+
+    CreateGraph(colConditions, edgesC, indegreeC);
+    TopoOrder(edgesC, indegreeC, orderC);
+    if (orderC.size() != k) {
+        return {};
+    }
+
+    int i;
+    vector<vector<int>> grid(k, vector<int>(k, 0));
+    vector<pair<int, int>> pos(k + 1);
+    for (i = 0; i < k; i++) {
+        pos[orderR[i]].first = i;
+        pos[orderC[i]].second = i;
+    }
+    for (i = 1; i <= k; i++) {
+        grid[pos[i].first][pos[i].second] = i;
+    }
+    return grid;
+}

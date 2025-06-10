@@ -453,3 +453,53 @@ void CR_1017_E()
     }
     cout << sum << endl;
 }
+
+
+// CSP-J 2024 第3题
+void P11229()
+{
+    int n;
+
+    cin >> n;
+
+    // 前13个数字的拼接木棍数
+    vector<string> nums = {"-1", "-1", "1", "7", "4", "2", "6", "8", "10", 
+        "18", "22", "20", "28", "68"};
+
+    if (n <= 13) {
+        cout << nums[n] << endl;
+        return;
+    }
+
+    int m, r;
+
+    m = n / 7;
+    r = n % 7;
+    if (r == 1) {
+        m--;
+        r = 8;
+    }
+
+    string a, b;
+
+    a = nums[r] + string(m, '8');
+
+    if (m > 0) {
+        if (r + 7 <= 13) {
+            if (r + 7 == 10 && m > 1) { // 11根木棍反而能拼出更小的数字
+                b += "200";
+                m -= 2;
+            } else {
+                b += nums[r + 7];
+                m--;
+            }
+            b += string(m, '8');
+            if (a.size() == b.size()) {
+                a = min(a, b);
+            } else {
+                a = (a.size() < b.size() ? a : b);
+            }
+        }
+    }
+    cout << a << endl;
+}
