@@ -503,3 +503,34 @@ void P11229()
     }
     cout << a << endl;
 }
+
+
+void CR_1029_C()
+{
+    int i;
+    int n;
+
+    cin >> n;
+
+    int cnt;
+    vector<int> a(n);
+    unordered_set<int> prev, cur, t;
+    for (i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    cnt = 1;
+    prev.emplace(a[0]);
+    for (i = 1; i < n; i++) {
+        cur.emplace(a[i]);
+        if (prev.count(a[i])) {
+            t.emplace(a[i]);
+            if (t.size() == prev.size()) {
+                cnt++;
+                prev = cur;
+                t.clear();
+            }
+        }
+    }
+    cout << cnt << endl;
+}

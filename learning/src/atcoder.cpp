@@ -2346,3 +2346,93 @@ void ABC_408_D()
     // cout << "ans = " << ans << endl;
     cout << ans << endl;
 }
+
+
+void ABC_410_D()
+{
+    int i;
+    int n, m;
+
+    cin >> n >> m;
+
+    int from, to, weight;
+    vector<vector<pair<int, int>>> edges(n + 1);
+    for (i = 0; i < m; i++) {
+        cin >> from >> to >> weight;
+        edges[from].push_back({to, weight});
+    }
+
+    // weight < 1024
+    // visited[i][j] - 到i点是否有xor值为j的情况
+    vector<vector<bool>> visited(n + 1, vector<bool>(1024, false));
+    queue<pair<int, int>> q;
+
+    visited[1][0] = true;
+    q.push({1, 0});
+    while (!q.empty()) {
+        auto [cur, xorVal] = q.front();
+        q.pop();
+
+        for (auto& [next, weight] : edges[cur]) {
+            auto n_xorVal = (xorVal ^ weight);
+            if (visited[next][n_xorVal] == false) {
+                visited[next][n_xorVal] = true;
+                q.push({next, n_xorVal});
+            }
+        }
+    }
+    for (i = 0; i < 1024; i++) {
+        if (visited[n][i]) {
+            cout << i << endl;
+            return;
+        }
+    }
+    cout << -1 << endl;
+}
+
+
+void ABC_410_E()
+{
+    int i, j;
+    int n, h, m;
+    int inf = 0x3f3f3f3f;
+
+    cin >> n >> h >> m;
+
+    vector<int> a(n), b(n);
+    for (i = 0; i < n; i++) {
+        cin >> a[i] >> b[i];
+    }
+
+    // dp[i][j] - 击败第i个怪物消耗j生命值的最小魔法使用量(m)
+    vector<vector<int>> dp(n, vector<int>(h + 1, inf));
+
+    if (a[0] <= h) {
+        dp[0][a[0]] = 0;
+    }
+    if (b[0] <= m) {
+        dp[0][0] = b[0];
+    }
+    for (i = 1; i < n; i++) {
+        for (j = 0; j <= h; j++) {
+            if (dp[i - 1][j] != inf) {
+                if (j + a[i] <= h) {
+                    dp[i][j + a[i]] = min(dp[i][j + a[i]], dp[i - 1][j]);
+                }
+                if (dp[i - 1][j] + b[i] <= m) {
+                    dp[i][j] = min(dp[i][j], dp[i - 1][j] + b[i]);
+                }
+            }
+        }
+    }
+    int ans = 0;
+    for (i = 0; i < n; i++) {
+        for (j = 0; j <= h; j++) {
+            if (dp[i][j] != inf) {
+                ans = i + 1;
+                break;
+            }
+        }
+    }
+    cout << ans << endl;
+}

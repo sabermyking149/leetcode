@@ -26685,3 +26685,57 @@ vector<vector<int>> buildMatrix(int k, vector<vector<int>>& rowConditions, vecto
     }
     return grid;
 }
+
+
+// LC395
+unordered_map<string, int> data_LC395;
+int longestSubstring(string s, int k)
+{
+    if (data_LC395.count(s)) {
+        return data_LC395[s];
+    }
+
+    int i;
+    int n = s.size();
+    int m;
+    string t;
+    vector<string> strs;
+    unordered_map<char, vector<int>> idx;
+    for (i = 0; i < n; i++) {
+        idx[s[i]].emplace_back(i);
+    }
+    bool f = true;
+    for (auto& it : idx) {
+        if (it.second.size() < k) {
+            f = false;
+            // it.second的每一个区间内考虑情况
+            auto& v = it.second;
+            m = v.size();
+            if (v[0] != 0 && v[0] >= k) {
+                t = s.substr(0, v[0]);
+                strs.emplace_back(t);
+            }
+            for (i = 1; i < m; i++) {
+                if (v[i] - v[i - 1] - 1 < k) {
+                    continue;
+                }
+                t = s.substr(v[i - 1] + 1, v[i] - v[i - 1] - 1);
+                strs.emplace_back(t);
+            }
+            if (v[m - 1] != n - 1 && n - v[m - 1] - 1 >= k) {
+                t = s.substr(v[m - 1] + 1);
+                strs.emplace_back(t);
+            }
+        }
+    }
+    if (f) {
+        return n;
+    }
+    // for (auto str :strs) cout << str << endl;
+    int maxLen = 0;
+    for (auto& str : strs) {
+        maxLen = max(maxLen, longestSubstring(str, k));
+    }
+    data_LC395[s] = maxLen;
+    return maxLen;
+}
