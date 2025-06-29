@@ -534,3 +534,39 @@ void CR_1029_C()
     }
     cout << cnt << endl;
 }
+
+
+void ECR_180_C()
+{
+    int i, j, k;
+    int n;
+
+    cin >> n;
+    vector<int> a(n);
+    for (i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    int left, right, mid;
+    long long ways = 0;
+    for (i = n - 1; i >= 2; i--) {
+        if (a[i] + a[i - 1] + a[i - 2] <= a[n - 1]) {
+            break;
+        }
+        for (j = i - 1; j >= 1; j--) {
+            left = 0;
+            right = j - 1;
+            while (left <= right) {
+                mid = (right - left) / 2 + left;
+                if (a[j] + a[mid] > a[i] && a[n - 1] - a[i] - a[j] < a[mid]) { // 还要满足3个数之和大于a[n - 1]
+                    right = mid - 1;
+                } else {
+                    left = mid + 1;
+                }
+            }
+            // cout << i << " " << j << " " << left << " " << j - left << endl;
+            ways += j - left;
+        }
+    }
+    cout << ways << endl;
+}
