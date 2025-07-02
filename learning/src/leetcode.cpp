@@ -63,6 +63,28 @@ vector<int> GetPrimes(int n)
 }
 
 
+bool IsPrime(int n)
+{
+    if (n <= 1) {
+        return false;
+    }
+    if (n == 2 || n == 3) {
+        return true;
+    }
+    if (n % 2 == 0 || n % 3 == 0) {
+        return false;
+    }
+
+    int m = sqrt(n);
+    for (int i = 3; i <= m; i += 2) {
+        if (n % i == 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
 // 求组合数
 long long Combine(int m, int n, map<pair<int, int>, long long>& combineData)
 {
@@ -26738,4 +26760,106 @@ int longestSubstring(string s, int k)
     }
     data_LC395[s] = maxLen;
     return maxLen;
+}
+
+
+// LC3593
+int minIncrease(int n, vector<vector<int>>& edges, vector<int>& cost)
+{
+    long long maxCost;
+    vector<vector<int>> e(n);
+    for (auto& edge : edges) {
+        e[edge[0]].emplace_back(edge[1]);
+        e[edge[1]].emplace_back(edge[0]);
+    }
+
+    // maxVal[i] - 以i为根节点到其任意叶子节点路径最大cost
+    vector<long long> maxVal(n, -1);
+    function<long long (int, int)> dfs = [&dfs, &cost, &e, &maxVal](int cur, int parent) {
+        if (maxVal[cur] != -1) {
+            return maxVal[cur];
+        }
+
+        long long ans = 0;
+        long long sum;
+
+        ans = cost[cur];
+        for (auto& next : e[cur]) {
+            sum = cost[cur];
+            if (next != parent) {
+                sum += dfs(next, cur);
+                ans = max(ans, sum);
+            }
+        }
+        maxVal[cur] = ans;
+        return ans;
+    };
+
+    dfs(0, -1);
+    maxCost = 0;
+    for (auto m : maxVal) {
+        // cout << m << " ";
+        maxCost = max(maxCost, m);
+    }
+
+    int cnt = 0;
+    function <void (int, int, long long)> GetIncrease = [&GetIncrease, &maxVal, &e, &cost, &cnt](int cur, int parent, long long curVal) {
+        if (maxVal[cur] == curVal) {
+            for (auto& next : e[cur]) {
+                if (next != parent) {
+                    GetIncrease(next, cur, curVal - cost[cur]);
+                }
+            }
+        } else {
+            cnt++;
+            for (auto& next : e[cur]) {
+                if (next != parent) {
+                    GetIncrease(next, cur, curVal - cost[cur] - (curVal - maxVal[cur]));
+                }
+            }
+        }
+    };
+
+    GetIncrease(0, -1, maxCost);
+
+    return cnt;
+}
+
+
+// LC239
+vector<int> maxSlidingWindow(vector<int>& nums, int k)
+{
+    if (k == 1) {
+        return nums;
+    }
+
+    // 单调递减队列
+    deque<int> dq;
+
+    int i;
+    int n = nums.size();
+    vector<int> ans;
+    for (i = 0; i < n; i++) {
+        if (dq.empty()) {
+            dq.push_back(i);
+            continue;
+        }
+        while (i - dq.front() >= k) {
+            dq.pop_front();
+            if (dq.empty()) {
+                break;
+            }
+        }
+        while (nums[dq.back()] < nums[i]) {
+            dq.pop_back();
+            if (dq.empty()) {
+                break;
+            }
+        }
+        dq.push_back(i);
+        if (i >= k - 1) {
+            ans.emplace_back(nums[dq.front()]);
+        }
+    }
+    return ans;
 }
