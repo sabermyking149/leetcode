@@ -133,11 +133,11 @@ private:
     }
 
 public:
-    // 构造函数，初始化parent和rank数组
+    // 构造函数, 初始化parent和rank数组
     UnionFind(int size) : parent(size), rank(size, 0)
     {
         for (int i = 0; i < size; ++i) {
-            parent[i] = i;  // 初始时，每个节点的父节点是它自己
+            parent[i] = i;  // 初始时, 每个节点的父节点是它自己
         }
     }
 
@@ -148,7 +148,7 @@ public:
         int yRoot = find(y);
 
         if (xRoot == yRoot) {
-            return;  // 如果x和y已经在同一个集合中，则不需要合并
+            return;  // 如果x和y已经在同一个集合中, 则不需要合并
         }
 
         // 按秩合并：将秩较小的树合并到秩较大的树下
@@ -158,7 +158,7 @@ public:
             parent[yRoot] = xRoot;
         } else {
             parent[yRoot] = xRoot;
-            rank[xRoot] += 1;  // 如果秩相等，选择一个作为根，并增加其秩
+            rank[xRoot] += 1;  // 如果秩相等, 选择一个作为根, 并增加其秩
         }
     }
 
@@ -283,6 +283,76 @@ private:
         
         // 左子树无解，再查右子树
         return find(node * 2 + 2, mid + 1, end, L, R, x);
+    }
+};
+
+
+// 二进制提升法最近公共祖先节点
+class BinaryLiftingLCA {
+private:
+    vector<vector<int>> up; // up[i][j] - i节点的2^j级祖先, up[i][0] - 父节点
+    vector<int> depth;
+    int LOG;
+public:
+    // 生成up和depth数组
+    BinaryLiftingLCA(vector<vector<int>>& edges, int root)
+    {
+        int nodeNum = edges.size();
+        LOG = log2(nodeNum) + 1;
+        up = vector<vector<int>>(nodeNum + 1, vector<int>(LOG)); // 为节点编号从1开始留出空间
+        depth.resize(nodeNum + 1, 0);
+
+        function<void (int, int)> dfs = [&dfs, &edges, this](int cur, int parent) {
+            int i;
+            up[cur][0] = parent;
+            for (i = 1; i < LOG; i++) {
+                up[cur][i] = up[up[cur][i - 1]][i - 1];
+            }
+            for (auto& next : edges[cur]) {
+                if (next != parent) {
+                    depth[next] = depth[cur] + 1;
+                    dfs(next, cur);
+                }
+            }
+        };
+        dfs(root, root);
+    }
+
+    const vector<int>& GetDepth() const {
+        return depth;
+    }
+
+    // 节点u和v的最近公共祖先
+    int lca(int u, int v)
+    {
+        if (depth[u] < depth[v]) {
+            swap(u, v);
+        }
+
+        int i;
+        int diff;
+
+        diff = depth[u] - depth[v];
+        // u, v提升到同一高度
+        for (i = LOG - 1; i >= 0; i--) {
+            if ((diff & (1 << i)) == (1 << i)) {
+                u = up[u][i];
+            }
+        }
+        // 在同一条链上
+        if (u == v) {
+            return u;
+        }
+
+        // 同时找u, v的公共祖先
+        for (i = LOG - 1; i >= 0; i--) {
+            if (up[u][i] != up[v][i]) {
+                u = up[u][i];
+                v = up[v][i];
+            }
+            // 此处不应该break
+        }
+        return up[u][0];
     }
 };
 #endif

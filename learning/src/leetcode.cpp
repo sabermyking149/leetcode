@@ -26863,3 +26863,30 @@ vector<int> maxSlidingWindow(vector<int>& nums, int k)
     }
     return ans;
 }
+
+
+// LC3559
+vector<int> assignEdgeWeights(vector<vector<int>>& edges, vector<vector<int>>& queries)
+{
+    int mod = 1e9 + 7;
+    int n = edges.size() + 1;
+    int a, b;
+    vector<vector<int>> e(n + 1);
+    for (auto& edge : edges) {
+        e[edge[0]].emplace_back(edge[1]);
+        e[edge[1]].emplace_back(edge[0]);
+    }
+
+    BinaryLiftingLCA bll(e, 1);
+    vector<int> ans;
+    vector<int> depth = bll.GetDepth();
+    for (auto& q : queries) {
+        if (q[0] == q[1]) {
+            ans.emplace_back(0);
+            continue;
+        }
+        int node = bll.lca(q[0], q[1]);
+        ans.emplace_back(FastPow(2, depth[q[1]] + depth[q[0]] - depth[node] * 2 - 1, mod));
+    }
+    return ans;
+}
