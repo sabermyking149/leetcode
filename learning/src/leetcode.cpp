@@ -26890,3 +26890,150 @@ vector<int> assignEdgeWeights(vector<vector<int>>& edges, vector<vector<int>>& q
     }
     return ans;
 }
+
+
+// LC1353
+int maxEvents(vector<vector<int>>& events)
+{
+    int i, j;
+    int n = events.size();
+    int lastDay;
+    int ans;
+
+    sort(events.begin(), events.end());
+    lastDay = 0;
+    for (auto& e : events) {
+        lastDay = max(lastDay, e[1]);
+    }
+
+    for (auto e : events) cout << e[0] << " " << e[1] << endl;
+
+    // 存储event end day
+    priority_queue<int, vector<int>, greater<>> pq; 
+    ans = 0;
+    j = 0;
+    for (i = 1; i <= lastDay; i++) {
+        while (j < n && events[j][0] <= i) {
+            pq.push(events[j][1]);
+            j++;
+        }
+        // 小于i的会议没办法参加了
+        while (!pq.empty() && pq.top() < i) {
+            pq.pop();
+        }
+        if (!pq.empty()) {
+            ans++;
+            pq.pop();
+        }
+    }
+    return ans;
+}
+
+
+// LC2448
+long long minCost_LC2448(vector<int>& nums, vector<int>& cost)
+{
+    int i;
+    int n = nums.size();
+    vector<pair<long long, long long>> vp;
+    for (i = 0; i < n; i++) {
+        vp.push_back({nums[i], cost[i]});
+    }
+
+    sort(vp.begin(), vp.end());
+
+    vector<long long> prefixnXcSum(n);
+    vector<long long> prefixCostSum(n);
+
+    prefixCostSum[0] = vp[0].second;
+    prefixnXcSum[0] = vp[0].first * vp[0].second;
+    for (i = 1; i < n; i++) {
+        prefixnXcSum[i] = prefixnXcSum[i - 1] + vp[i].first * vp[i].second;
+        prefixCostSum[i] = prefixCostSum[i - 1] + vp[i].second;
+        // cout << prefixnXcSum[i] << " " << prefixCostSum[i] << endl;
+    }
+
+    long long ans = LLONG_MAX;
+    long long cur;
+    for (i = 0; i < n; i++) {
+        cur = prefixCostSum[i] * vp[i].first - prefixnXcSum[i] + 
+            (prefixnXcSum[n - 1] - prefixnXcSum[i]) - 
+            (prefixCostSum[n - 1] - prefixCostSum[i]) * vp[i].first;
+        ans = min(ans, cur);
+        // cout << cur << endl;
+    }
+
+    return ans;
+}
+
+
+// LC3331
+vector<int> findSubtreeSizes(vector<int>& parent, string s)
+{
+    int i;
+    int n = parent.size();
+
+    vector<vector<int>> edges(n);
+
+    for (i = 0; i < n; i++) {
+        if (parent[i] != -1) {
+            edges[parent[i]].emplace_back(i);
+        }
+    }
+
+    // 字符所在的最近节点编号
+    vector<int> ancestor(26, -1);
+    function<void (int)> ScanTree = [&ScanTree, &edges, &parent, &ancestor, &s](int cur) {
+        int t = ancestor[s[cur] - 'a'];
+        if (edges[cur].empty()) {
+            if (t != -1 && t != parent[cur]) {
+                parent[cur] = t;
+            }
+            return;
+        }
+        for (auto& next : edges[cur]) {
+            if (t == -1) {
+                ancestor[s[cur] - 'a'] = cur;
+                ScanTree(next);
+                ancestor[s[cur] - 'a'] = t;
+            } else {
+                if (t != parent[cur]) {
+                    parent[cur] = t;
+                }
+                ancestor[s[cur] - 'a'] = cur;
+                ScanTree(next);
+                ancestor[s[cur] - 'a'] = t;
+            }
+        }
+    };
+
+    ScanTree(0);
+
+    // 由更新后的parent重新建图
+    for (i = 0; i < n; i++) {
+        edges[i].clear();
+    }
+    for (i = 0; i < n; i++) {
+        // cout << parent[i] << " ";
+        if (parent[i] != -1) {
+            edges[parent[i]].emplace_back(i);
+        }
+    }
+
+    vector<int> nodeNums(n, 0);
+    function<int (int)> dfs = [&dfs, &edges, &nodeNums](int cur) {
+        if (nodeNums[cur] != 0) {
+            return nodeNums[cur];
+        }
+
+        int ans = 1;
+        for (auto& next : edges[cur]) {
+            ans += dfs(next);
+        }
+        nodeNums[cur] = ans;
+        return ans;
+    };
+
+    dfs(0);
+    return nodeNums;
+}
