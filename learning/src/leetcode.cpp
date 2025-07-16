@@ -19370,7 +19370,7 @@ int getSum(vector<int>& nums)
 }
 
 
-// LC84
+// LC84 LC1856
 int largestRectangleArea(vector<int>& heights)
 {
     int i;
@@ -27036,4 +27036,245 @@ vector<int> findSubtreeSizes(vector<int>& parent, string s)
 
     dfs(0);
     return nodeNums;
+}
+
+
+// LC2327
+vector<bool> friendRequests(int n, vector<vector<int>>& restrictions, vector<vector<int>>& requests)
+{
+    int i;
+    int m = restrictions.size();
+    UnionFind uf = UnionFind(n);
+    vector<bool> ans;
+    for (auto& r : requests) {
+        auto rk0 = uf.findSet(r[0]);
+        auto rk1 = uf.findSet(r[1]);
+        if (rk0 == rk1) {
+            ans.emplace_back(true);
+            continue;
+        }
+        // 从限制条件入手, 如果r0, r1合并则rk0 rk1相等, 可能导致限制条件合并
+        for (i = 0; i < m; i++) {
+            auto rk2 = uf.findSet(restrictions[i][0]);
+            auto rk3 = uf.findSet(restrictions[i][1]);
+            if ((rk0 == rk2 && rk1 == rk3) || (rk0 == rk3 && rk1 == rk2)) {
+                ans.emplace_back(false);
+                break;
+            }
+        }
+        if (i == m) {
+            uf.unionSets(r[0], r[1]);
+            ans.emplace_back(true);
+        }
+    }
+    return ans;
+}
+
+
+// LC3614
+char processStr(string s, long long k)
+{
+    int i;
+    int n = s.size();
+    // 执行s[i]后目标字符串的长度
+    vector<long long> opLen(n);
+    if (isalpha(s[0])) {
+        opLen[0] = 1;
+    } else {
+        opLen[0] = 0;
+    }
+    for (i = 1; i < n; i++) {
+        if (isalpha(s[i])) {
+            opLen[i] = opLen[i - 1] + 1;
+        } else if (s[i] == '*') {
+            if (opLen[i - 1] > 0) {
+                opLen[i] = opLen[i - 1] - 1;
+            }
+        } else if (s[i] == '#') {
+            opLen[i] = opLen[i - 1] * 2;
+        } else {
+            // '%'
+            opLen[i] = opLen[i - 1];
+        }
+    }
+    if (opLen[n - 1] <= k) {
+        return '.';
+    }
+
+    // cout << opLen[n - 1] << endl;
+    long long len = opLen[n - 1];
+    for (i = n - 1; i >= 0; i--) {
+        if (isalpha(s[i])) {
+            if (opLen[i] == k + 1) {
+                return s[i];
+            }
+            len--;
+        } else if (s[i] == '*') {
+            len++;
+        } else if (s[i] == '#') {
+            if (i > 0) {
+                auto tLen = opLen[i - 1];
+                if (k >= tLen) {
+                    k -= tLen;
+                }
+                len = tLen;
+            }
+        } else if (s[i] == '%') {
+            // idx ~ n - 1 - idx
+            k = len - 1 - k;
+        }
+        // cout << "k = " << k << endl;
+    }
+    return s[k];
+}
+
+
+// LC3302
+vector<int> validSequence(string word1, string word2)
+{
+    int i, j;
+    int m = word1.size();
+    int n = word2.size();
+
+    if (m < n) {
+        return {};
+    }
+
+    vector<int> ans(n);
+    // 预处理, suffix[i] - 以word1的i位开始的后缀最多能覆盖word2后缀的位置
+    vector<int> suffix(m, n);
+    i = m - 1;
+    j = n - 1;
+    while (i >= 0 && j >= 0) {
+        if (word1[i] == word2[j]) {
+            suffix[i] = j;
+            j--;
+        } else {
+            if (i < m - 1) {
+                suffix[i] = suffix[i + 1];
+            }
+        }
+        i--;
+    }
+    while (i >= 0) {
+        if (i < m - 1) {
+            suffix[i] = suffix[i + 1];
+        }
+        i--;
+    }
+    // for (auto s : suffix) cout << s << " ";
+    bool used = false;
+    i = j = 0;
+    while (i < m && j < n) {
+        if (word2[j] == word1[i]) {
+            ans[j] = i;
+            j++;
+        } else {
+            if (used == false) {
+                if (i == m - 1) {
+                    if (j != n - 1) {
+                        break;
+                    }
+                    ans[j] = m - 1;
+                    j++;
+                    continue;
+                }
+                // i < m - 1
+                if (j == n - 1) {
+                    ans[j] = i;
+                    j++;
+                    continue;
+                }
+                if (suffix[i + 1] <= j + 1) {
+                    used = true;
+                    ans[j] = i;
+                    j++;
+                }
+            }
+        }
+        i++;
+    }
+    if (j == n) {
+        return ans;
+    }
+    return {};
+}
+
+
+// LC2876
+vector<int> countVisitedNodes(vector<int>& edges)
+{
+    // 条件已限定n个节点, n条边且每个点的出度均为1, 则通过拓扑排序后剩下的点一定是一个环
+    int i;
+    int n = edges.size();
+    vector<int> inDegree(n, 0);
+    vector<int> isloopNodes(n, 1);
+    for (i = 0; i < n; i++) {
+        inDegree[edges[i]]++;
+    }
+
+    queue<int> q;
+    for (i = 0; i < n; i++) {
+        if (inDegree[i] == 0) {
+            isloopNodes[i] = 0;
+            q.push(i);
+        }
+    }
+    while (!q.empty()) {
+        auto node = q.front();
+        q.pop();
+        inDegree[edges[node]]--;
+        if (inDegree[edges[node]] == 0) {
+            q.push(edges[node]);
+            isloopNodes[edges[node]] = 0;
+        }
+    }
+
+    // 注意可能不止一个环(多个连通分量)
+    int len;
+    vector<int> visited(n, 0);
+    vector<int> loopNodes;
+    vector<int> loopLen(n, 0);
+    auto FindLoop = [&edges, &visited, &len, &loopNodes](auto&& self, int cur) -> void {
+        visited[cur] = 1;
+        len++;
+        loopNodes.emplace_back(cur);
+        if (visited[edges[cur]] == 0) {
+            self(self, edges[cur]);
+        }
+    };
+    for (i = 0; i < n; i++) {
+        if (isloopNodes[i] && visited[i] == 0) {
+            len = 0;
+            FindLoop(FindLoop, i);
+            while (!loopNodes.empty()) {
+                loopLen[loopNodes.back()] = len;
+                loopNodes.pop_back();
+            }
+            // cout << "loopLen = " << len << endl;
+        }
+    }
+
+    // 反向图
+    vector<vector<int>> rev_edges(n);
+    for (i = 0; i < n; i++) {
+        rev_edges[edges[i]].emplace_back(i);
+    }
+
+    vector<int> ans(n);
+    auto dfs = [&isloopNodes, &rev_edges, &ans](auto&& self, int cur, int len) -> void {
+        ans[cur] = len;
+        for (auto& next : rev_edges[cur]) {
+            if (isloopNodes[next] == 0) {
+                self(self, next, len + 1);
+            }
+        }
+    };
+    
+    for (i = 0; i < n; i++) {
+        if (isloopNodes[i]) {
+            dfs(dfs, i, loopLen[i]);
+        }
+    }
+    return ans;
 }

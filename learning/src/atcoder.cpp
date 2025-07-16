@@ -2436,3 +2436,32 @@ void ABC_410_E()
     }
     cout << ans << endl;
 }
+
+
+void ABC_414_D()
+{
+    // 问题转化为: 一个长度为n的单调不减数组, 分成m个连续子数组, 求每个子数组首尾之差(正数)之和的最小值
+    // 再转化一下, 实际可计算最后一个元素与第一个元素之差, 再减去m - 1个最大相邻元素之和
+    int i;
+    int m, n;
+    long long ans;
+
+    cin >> n >> m;
+
+    vector<long long> x(n);
+    for (i = 0; i < n; i++) {
+        cin >> x[i];
+    }
+    sort(x.begin(), x.end());
+    vector<long long> diff;
+    for (i = 1; i < n; i++) {
+        diff.emplace_back(x[i] - x[i - 1]);
+    }
+    sort(diff.rbegin(), diff.rend());
+    long long a = 0;
+    for (i = 0; i < m - 1; i++) {
+        a += diff[i];
+    }
+    ans = x[n - 1] - x[0] - a;
+    cout << ans << endl;
+}
