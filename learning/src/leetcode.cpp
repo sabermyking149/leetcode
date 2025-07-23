@@ -27204,7 +27204,7 @@ vector<int> validSequence(string word1, string word2)
 // LC2876
 vector<int> countVisitedNodes(vector<int>& edges)
 {
-    // 条件已限定n个节点, n条边且每个点的出度均为1, 则通过拓扑排序后剩下的点一定是一个环
+    // 条件已限定n个节点, n条边且每个点的出度均为1, 则通过拓扑排序后剩下的点一定是一个环或多个环
     int i;
     int n = edges.size();
     vector<int> inDegree(n, 0);
@@ -27277,4 +27277,223 @@ vector<int> countVisitedNodes(vector<int>& edges)
         }
     }
     return ans;
+}
+
+
+// LC2050
+int minimumTime(int n, vector<vector<int>>& relations, vector<int>& time)
+{
+    int i;
+    // 第i门课程可以学习的时刻
+    vector<int> learningTime(n + 1, 0);
+
+    vector<int> inDegree(n + 1, 0);
+    // 条件已保证relations是一个DAG, 但一门课程可能有多个出度
+    vector<vector<int>> edges(n + 1);
+    for (auto& r : relations) {
+        inDegree[r[1]]++;
+        edges[r[0]].emplace_back(r[1]);
+    }
+    queue<pair<int, int>> q;
+    for (i = 1; i <= n; i++) {
+        if (inDegree[i] == 0) {
+            q.push({i, time[i - 1]});
+        }
+    }
+
+    while (!q.empty()) {
+        auto [course, needTime] = q.front();
+        q.pop();
+        learningTime[course] = max(learningTime[course], needTime);
+        for (auto& next : edges[course]) {
+            inDegree[next]--;
+            learningTime[next] = max(learningTime[next], needTime + time[next - 1]);
+            if (inDegree[next] == 0) {
+                q.push({next, learningTime[next]});
+            }
+        }
+    }
+    return *max_element(learningTime.begin(), learningTime.end());
+}
+
+
+// LC2290
+int minimumObstacles(vector<vector<int>>& grid)
+{
+    // dijkstra
+    int i;
+    int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+    int m = grid.size();
+    int n = grid[0].size();
+    vector<vector<int>> dist(m, vector<int>(n, INT_MAX));
+    // {obstaclesNum, pos}
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
+
+    pq.push({0, 0});
+    while (!pq.empty()) {
+        auto [obstaclesNum, pos] = pq.top();
+        pq.pop();
+        auto r = pos / n;
+        auto c = pos % n;
+        if (dist[r][c] < obstaclesNum) {
+            continue;
+        }
+        dist[r][c] = obstaclesNum;
+
+        for (i = 0; i < 4; i++) {
+            auto nr = r + directions[i][0];
+            auto nc = c + directions[i][1];
+            if (nr >= m || nr < 0 || nc >= n || nc < 0) {
+                continue;
+            }
+            if (obstaclesNum + grid[nr][nc] < dist[nr][nc]) {
+                dist[nr][nc] = obstaclesNum + grid[nr][nc];
+                pq.push({dist[nr][nc], nr * n + nc});
+            }
+        }
+    }
+
+    return dist[m - 1][n - 1];
+}
+
+
+// LC3615
+int maxLen(int n, vector<vector<int>>& edges, string label)
+{
+    int i, j;
+    vector<vector<int>> adj(n);
+    for (auto& e : edges) {
+        adj[e[0]].emplace_back(e[1]);
+        adj[e[1]].emplace_back(e[0]);
+    }
+
+    // dp[i] - i型路径(二进制压缩)能否组成回文路径
+    vector<bool> dp;
+
+    int ans = 0;
+    // 可以从中心一(两)点向两端扩展构造回文
+    auto dfs = [&label, &dp, &adj, &ans](auto&& self, int start, int end, unsigned int route, int nums) -> void {
+        ans = max(ans, nums);
+        int i, j;
+        int size1 = adj[start].size();
+        int size2 = adj[end].size();
+        for (i = 0; i < size1; i++) {
+            for (j = 0; j < size2; j++) {
+                auto n_start = adj[start][i];
+                auto n_end = adj[end][j];
+                auto n_route = route | (1 << n_start) | (1 << n_end);
+                if (n_start == n_end || (route & 1 << n_start) != 0 ||
+                    (route & 1 << n_end) != 0 || label[n_start] != label[n_end] || dp[n_route]) {
+                    continue;
+                }
+
+                dp[n_route] = true;
+                self(self, n_start, n_end, n_route, nums + 2);
+            }
+        }
+    };
+
+    // 中心一个点
+    unsigned int route;
+    for (i = 0; i < n; i++) {
+        dp.assign(1 << n, false);
+        route = 0;
+        route |= 1 << i;
+        dp[route] = true;
+        dfs(dfs, i, i, route, 1);
+    }
+
+    // 两个点
+    int size;
+    for (i = 0; i < n; i++) {
+        size = adj[i].size();
+        dp.assign(1 << n, false);
+        for (j = 0; j < size; j++) {
+            if (label[i] == label[adj[i][j]]) {
+                route = 0;
+                route = route | 1 << i | 1 << adj[i][j];
+                dp[route] = true;
+                dfs(dfs, i, adj[i][j], route, 2);
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LC3600
+int maxStability(int n, vector<vector<int>>& edges, int k)
+{
+    int i, m;
+    int cnt, t;
+    int maxLen;
+    UnionFind uf(n), uf_connect(n);
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>> pq; // [weight, from, to]
+    cnt = 0;
+    maxLen = 2e5;
+    for (auto& edge: edges) {
+        if (edge[3] == 1) {
+            if (uf.findSet(edge[0]) != uf.findSet(edge[1])) {
+                uf.unionSets(edge[0], edge[1]);
+                maxLen = min(maxLen, edge[2]);
+            } else { // 形成了环
+                return -1;
+            }
+            cnt++;
+        } else {
+            pq.push({edge[2], edge[0], edge[1]});
+        }
+        uf_connect.unionSets(edge[0], edge[1]);
+    }
+
+    // must边太多可以形成环
+    if (cnt >= n) {
+        return -1;
+    }
+    // 有多个连通分量
+    int area = uf_connect.findSet(0);
+    for (i = 0; i < n; i++) {
+        if (uf_connect.findSet(i) != area) {
+            return -1;
+        }
+    }
+
+    vector<tuple<int, int, int>> e;
+    while (!pq.empty()) {
+        e.emplace_back(pq.top());
+        pq.pop();
+    }
+
+    int left, right, mid;
+
+    left = 1;
+    right = maxLen;
+    m = e.size();
+    while (left <= right) {
+        t = k;
+        mid = (right - left) / 2 + left;
+        auto tempUf = uf;
+        // 从大到小遍历可升级边
+        for (i = 0; i < m; i++) {
+            auto [weight, a, b] = e[i];
+            if (tempUf.findSet(a) != tempUf.findSet(b)) {
+                if (weight >= mid) {
+                    tempUf.unionSets(a, b);
+                } else {
+                    if (t == 0 || weight * 2 < mid) {
+                        break;
+                    } else {
+                        tempUf.unionSets(a, b);
+                        t--;
+                    }
+                }
+            }
+        }
+        if (i != m) {
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    return right;
 }
