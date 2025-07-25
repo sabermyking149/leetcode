@@ -27497,3 +27497,174 @@ int maxStability(int n, vector<vector<int>>& edges, int k)
     }
     return right;
 }
+
+
+// LC2322
+int minimumScore(vector<int>& nums, vector<vector<int>>& edges)
+{
+    int i, j;
+    int n = nums.size();
+    vector<vector<int>> e(n);
+
+    for (auto& edge : edges) {
+        e[edge[0]].emplace_back(edge[1]);
+        e[edge[1]].emplace_back(edge[0]);
+    }
+
+    vector<int> xorVal(n, -1);
+    vector<vector<int>> adj; // 以0为根的树的所有边
+    auto dfs = [&nums, &e, &xorVal, &adj](auto&& self, int cur, int parent) -> int {
+        if (xorVal[cur] != -1) {
+            return xorVal[cur];
+        }
+        if (e[cur].size() == 1 && e[cur][0] == parent) {
+            xorVal[cur] = nums[cur];
+            return xorVal[cur];
+        }
+        int ans = nums[cur];
+        for (auto& next : e[cur]) {
+            if (next != parent) {
+                adj.push_back({cur, next});
+                ans ^= self(self, next, cur);
+            }
+        }
+
+        xorVal[cur] = ans;
+        return ans;
+    };
+
+    dfs(dfs, 0, -1);
+    // for (auto x : xorVal) cout << x << " "; cout << endl;
+    int m = adj.size();
+    int a, b, c;
+    int curXorVal;
+    int ancestor, ans;
+    BinaryLiftingLCA bll(e, 0);
+    ans = INT_MAX;
+    for (i = 0; i < m - 1; i++) {
+        for (j = i + 1; j < m; j++) {
+            // cout << adj[i][1] << " " << adj[j][1] << endl;
+            ancestor = bll.lca(adj[i][1], adj[j][1]);
+            if (ancestor == adj[i][1]) { // 子树
+                a = xorVal[0] ^ xorVal[adj[i][1]];
+                b = xorVal[adj[i][1]] ^ xorVal[adj[j][1]];
+                c = xorVal[adj[j][1]];
+            } else {
+                a = xorVal[adj[i][1]];
+                b = xorVal[adj[j][1]];
+                c = xorVal[0] ^ a ^ b;
+            }
+            ans = min(ans, max({a, b, c}) - min({a, b, c}));
+        }
+    }
+    return ans;
+}
+// 不使用lca, 而是采用每个节点的进入和退出时间戳来判断父子关系
+int minimumScore_betterWay(vector<int>& nums, vector<vector<int>>& edges)
+{
+    int i, j;
+    int n = nums.size();
+    vector<vector<int>> e(n);
+
+    for (auto& edge : edges) {
+        e[edge[0]].emplace_back(edge[1]);
+        e[edge[1]].emplace_back(edge[0]);
+    }
+
+    vector<int> xorVal(n, -1);
+    vector<vector<int>> adj; // 以0为根的树的所有边
+    vector<int> in(n); // 节点进入的时间
+    vector<int> out(n); // 节点退出的时间
+    auto dfs = [&nums, &e, &xorVal, &adj, &in, &out](auto&& self, int cur, int parent, int& time) -> int {
+        in[cur] = time;
+        time++;
+        if (xorVal[cur] != -1) {
+            return xorVal[cur];
+        }
+        if (e[cur].size() == 1 && e[cur][0] == parent) {
+            xorVal[cur] = nums[cur];
+            out[cur] = time;
+            time++;
+            return xorVal[cur];
+        }
+        int ans = nums[cur];
+        for (auto& next : e[cur]) {
+            if (next != parent) {
+                adj.push_back({cur, next});
+                ans ^= self(self, next, cur, time);
+            }
+        }
+
+        xorVal[cur] = ans;
+        out[cur] = time;
+        time++;
+        return ans;
+    };
+
+    int time = 0;
+
+    dfs(dfs, 0, -1, time);
+    // for (auto x : in) cout << x << " "; cout << endl;
+    // for (auto x : out) cout << x << " "; cout << endl;
+    int m = adj.size();
+    int a, b, c;
+    int ans;
+    ans = INT_MAX;
+    for (i = 0; i < m - 1; i++) {
+        for (j = i + 1; j < m; j++) {
+            if (in[adj[i][1]] < in[adj[j][1]] && out[adj[i][1]] > out[adj[j][1]]) { // 子树
+                a = xorVal[0] ^ xorVal[adj[i][1]];
+                b = xorVal[adj[i][1]] ^ xorVal[adj[j][1]];
+                c = xorVal[adj[j][1]];
+            } else {
+                a = xorVal[adj[i][1]];
+                b = xorVal[adj[j][1]];
+                c = xorVal[0] ^ a ^ b;
+            }
+            ans = min(ans, max({a, b, c}) - min({a, b, c}));
+        }
+    }
+    return ans;
+}
+
+
+// LC2421
+int numberOfGoodPaths(vector<int>& vals, vector<vector<int>>& edges)
+{
+    // 从最小值点扩充, 查并集计算连通分量和各个分量含有的当前最小点个数
+    int i;
+    int n = vals.size();
+    int ans;
+    map<int, vector<int>> nodes;
+
+    for (i = 0; i < n; i++) {
+        nodes[vals[i]].emplace_back(i);
+    }
+    vector<vector<int>> e(n);
+    for (auto& edge : edges) {
+        e[edge[0]].emplace_back(edge[1]);
+        e[edge[1]].emplace_back(edge[0]);
+    }
+
+    UnionFind uf(n);
+    unordered_map<int, int> nodesSet;
+    ans = 0;
+    for (auto& [val, node] : nodes) {
+        for (auto& id : node) {
+            for (auto& next : e[id]) {
+                if (vals[next] <= val && uf.findSet(next) != uf.findSet(id)) {
+                    uf.unionSets(next, id);
+                }
+            }
+        }
+        nodesSet.clear();
+        for (auto& id : node) {
+            nodesSet[uf.findSet(id)]++;
+        }
+        for (auto& [sets, nums] : nodesSet) {
+            ans += (nums + 1) * nums / 2;
+        }
+    }
+    // for (i = 0; i < n; i++) cout << uf.findSet(i) << " "; cout << endl;
+    return ans;
+}
