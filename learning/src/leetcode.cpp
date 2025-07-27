@@ -16,6 +16,7 @@
 #include <list>
 #include <optional>
 #include <bit>
+#include <climits>
 
 #include "pub.h"
 
@@ -27666,5 +27667,99 @@ int numberOfGoodPaths(vector<int>& vals, vector<vector<int>>& edges)
         }
     }
     // for (i = 0; i < n; i++) cout << uf.findSet(i) << " "; cout << endl;
+    return ans;
+}
+
+
+// LC1574
+int findLengthOfShortestSubarray(vector<int>& arr)
+{
+    int i;
+    int n = arr.size();
+    int left, right, mid;
+    bool f;
+    // 前缀是否不递减
+    vector<bool> isIncreasing(n);
+    // 后缀是否不递增
+    vector<bool> isDecreasing(n);
+
+    f = true;
+    isIncreasing[0] = f;
+    for (i = 1; i < n; i++) {
+        if (arr[i] < arr[i - 1]) {
+            f = false;
+        }
+        isIncreasing[i] = f;
+    }
+    f = true;
+    isDecreasing[n - 1] = f;
+    for (i = n - 2; i >= 0; i--) {
+        if (arr[i] > arr[i + 1]) {
+            f = false;
+        }
+        isDecreasing[i] = f;
+    }
+
+    left = 0;
+    right = n;
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        for (i = 0; i < n; i++) {
+            if (i == 0) {
+                if (isDecreasing[mid]) {
+                    right = mid - 1;
+                    break;
+                }
+            } else {
+                if (isIncreasing[i - 1] == false) {
+                    left = mid + 1;
+                    break;
+                }
+                if (isIncreasing[i]) {
+                    if (i + mid >= n || (arr[i - 1] <= arr[i + mid] && isDecreasing[i + mid])) {
+                        right = mid - 1;
+                        break;
+                    }
+                } else {
+                    if (i + mid >= n) {
+                        right = mid - 1;
+                    } else {
+                        if (arr[i - 1] <= arr[i + mid] && isDecreasing[i + mid]) {
+                            right = mid - 1;
+                        } else {
+                            left = mid + 1;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    return left;
+}
+
+
+// LC467
+int findSubstringInWraproundString(string s)
+{
+    int i;
+    int n = s.size();
+    int ans, curMaxLen;
+    vector<int> cnt(26, 0);
+
+    cnt[s[0] - 'a'] = 1;
+    curMaxLen = 1;
+    for (i = 1; i < n; i++) {
+        if ('a' + (s[i - 1] - 'a' + 1) % 26 == s[i]) {
+            curMaxLen++;
+        } else {
+            curMaxLen = 1;
+        }
+        cnt[s[i] - 'a'] = max(cnt[s[i] - 'a'], curMaxLen);
+    }
+    ans = 0;
+    for (i = 0; i < 26; i++) {
+        ans += cnt[i];
+    }
     return ans;
 }

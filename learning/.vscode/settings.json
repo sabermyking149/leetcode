@@ -64,6 +64,7 @@
         "stdexcept": "cpp",
         "stop_token": "cpp",
         "typeinfo": "cpp",
-        "optional": "cpp"
+        "optional": "cpp",
+        "climits": "cpp"
     }
 }
