@@ -27763,3 +27763,239 @@ int findSubstringInWraproundString(string s)
     }
     return ans;
 }
+
+
+// LC3635
+int earliestFinishTime(vector<int>& landStartTime, vector<int>& landDuration, vector<int>& waterStartTime, vector<int>& waterDuration)
+{
+    int i;
+    int m, n;
+    int lastTime;
+
+    m = landStartTime.size();
+    n = waterStartTime.size();
+    vector<pair<int, int>> land;
+    vector<pair<int, int>> water;
+
+    for (i = 0; i < m; i++) {
+        land.push_back({landStartTime[i], landStartTime[i] + landDuration[i]});
+    }
+    for (i = 0; i < n; i++) {
+        water.push_back({waterStartTime[i], waterStartTime[i] + waterDuration[i]});
+    }
+
+    // 最早结束时间后缀数组
+    vector<int> suffixWater(n);
+    vector<int> suffixLand(m);
+    sort(water.begin(), water.end());
+    sort(land.begin(), land.end());
+
+    suffixLand[m - 1] = land[m - 1].second;
+    for (i = m - 2; i >= 0; i--) {
+        suffixLand[i] = min(suffixLand[i + 1], land[i].second);
+    }
+    suffixWater[n - 1] =  water[n - 1].second;
+    for (i = n - 2; i >= 0; i--) {
+        suffixWater[i] = min(suffixWater[i + 1], water[i].second);
+    }
+    vector<int> prefixWater(n);
+    vector<int> prefixLand(m);
+    // 最少持续时间前缀数组
+    prefixLand[0] = land[0].second - land[0].first;
+    for (i = 1; i < m; i++) {
+        prefixLand[i] = min(prefixLand[i - 1], land[i].second - land[i].first);
+    }
+
+    prefixWater[0] = water[0].second - water[0].first;
+    for (i = 1; i < n; i++) {
+        prefixWater[i] = min(prefixWater[i - 1], water[i].second - water[i].first);
+    }
+
+    int left, right, mid;
+    lastTime = INT_MAX;
+    // 先land
+    for (i = 0; i < m; i++) {
+        // 无外乎两种情况: waterStartTime小于landStartTime[i] + landDuration[i], 加上最小持续时间;
+        // waterStartTime大于landStartTime[i] + landDuration[i], 选当前最早结束时间
+        left = 0;
+        right = n - 1;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (water[mid].first <= landStartTime[i] + landDuration[i]) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        if (right >= 0) {
+            lastTime = min(lastTime, landStartTime[i] + landDuration[i] + prefixWater[right]);
+        }
+        if (right + 1 < n) {
+            lastTime = min(lastTime, suffixWater[right + 1]);
+        }
+    }
+    // cout << lastTime << endl;
+    // 先water
+    for (i = 0; i < n; i++) {
+        left = 0;
+        right = m - 1;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (land[mid].first <= waterStartTime[i] + waterDuration[i]) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        if (right >= 0) {
+            lastTime = min(lastTime, waterStartTime[i] + waterDuration[i] + prefixLand[right]);
+        }
+        if (right + 1 < m) {
+            lastTime = min(lastTime, suffixLand[right + 1]);
+        }
+    }
+    return lastTime;
+}
+
+
+// LC3640
+long long maxSumTrionic(vector<int>& nums)
+{
+    int i;
+    int n = nums.size();
+    long long INF = -1e14;
+    vector<long long> prefix(n);
+    for (i = 0; i < n; i++) {
+        prefix[i] = nums[i];
+        if (i > 0) {
+            prefix[i] += prefix[i - 1];
+        }
+    }
+
+    // 寻找单减区间
+    vector<vector<int>> downRange;
+    int start;
+    bool f = true;
+    for (i = 1; i < n; i++) {
+        if (nums[i] < nums[i - 1] && f) {
+            start = i;
+            f = false;
+        }
+        if (nums[i] > nums[i - 1] && f == false) {
+            downRange.push_back({start, i - 1});
+            f = true;
+        }
+        if (nums[i] == nums[i - 1] && f == false) { // 必须严格单调
+            f = true;
+        }
+    }
+
+    vector<long long> dp(n); // dp[i] - i结尾最大递增子数组和, 且子数组长度大于1
+    dp[0] = INF;
+    for (i = 1; i < n; i++) {
+        if (nums[i] > nums[i - 1]) {
+            dp[i] = max(nums[i - 1] * 1ll, dp[i - 1]) + nums[i];
+        } else {
+            dp[i] = INF;
+        }
+    }
+    vector<long long> dp1(n); // dp1[i] - i起始最大递增子数组和, 且子数组长度大于1
+    dp1[n - 1] = INF;
+    for (i = n - 2; i >= 0; i--) {
+        if (nums[i] < nums[i + 1]) {
+            dp1[i] = max(dp1[i + 1], nums[i + 1] * 1ll) + nums[i];
+        } else {
+            dp1[i] = INF;
+        }
+    }
+
+    long long ans = INF;
+    int m = downRange.size();
+    for (i = 0; i < m; i++) {
+        // cout << downRange[i][0] << " " << downRange[i][1] << endl;
+        ans = max(ans, dp[downRange[i][0] - 1] + dp1[downRange[i][1]] + 
+            prefix[downRange[i][1] - 1] - prefix[downRange[i][0] - 1]);
+    }
+    return ans;
+}
+
+
+// LC3398 LC3399
+int minLength(string s, int numOps)
+{
+    int i;
+    int n = s.size();
+    int left, right, mid;
+    int cntOps, cnt0, cnt1;
+    string t;
+    vector<int> cnt;
+
+    // 特判最小长度可否为1
+    int type1, type2;
+
+    // type1 - "010101..."
+    // types - "101010..."
+    type1 = type2 = 0;
+    for (i = 0; i < n; i++) {
+        if (i % 2 == 0) {
+            if (s[i] == '1') {
+                type1++;
+            } else {
+                type2++;
+            }
+        } else {
+            if (s[i] == '0') {
+                type1++;
+            } else {
+                type2++;
+            }
+        }
+    }
+    // cout << type1 << " " << type2 << endl;
+    if (type1 <= numOps || type2 <= numOps) {
+        return 1;
+    }
+
+    // 二分最小相同子字符串长度
+    left = 2;
+    right = n;
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        cntOps = 0;
+        cnt.assign(2, 0);
+        t = s;
+        if (t[0] == '0') {
+            cnt[0]++;
+        } else {
+            cnt[1]++;
+        }
+        for (i = 1; i < n; i++) {
+            if (t[i] == t[i - 1]) {
+                cnt[t[i] - '0']++;
+                if (cnt[t[i] - '0'] > mid) {
+                    // 此处分别考虑 00011 00111 mid = 2的情况
+                    if (i + 1 < n && t[i] == t[i + 1]) {
+                        t[i] = '1' - (t[i] - '0');
+                    } else if (i + 1 < n && t[i] != t[i + 1]) {
+                        t[i - 1] = '1' - (t[i - 1] - '0');
+                    }
+                    cnt[t[i] - '0'] = 1;
+                    cnt['1' - t[i]] = 0;
+                    cntOps++;
+                    if (cntOps > numOps) {
+                        break;
+                    }
+                }
+            } else {
+                cnt[t[i] - '0'] = 1;
+                cnt['1' - t[i]] = 0;
+            }
+        }
+        if (i != n) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    return left;
+}
