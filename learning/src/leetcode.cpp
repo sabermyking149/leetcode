@@ -7168,40 +7168,43 @@ long long continuousSubarrays(vector<int>& nums)
 int trap(vector<int>& height)
 {
     int i;
-    int cnt, ans;
+    int ans;
+    int startIdx;
     int n = height.size();
-    vector<int> h;
-    stack<pair<int, int>> st;
-    bool start;
+    stack<int> st;
 
-    start = false;
+    startIdx = 0;
     for (i = 0; i < n; i++) {
-        if (height[i] == 0) {
-            continue;
-        } else {
-            h.insert(h.end(), height.begin() + i, height.end());
+        if (height[i] != 0) {
+            startIdx = i;
             break;
         }
     }
-    n = h.size();
+
     ans = 0;
-    for (i = 0; i < n; i++) {
+    for (i = startIdx; i < n; i++) {
         if (st.empty()) {
-            st.push({h[i], i});
+            st.push(i);
             continue;
         }
-        auto t = st.top();
-        cnt = 0;
-        while (h[i] >= t.first) {
+        while (height[i] >= height[st.top()]) {
+            if (height[i] == height[st.top()]) {
+                st.pop();
+                if (st.empty()) {
+                    break;
+                }
+                continue;
+            }
+
+            auto t = st.top();
             st.pop();
             if (st.empty()) {
                 break;
             }
-            cnt++;
-            t = st.top();
+            auto left = st.top(); // 左边界
+            ans += (min(height[left], height[i]) - height[t]) * (i - left - 1);
         }
-        ans += cnt;
-        st.push({h[i], i});
+        st.push(i);
     }
     return ans;
 }
@@ -27998,4 +28001,254 @@ int minLength(string s, int numOps)
         }
     }
     return left;
+}
+
+
+// LC316 LC1081
+string removeDuplicateLetters(string s)
+{
+    int i, j;
+    int n = s.size();
+    int cnt, prev, idx;
+    char ch;
+    vector<vector<int>> alphabet(26);
+    unordered_set<char> nums;
+    for (i = 0; i < n; i++) {
+        alphabet[s[i] - 'a'].emplace_back(i);
+        nums.emplace(s[i]);
+    }
+
+    string ans;
+    cnt = 0;
+    prev = -1;
+    while (cnt < nums.size()) {
+        for (i = 0; i < 26; i++) {
+            if (alphabet[i].empty()) {
+                continue;
+            }
+            idx = 0;
+            for (j = 0; j < 26; j++) {
+                if (j == i || alphabet[j].empty()) {
+                    continue;
+                }
+                // alphabet[i]第一个大于prev的idx
+                auto it = upper_bound(alphabet[i].begin(), alphabet[i].end(), prev);
+                if (it == alphabet[i].end()) {
+                    break;
+                }
+                idx = it - alphabet[i].begin();
+                if (alphabet[i][idx] > alphabet[j].back()) {
+                    break;
+                }
+            }
+            if (j == 26) {
+                ans += 'a' + i;
+                prev = alphabet[i][idx];
+                alphabet[i].clear();
+                cnt++;
+                break;
+            } else {
+                // cout << i << " " << j << endl;
+            }
+        }
+        // cout << ans << endl;
+    }
+    return ans;
+}
+
+
+// LC1210
+int minimumMoves(vector<vector<int>>& grid)
+{
+    int i, j;
+    int n = grid.size();
+    // 蛇长度为2, 以pair<int, int> 表示其形态 {头, 尾}
+    // 所求 dist[pair<(n - 1, n - 1), (n - 1, n - 2)>]
+    map<pair<int, int>, int> dist;
+
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            if (j - 1 >= 0) {
+                dist[{i * n + j, i * n + j - 1}] = INT_MAX;
+            }
+            if (j + 1 < n) {
+            //    dist[{i * n + j, i * n + j + 1}] = INT_MAX;
+            }
+            if (i - 1 >= 0) {
+                dist[{i * n + j, (i - 1) * n + j}] = INT_MAX;
+            }
+            if (i + 1 < n) {
+            //    dist[{i * n + j, (i + 1) * n + j}] = INT_MAX;
+            }
+        }
+    }
+
+    priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<>> pq;
+    pq.push({0, {1, 0}});
+    while (!pq.empty()) {
+        auto [d, state] = pq.top();
+        pq.pop();
+
+        if (dist[state] < d) {
+            continue;
+        }
+        dist[state] = d;
+        auto [head, tail] = state;
+        // printf ("dist[%d %d] = %d\n", head, tail, dist[state]);
+        if (head - tail == 1) { // 平行的
+            if (head % n + 1 < n && grid[head / n][head % n + 1] == 0 && d + 1 < dist[{head + 1, head}]) { // 向右进一格
+                dist[{head + 1, head}] = d + 1;
+                pq.push({d + 1, {head + 1, head}});
+            }
+            if (head / n + 1 < n && grid[head / n + 1][head % n] == 0 && grid[tail / n + 1][tail % n] == 0) {
+                if (d + 1 < dist[{head + n, head + n - 1}]) { // 向下平移一格
+                    dist[{head + n, tail + n}] = d + 1;
+                    pq.push({d + 1, {head + n, tail + n}});
+                }
+                if (d + 1 < dist[{tail + n, tail}]) { // 顺时针旋转90度
+                    dist[{tail + n, tail}]= d + 1;
+                    pq.push({d + 1, {tail + n, tail}});
+                }
+            }
+        } else {
+            if (head / n + 1 < n && grid[head / n + 1][head % n] == 0 && d + 1 < dist[{head + n, head}]) { // 向下进一格
+                dist[{head + n, head}] = d + 1;
+                pq.push({d + 1, {head + n, head}});
+            }
+            if (head % n + 1 < n && grid[head / n][head % n + 1] == 0 && grid[tail / n][tail % n + 1] == 0) {
+                if (d + 1 < dist[{head + 1, tail + 1}]) { // 向右平移一格
+                    dist[{head + 1, tail + 1}] = d + 1;
+                    pq.push({d + 1, {head + 1, tail + 1}});
+                }
+                if (d + 1 < dist[{tail + 1, tail}]) { // 逆时针旋转90度
+                    dist[{tail + 1, tail}] = d + 1;
+                    pq.push({d + 1, {tail + 1, tail}});
+                }
+            }
+        }
+    }
+
+    // int ans = min(dist[{n * n - 1, n * n - 2}], dist[{n * n - 1, n * n - 1 - n}]); 只能横着到终点
+    int ans = dist[{n * n - 1, n * n - 2}];
+    return ans == INT_MAX ? -1 : ans;
+}
+
+
+// LC1371
+int findTheLongestSubstring(string s)
+{
+    int i;
+    int n = s.size();
+    int ans;
+    string hash = "00000"; // 元音状态
+    unordered_map<string, int> prefix;
+
+    ans = 0;
+    prefix[hash] = -1;
+    for (i = 0; i < n; i++) {
+        if (s[i] == 'a') {
+            hash[0] = '0' + (hash[0] - '0' + 1) % 2;
+        } else if (s[i] == 'e') {
+            hash[1] = '0' + (hash[1] - '0' + 1) % 2;
+        } else if (s[i] == 'i') {
+            hash[2] = '0' + (hash[2] - '0' + 1) % 2;
+        } else if (s[i] == 'o') {
+            hash[3] = '0' + (hash[3] - '0' + 1) % 2;
+        } else if (s[i] == 'u') {
+            hash[4] = '0' + (hash[4] - '0' + 1) % 2;
+        }
+        if (prefix.count(hash) == 0) {
+            prefix[hash] = i;
+        } else {
+            ans = max(ans, i - prefix[hash]);
+        }
+    }
+    return ans;
+}
+int findTheLongestSubstring_beterrWay(string s)
+{
+    int i;
+    int n = s.size();
+    int ans;
+    int state = 0; // 元音状态, 用整数代替字符串, 效率更高
+    vector<int> prefix(32, -2);
+
+    ans = 0;
+    prefix[state] = -1;
+    for (i = 0; i < n; i++) {
+        if (s[i] == 'a') { // 异或模拟不进位加法
+            state ^= (1 << 0);
+        } else if (s[i] == 'e') {
+            state ^= (1 << 1);
+        } else if (s[i] == 'i') {
+            state ^= (1 << 2);
+        } else if (s[i] == 'o') {
+            state ^= (1 << 3);
+        } else if (s[i] == 'u') {
+            state ^= (1 << 4);
+        }
+        if (prefix[state] == -2) {
+            prefix[state] = i;
+        } else {
+            ans = max(ans, i - prefix[state]);
+        }
+    }
+    return ans;
+}
+
+
+// LC2246
+int longestPath(vector<int>& parent, string s)
+{
+    int i;
+    int n = parent.size();
+    int ans;
+    vector<int> data(n); // data[i] - i为首节点最长路径
+    vector<vector<int>> edges(n);
+
+    for (i = 0; i < n; i++) {
+        if (parent[i] != -1) {
+            edges[i].emplace_back(parent[i]);
+            edges[parent[i]].emplace_back(i);
+        }
+    }
+
+    data.assign(n, -1);
+    ans = 0;
+    auto dfs = [&s, &edges, &data, &ans](auto&& self, int cur, int parent) -> int {
+        if (data[cur] != -1) {
+            return data[cur];
+        }
+        if (edges[cur].size() == 1 && edges[cur][0] == parent) {
+            data[cur] = 1;
+            return 1;
+        }
+
+        int len;
+        int a, b; // 统计第一和第二长的路径
+
+        a = b = 1;
+        for (auto next : edges[cur]) {
+            if (next != parent) {
+                if (s[next] != s[cur]) {
+                    len = self(self, next, cur) + 1;
+                    if (len > a) {
+                        b = a;
+                        a = len;
+                    } else if (len > b) {
+                        b = len;
+                    }
+                } else {
+                    self(self, next, cur); // 不满足条件, 向子节点寻找
+                }
+            }
+        }
+
+        data[cur] = a;
+        ans = max(ans, a + b - 1);
+        return data[cur];
+    };
+
+    dfs(dfs, 0, -1);
+    return ans;
 }
