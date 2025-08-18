@@ -2465,3 +2465,36 @@ void ABC_414_D()
     ans = x[n - 1] - x[0] - a;
     cout << ans << endl;
 }
+
+
+void ABC_419_D()
+{
+    int i;
+    int n, m;
+    int l, r;
+    string s, t;
+
+    cin >> n >> m >> s >> t;
+
+    vector<int> diff(n + 1, 1); // diff[i] = a[i] / a[i - 1];
+    vector<int> a(n, 1);
+    for (i = 0; i < m; i++) {
+        cin >> l >> r;
+        diff[l - 1] *= -1;
+        diff[r] *= -1;
+    }
+    string ans(n, ' ');
+    for (i = 0; i < n; i++) {
+        if (i == 0) {
+            a[i] = diff[0];
+        } else {
+            a[i] = diff[i] * a[i - 1];
+        }
+        if (a[i] == -1) {
+            ans[i] = t[i];
+        } else {
+            ans[i] = s[i];
+        }
+    }
+    cout << ans << endl;
+}

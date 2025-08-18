@@ -28252,3 +28252,144 @@ int longestPath(vector<int>& parent, string s)
     dfs(dfs, 0, -1);
     return ans;
 }
+
+
+// LC3645
+long long maxTotal(vector<int>& value, vector<int>& limit)
+{
+    int i;
+    int t;
+    int n = value.size();
+    long long ans = 0;
+    auto cmp = [](const tuple<int, int, int>& a, const tuple<int, int, int>& b) {
+        if (get<0>(a) == get<0>(b)) {
+            return get<1>(a) < get<1>(b);
+        }
+        return get<0>(a) > get<0>(b);
+    };
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, decltype(cmp)> pq(cmp);
+    vector<pair<int, int>> vp;
+    for (i = 0; i < n; i++) {
+        pq.push({limit[i], value[i], i});
+        vp.push_back({limit[i], i});
+    }
+    sort(vp.begin(), vp.end());
+
+    int last_max_idx = 0;
+    int cur = 0;
+    vector<int> active(n, 0);
+    while (!pq.empty()) {
+        auto [l, v, idx] = pq.top();
+        pq.pop();
+        if (active[idx] == -1) { // 永久非活跃
+            continue;
+        }
+        active[idx] = 1;
+        ans += v;
+        cur++;
+        // cout << v << endl;
+        t = cur;
+        for (i = last_max_idx; i < n; i++) {
+            if (vp[i].first <= cur) {
+                if (active[vp[i].second] == 1) {
+                    t--;
+                }
+                active[vp[i].second] = -1;
+            } else {
+                last_max_idx = i;
+                break;
+            }
+        }
+        cur = t;
+    }
+    return ans;
+}
+
+
+// LC2528
+long long maxPower(vector<int>& stations, int r, int k)
+{
+    int i;
+    int n = stations.size();
+    int g;
+    long long left, right, mid;
+    long long cur;
+
+    left = 0;
+    right = 1e15;
+
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        auto t = stations;
+        cur = 0;
+        g = k;
+        for (i = 0; i <= r; i++) {
+            cur += t[i];
+        }
+        if (cur < mid) {
+            if (mid - cur > g) {
+                right = mid - 1;
+                continue;
+            } else {
+                t[r] += mid - cur;
+                g -= mid - cur;
+                cur = mid;
+            }
+        }
+        for (i = 1; i < n; i++) {
+            if (i + r < n) {
+                cur += t[i + r];
+            }
+            if (i - r - 1 >= 0) {
+                cur -= t[i - r - 1];
+            }
+            if (cur < mid) {
+                if (mid - cur > g) {
+                    right = mid - 1;
+                    break;
+                } else {
+                    t[i + r < n ? i + r : n - 1] += mid - cur;
+                    g -= mid - cur;
+                    cur = mid;
+                }
+            }
+        }
+        if (i == n) {
+            left = mid + 1;
+        }
+    }
+    return right;
+}
+
+
+// LC3654
+long long minArraySum(vector<int>& nums, int k)
+{
+    int i;
+    int n = nums.size();
+    long long inf = 1e15;
+    long long cur;
+
+    if (k == 1) {
+        return 0;
+    }
+
+    // dp[i] - 前i个元素最小剩余元素和
+    vector<long long> dp(n + 1);
+    // r[i] - 前缀和除以k余数对应的最小剩余元素和
+    vector<long long> r(k + 1, inf);
+
+    r[0] = dp[0]= 0;
+    cur = 0;
+    for (i = 1; i <= n; i++) {
+        cur += nums[i - 1];
+        if (r[cur % k] == inf) {
+            dp[i] = dp[i - 1] + nums[i - 1];
+            r[cur % k] = dp[i];
+        } else {
+            dp[i] = min(dp[i - 1] + nums[i - 1], r[cur % k]);
+            r[cur % k] = min(r[cur % k], dp[i]);
+        }
+    }
+    return dp[n];
+}
