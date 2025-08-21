@@ -86,6 +86,27 @@ bool IsPrime(int n)
 }
 
 
+// 仅针对小数据的数组全排列(非去重)
+vector<vector<int>> GetArrPermutation(vector<int>& source)
+{
+    int i;
+    int n = source.size();
+    vector<vector<int>> ans;
+
+    int len = 1;
+    i = n;
+    while (i) {
+        len *= i;
+        i--;
+    }
+    ans.emplace_back(source);
+    for (i = 1; i < len; i++) {
+        next_permutation(source.begin(), source.end());
+        ans.emplace_back(source);
+    }
+    return ans;
+}
+
 // 求组合数
 long long Combine(int m, int n, map<pair<int, int>, long long>& combineData)
 {
@@ -28392,4 +28413,197 @@ long long minArraySum(vector<int>& nums, int k)
         }
     }
     return dp[n];
+}
+
+
+// LC679
+bool judgePoint24(vector<int>& cards)
+{
+    int i;
+    int p;
+    int t;
+    vector<vector<int>> permutation = {{1, 2, 3}, {1, 3, 2}, {2, 1, 3},
+        {2, 3, 1}, {3, 1, 2}, {3, 2, 1}};
+
+    vector<char> operators = {'+', '-', '*', '/'};
+    vector<char> op(3, ' ');
+
+    // 计算后缀表达式
+    auto Calc = [](string& expression) {
+        int i;
+        int n = expression.size();
+        double a, b;
+        double inf = 1e9;
+        stack<double> st;
+
+        for (i = 0; i < n; i++) {
+            if (isdigit(expression[i])) {
+                st.push(expression[i] - '0');
+            } else {
+                a = st.top();
+                st.pop();
+                b = st.top();
+                st.pop();
+                if (expression[i] == '+') {
+                    st.push(b + a);
+                } else if (expression[i] == '-') {
+                    st.push(b - a);
+                } else if (expression[i] == '*') {
+                    st.push(b * a);
+                } else {
+                    if (a == 0) {
+                        return inf;
+                    }
+                    st.push(b / a);
+                }
+            }
+        }
+        return st.top();
+    };
+
+    string expression;
+    vector<vector<int>> c = GetArrPermutation(cards);
+    for (auto& cards : c) {
+        for (p = 0; p < 6; p++) {
+            for (i = 0; i < 64; i++) { // 以4进制表示三个符号
+                t = i;
+                op[0] = operators[t % 4];
+                t /= 4;
+
+                op[1] = operators[t % 4];
+                t /= 4;
+
+                op[2] = operators[t % 4];
+
+                expression.clear();
+                if (permutation[p][0] == 1) {
+                    expression += cards[0] + '0';
+                    expression += cards[1] + '0';
+                    expression += op[0];
+                } else if (permutation[p][1] == 1) {
+                    expression += cards[1] + '0';
+                    expression += cards[2] + '0';
+                    expression += op[1];
+                } else {
+                    expression += cards[2] + '0';
+                    expression += cards[3] + '0';
+                    expression += op[2];
+                }
+
+                if (permutation[p][0] == 2) {
+                    if (permutation[p][1] == 1) {
+                        expression = to_string(cards[0]) + expression;
+                        expression += op[0];
+                    }
+                    if (permutation[p][2] == 1) {
+                        expression += cards[0] + '0';
+                        expression += cards[1] + '0';
+                        expression += op[0];
+                    }
+                } else if (permutation[p][1] == 2) {
+                    if (permutation[p][0] == 1) {
+                        expression += cards[2] + '0';
+                        expression += op[1];
+                    }
+                    if (permutation[p][2] == 1) {
+                        expression = to_string(cards[1]) + expression;
+                        expression += op[1];
+                    }
+                } else {
+                    if (permutation[p][1] == 1) {
+                        expression += cards[3] + '0';
+                        expression += op[2];
+                    }
+                    if (permutation[p][0] == 1) {
+                        expression += cards[2] + '0';
+                        expression += cards[3] + '0';
+                        expression += op[2];
+                    }
+                }
+
+                if (permutation[p][0] == 3) {
+                    expression = to_string(cards[0]) + expression;
+                    expression += op[0];
+                } else if (permutation[p][1] == 3) {
+                    expression += op[1];
+                } else {
+                    expression += cards[3] + '0';
+                    expression += op[2];
+                }
+                auto res = Calc(expression);
+                if (fabs(res - 24) < 1e-5) {
+                    cout << "expression = " << expression << endl;
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+
+// LC1277
+int countSquares(vector<vector<int>>& matrix)
+{
+    int i, j;
+    int m = matrix.size();
+    int n = matrix[0].size();
+    int ans = 0;
+    // dp[i][j] - 以matrix[i][j]为正方形右下角顶点的最大边长
+    vector<vector<int>> dp(m, vector<int>(n, 0));
+
+    for (i = 0; i < m; i++) {
+        if (matrix[i][0]) {
+            dp[i][0] = 1;
+            ans++;
+        }
+    }
+    for (j = 1; j < n; j++) {
+        if (matrix[0][j]) {
+            dp[0][j] = 1;
+            ans++;
+        }
+    }
+    for (i = 1; i < m; i++) {
+        for (j = 1; j < n; j++) {
+            if (matrix[i][j]) {
+                dp[i][j] = min({dp[i][j - 1], dp[i - 1][j], dp[i - 1][j - 1]}) + 1;
+                // printf ("dp[%d][%d] = %d\n", i, j, dp[i][j]);
+                ans += dp[i][j];
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LC1316
+int distinctEchoSubstrings(string text)
+{
+    // 字符串哈希
+    int i, j;
+    int n = text.size();
+    int mod = 1e9 + 7;
+    long long base = 1337;
+    vector<vector<long long>> hash(n, vector<long long>(n));
+    for (i = 0; i < n; i++) {
+        hash[i][i] = text[i] - 'a' + 1;
+        for (j = i + 1; j < n; j++) {
+            hash[i][j] = (hash[i][j - 1] * base + text[j] - 'a' + 1) % mod;
+        }
+    }
+    set<int> chosenHash;
+    int ans = 0;
+    int len;
+    for (i = 0; i < n; i++) {
+        for (j = i + 1; j < n; j += 2) {
+            len = j - i + 1;
+            if (hash[i][i + len / 2 - 1] == hash[i + len / 2][j] && 
+                chosenHash.count(hash[i][j]) == 0) {
+                ans++;
+                chosenHash.emplace(hash[i][j]);
+            }
+        }
+    }
+    return ans;
 }
