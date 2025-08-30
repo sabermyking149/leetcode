@@ -5607,6 +5607,7 @@ vector<int> getSubarrayBeauty(vector<int>& nums, int k, int x)
     return ans;
 }
 
+
 // LC241
 void DivideExpression(string& expression, vector<int>& nums)
 {
@@ -28606,4 +28607,209 @@ int distinctEchoSubstrings(string text)
         }
     }
     return ans;
+}
+
+
+// LC1520
+vector<string> maxNumOfSubstrings(string s)
+{
+    int i, j;
+    int n = s.size();
+    vector<vector<int>> idx(26);
+    for (i = 0; i < n; i++) {
+        idx[s[i] - 'a'].emplace_back(i);
+    }
+    bool flag;
+    vector<vector<int>> ranges;
+    for (i = 0; i < 26; i++) {
+        if (idx[i].empty()) {
+            continue;
+        }
+        flag = true;
+        int end = idx[i].back();
+        for (j = idx[i][0]; j <= end; j++) {
+            if (s[j] == 'a' + i) {
+                continue;
+            }
+            // 不包含
+            if (idx[s[j] - 'a'][0] < idx[i][0]) {
+                flag = false;
+                break;
+            }
+            // 延长end
+            if (idx[s[j] - 'a'].back() > end) {
+                end = idx[s[j] - 'a'].back();
+            }
+        }
+        if (flag) {
+            ranges.push_back({idx[i][0], end});
+        }
+    }
+
+    // for (auto r : ranges) cout << r[0] << " " << r[1] << endl;
+    int size = ranges.size();
+    sort(ranges.begin(), ranges.end());
+    // dp[i] - 以ranges[i]结尾的最多区间数
+    vector<int> dp(size, 0);
+    // prev[i] - 以ranges[i]结尾实现最多区间数时上一个range的idx
+    vector<int> prev(size);
+    // sum[i] - 以ranges[i]结尾实现最多区间数时最短区间字符串长度之和
+    vector<int> sum(size);
+    dp[0] = 1;
+    prev[0] = -1;
+    sum[0] = ranges[0][1] - ranges[0][0] + 1;
+
+    int maxRanges = 0;
+    int minLen = INT_MAX;
+    int endIdx = 0;
+    for (i = 1; i < size; i++) {
+        dp[i] = 1;
+        prev[i] = -1;
+        sum[i] = ranges[i][1] - ranges[i][0] + 1;
+        for (j = i - 1; j >= 0; j--) {
+            if (ranges[j][1] < ranges[i][0]) {
+                if (dp[i] < dp[j] + 1) {
+                    dp[i] = dp[j] + 1;
+                    prev[i] = j;
+                    sum[i] = sum[j] + ranges[i][1] - ranges[i][0] + 1;
+                } else if (dp[i] == dp[j] + 1) {
+                    if (sum[j] + ranges[i][1] - ranges[i][0] + 1 < sum[i]) {
+                        prev[i] = j;
+                        sum[i] = sum[j] + ranges[i][1] - ranges[i][0] + 1;
+                    }
+                }
+            }
+        }
+        // 顺便找最大分隔区间数量且总长度最短的最后一个区间idx
+        if (dp[i] > maxRanges) {
+            maxRanges = dp[i];
+            minLen = sum[i];
+            endIdx = i;
+        } else if (dp[i] == maxRanges && minLen > sum[i]) {
+            minLen = sum[i];
+            endIdx = i;
+        }
+    }
+    // cout << endIdx << endl;
+
+    // 从后向前找子字符串
+    i = endIdx;
+    vector<string> ans;
+    ans.emplace_back(s.substr(ranges[i][0], ranges[i][1] - ranges[i][0] + 1));
+    while (prev[i] != -1) {
+        i = prev[i];
+        ans.emplace_back(s.substr(ranges[i][0], ranges[i][1] - ranges[i][0] + 1));
+    }
+    return ans;
+}
+
+
+// LC1579
+int maxNumEdgesToRemove(int n, vector<vector<int>>& edges)
+{
+    // 查并集, 优先连通type3的路径
+    int i;
+    vector<vector<int>> e3;
+    vector<vector<int>> e1;
+    vector<vector<int>> e2;
+
+    for (auto& edge : edges) {
+        if (edge[0] == 3) {
+            e3.push_back({edge[1], edge[2]});
+        } else if (edge[0] == 1) {
+            e1.push_back({edge[1], edge[2]});
+        } else {
+            e2.push_back({edge[1], edge[2]});
+        }
+    }
+
+    int ans = 0;
+    UnionFind uf(n + 1);
+    for (auto& edge : e3) {
+        auto u = edge[0];
+        auto v = edge[1];
+        if (uf.findSet(u) != uf.findSet(v)) {
+            uf.unionSets(u, v);
+        } else {
+            ans++;
+        }
+    }
+    auto t = uf;
+    for (auto& edge : e1) {
+        auto u = edge[0];
+        auto v = edge[1];
+        if (t.findSet(u) != t.findSet(v)) {
+            t.unionSets(u, v);
+        } else {
+            ans++;
+        }
+    }
+    auto f = uf;
+    for (auto& edge : e2) {
+        auto u = edge[0];
+        auto v = edge[1];
+        if (f.findSet(u) != f.findSet(v)) {
+            f.unionSets(u, v);
+        } else {
+            ans++;
+        }
+    }
+    int area = t.findSet(1);
+    for (i = 1; i <= n; i++) {
+        if (area != t.findSet(i)) {
+            return -1;
+        }
+    }
+    area = f.findSet(1);
+    for (i = 1; i <= n; i++) {
+        if (area != f.findSet(i)) {
+            return -1;
+        }
+    }
+    return ans;
+}
+
+
+// LC1354
+bool isPossible(vector<int>& target)
+{
+    int i;
+    int n = target.size();
+
+    if (n == 1) {
+        if (target[0] != 1) {
+            return false;
+        }
+        return true;
+    }
+
+    priority_queue<int, vector<int>> pq;
+    long long sum = 0;
+    for (i = 0; i < n; i++) {
+        sum += target[i];
+        pq.push(target[i]);
+    }
+    while (1) {
+        auto t1 = pq.top();
+        if (t1 == 1) {
+            break;
+        }
+        pq.pop();
+        auto t2 = pq.top();
+        if (t1 == t2) {
+            return false;
+        }
+
+        // t1 - num * d <= t2;
+        auto d = sum - t1;
+        auto num = ceil((t1 - t2) * 1.0 / d);
+        auto t3 = t1 - num * d;
+        // printf ("%d %d %d\n", d, num, t3);
+        if (t3 < 1) {
+            return false;
+        }
+        sum = d + t3;
+        pq.push(t3);
+    }
+    return true;
 }

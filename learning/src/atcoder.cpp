@@ -334,12 +334,12 @@ void ABC_350_D()
 }
 
 
-// 接近超时
 void ABC_351_D()
 {
     int i, j;
     int H, W;
-    unordered_set<int> dangerZone;
+    // 原本用的是unordered系列, 几近超时, 可预计测试数据中专门构造了哈希冲突的数据
+    set<int> dangerZone;
     cin >> H >> W;
 
     vector<vector<char>> grid(H, vector<char>(W, ' '));
@@ -369,10 +369,10 @@ void ABC_351_D()
     }
 
     vector<vector<bool>> visited(H, vector<bool>(W, false));
-    unordered_set<int> visitedDangerZone;
+    set<int> visitedDangerZone;
 
-    function<void (vector<vector<char>>&, int, int, int&)> dfs = 
-        [&dfs, &visited, &visitedDangerZone, &dangerZone](vector<vector<char>>& grid, int row, int col, int& cnt) {
+    auto dfs = [&visited, &visitedDangerZone, &dangerZone](auto&& self,
+        vector<vector<char>>& grid, int row, int col, int& cnt) {
 
         int i;
         int pos;
@@ -397,7 +397,7 @@ void ABC_351_D()
             if (nr < 0 || nr >= H || nc < 0 || nc >= W || grid[nr][nc] != '.' || visited[nr][nc]) {
                 continue;
             }
-            dfs(grid, nr, nc, cnt);
+            self(self, grid, nr, nc, cnt);
         }
     };
     int cnt;
@@ -408,9 +408,9 @@ void ABC_351_D()
                 dangerZone.count(i * W + j) == 0) {
                 cnt = 0;
                 visitedDangerZone.clear();
-                dfs(grid, i, j, cnt);
+                dfs(dfs, grid, i, j, cnt);
                 ans = max(ans, cnt);
-                //cout << cnt << endl;
+                // cout << cnt << endl;
             }
         }
     }
@@ -2497,4 +2497,68 @@ void ABC_419_D()
         }
     }
     cout << ans << endl;
+}
+
+
+void ABC_420_D()
+{
+    int i, j;
+    int h, w;
+    int s, g;
+
+    cin >> h >> w;
+    vector<string> grid(h);
+    for (i = 0; i < h; i++) {
+        cin >> grid[i];
+        for (j = 0; j < w; j++) {
+            if (grid[i][j] == 'S') {
+                s = i * w + j;
+            } else if (grid[i][j] == 'G') {
+                g = i * w + j;
+            }
+        }
+    }
+
+    int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+    vector<vector<int>> dist(h * w, vector<int>(2, INT_MAX));
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<>> pq;
+    pq.push({0, s, 0});
+    while (!pq.empty()) {
+        auto [d, pos, state] = pq.top();
+        pq.pop();
+        if (dist[pos][state] < d) {
+            continue;
+        }
+        dist[pos][state] = d;
+        for (i = 0; i < 4; i++) {
+            auto nr = pos / w + directions[i][0];
+            auto nc = pos % w + directions[i][1];
+            if (nr < 0 || nr >= h || nc < 0 || nc >= w || grid[nr][nc] == '#') {
+                continue;
+            }
+            auto npos = nr * w + nc;
+            if (grid[nr][nc] == 'o' && state == 0 && dist[npos][state] > d + 1) {
+                dist[npos][state] = d + 1;
+                pq.push({d + 1, npos, state});
+            }
+            if (grid[nr][nc] == 'x' && state == 1 && dist[npos][state] > d + 1) {
+                dist[npos][state] = d + 1;
+                pq.push({d + 1, npos, state});
+            }
+            if (grid[nr][nc] == '?' && dist[npos][1 - state] > d + 1) {
+                dist[npos][1 - state] = d + 1;
+                pq.push({d + 1, npos, 1 - state});
+            }
+            if ((grid[nr][nc] == '.' || grid[nr][nc] == 'G' || grid[nr][nc] == 'S') && dist[npos][state] > d + 1) {
+                dist[npos][state] = d + 1;
+                pq.push({d + 1, npos, state});
+            }
+        }
+    }
+    int ans = min(dist[g][0], dist[g][1]);
+    if (ans == INT_MAX) {
+        cout << -1 << endl;
+    } else {
+        cout << ans << endl;
+    }
 }
