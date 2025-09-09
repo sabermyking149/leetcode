@@ -2562,3 +2562,41 @@ void ABC_420_D()
         cout << ans << endl;
     }
 }
+
+
+void ABC_422_D()
+{
+    int i;
+    int n, k, m;
+    int x;
+
+    cin >> n >> k;
+
+    int len = 1 << n;
+    vector<int> ans(len);
+    auto dfs = [&](auto&& self, int cur, int n, int idx) {
+        if (n == 0) {
+            ans[idx] = cur;
+            return;
+        }
+        self(self, cur / 2, n - 1, idx * 2);
+        self(self, cur - cur / 2, n - 1, idx * 2 + 1);
+    };
+
+    dfs(dfs, k, n, 0);
+
+    vector<int> nextlvl = ans;
+    vector<int> t;
+    x = 0;
+    while (nextlvl.size() > 1) {
+        x = max(x, *max_element(nextlvl.begin(), nextlvl.end()) - *min_element(nextlvl.begin(), nextlvl.end()));
+        m = nextlvl.size();
+        t.clear();
+        for (i = 1; i < m; i += 2) {
+            t.emplace_back(nextlvl[i] + nextlvl[i - 1]);
+        }
+        nextlvl = t;
+    }
+    cout << x << endl;
+    for (auto a : ans) cout << a << " "; cout << endl;
+}

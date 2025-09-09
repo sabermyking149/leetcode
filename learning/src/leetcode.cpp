@@ -28813,3 +28813,151 @@ bool isPossible(vector<int>& target)
     }
     return true;
 }
+
+
+// LC3665
+int uniquePaths(vector<vector<int>>& grid)
+{
+    int i, j;
+    int m = grid.size();
+    int n  = grid[0].size();
+    vector<vector<vector<long long>>> dp(m, vector<vector<long long>>(n, vector<long long>(2, 0)));
+
+    // dp[i][j][0 ~ 1] - 0 - 从左边进入  1 - 从上面进入
+    dp[0][0][0] = 1;
+    dp[0][0][1] = 1;
+    for (i = 1; i < m; i++) {
+        if (grid[i][0] == 0) {
+            dp[i][0][1] = 1;
+        } else {
+            dp[i][0][1] = 1;
+            break;
+        }
+    }
+    for (j = 1; j < n; j++) {
+        if (grid[0][j] == 0) {
+            dp[0][j][0] = 1;
+        } else {
+            dp[0][j][0] = 1;
+            break;
+        }
+    }
+    int mod = 1e9 + 7;
+    for (i = 1; i < m; i++) {
+        for (j = 1; j < n; j++) {
+            if ((grid[i][j] == 1 && i + 1 < m) || grid[i][j] == 0) {
+                if (grid[i][j - 1] == 1) {
+                    dp[i][j][0] = (dp[i][j][0] + dp[i][j - 1][1]) % mod;
+                } else {
+                    dp[i][j][0] = (dp[i][j][0] + dp[i][j - 1][0] + dp[i][j - 1][1]) % mod;
+                }
+            }
+            if ((grid[i][j] == 1 && j + 1 < n) || grid[i][j] == 0) {
+                if (grid[i - 1][j] == 1) {
+                    dp[i][j][1] = (dp[i][j][1] + dp[i - 1][j][0]) % mod;
+                } else {
+                    dp[i][j][1] = (dp[i][j][1] + dp[i - 1][j][0] + dp[i - 1][j][1]) % mod;
+                }
+            }
+        }
+    }
+    /* for (auto d : dp) {
+        for (auto dd : d) cout << dd[0] + dd[1] << " "; cout << endl;
+    } */
+    return (dp[m - 1][n - 1][0] + dp[m - 1][n - 1][1]) % mod;
+}
+
+
+// LC3676 (原题long long 的返回值有点搞)
+long long bowlSubarrays(vector<int>& nums)
+{
+    int i;
+    int idx;
+    int n = nums.size();
+    long long ans = 0;
+    stack<int> st;
+
+    for (i = 0; i < n; i++) {
+        if (st.empty()) {
+            st.push(i);
+            continue;
+        }
+        idx = st.top();
+        while (nums[idx] < nums[i]) {
+            // cout << idx << " " << i << endl;
+            if (idx + 1 < i) {
+                ans++;
+            }
+            st.pop();
+            if (st.empty()) {
+                break;
+            }
+            idx = st.top();
+        }
+        st.push(i);
+    }
+    while (!st.empty()) {
+        st.pop();
+    }
+    for (i = n - 1; i >= 0; i--) {
+        if (st.empty()) {
+            st.push(i);
+            continue;
+        }
+        idx = st.top();
+        while (nums[idx] < nums[i]) {
+            // cout << idx << " " << i << endl;
+            if (i + 1 < idx) {
+                ans++;
+            }
+            st.pop();
+            if (st.empty()) {
+                break;
+            }
+            idx = st.top();
+        }
+        st.push(i);
+    }
+    return ans;
+}
+
+
+// LC2607
+long long makeSubKSumEqual(vector<int>& arr, int k)
+{
+    int i, j;
+    int n = arr.size();
+    vector<vector<int>> groups(k);
+    vector<int> visited(n, 0);
+    for (i = 0; i < k; i++) {
+        if (visited[i]) {
+            continue;
+        }
+        j = i;
+        while (visited[j] == 0) {
+            visited[j] = 1;
+            groups[i].emplace_back(arr[j]);
+            j = (j + k) % n;
+        }
+    }
+
+    // 每个groups[i] 取中位数
+    int mid, len;
+    long long ans = 0;
+    for (i = 0; i < k; i++) {
+        if (groups[i].empty()) {
+            continue;
+        }
+        sort(groups[i].begin(), groups[i].end());
+        len = groups[i].size();
+        if (len % 2 == 1) {
+            mid = groups[i][len / 2];
+        } else {
+            mid = (groups[i][len / 2 - 1] + groups[i][len / 2]) / 2;
+        }
+        for (j = 0; j < len; j++) {
+            ans += abs(mid - groups[i][j]);
+        }
+    }
+    return ans;
+}
