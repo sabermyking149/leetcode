@@ -28961,3 +28961,180 @@ long long makeSubKSumEqual(vector<int>& arr, int k)
     }
     return ans;
 }
+
+
+// LC3686
+int countStableSubsequences(vector<int>& nums)
+{
+    int i;
+    int n = nums.size();
+    int mod = 1e9 + 7;
+    // dp[n][0 ~ 1][0 ~ 2] - 前n个数组成的子序列 且最后一个数是偶数/奇数 已连续奇偶性的个数的总子序列数
+    vector<vector<vector<long long>>> dp(n + 1, vector<vector<long long>>(2, vector<long long>(3, 0)));
+
+    dp[1][nums[0] % 2][1] = 1;
+    for (i = 2; i <= n; i++) {
+        if (nums[i - 1] % 2 == 1) {
+            dp[i][1][1] = (dp[i - 1][1][1] + dp[i - 1][0][1] + dp[i - 1][0][2] + 1) % mod;
+            dp[i][1][2] = (dp[i - 1][1][2] + dp[i - 1][1][1]) % mod;
+            dp[i][0][1] = dp[i - 1][0][1];
+            dp[i][0][2] = dp[i - 1][0][2];
+        } else {
+            dp[i][0][1] = (dp[i - 1][0][1] + dp[i - 1][1][1] + dp[i - 1][1][2] + 1) % mod;
+            dp[i][0][2] = (dp[i - 1][0][2] + dp[i - 1][0][1]) % mod;
+            dp[i][1][1] = dp[i - 1][1][1];
+            dp[i][1][2] = dp[i - 1][1][2];
+        }
+    }
+
+    long long ans;
+    /* for (i = 1; i <= n; i++) {
+        for (int j = 1; j <= 2; j++) {
+            printf ("dp[%d][0][%d] = %d, dp[%d][1][%d] = %d\n", i, j, dp[i][0][j], i, j, dp[i][1][j]);
+        }
+    } */
+    ans = (dp[n][0][1] + dp[n][0][2] + dp[n][1][1] + dp[n][1][2]) % mod;
+    return ans;
+}
+
+
+// LC3677
+int countBinaryPalindromes(long long n)
+{
+    int i;
+    // 长度为len的二进制回文串个数
+    auto cntPalindromes = [](int len) {
+        if (len == 1) { // 还有0
+            return 2ll;
+        } else if (len <= 2) {
+            return 1ll;
+        }
+        return 1ll << ((len - 2 + 1) / 2);
+    };
+
+    int len = bit_width(static_cast<unsigned long long>(n));
+    int cnt = 0;
+    int ans = 0;
+    long long cur = 0;
+    auto dfs = [&](auto&& self, int left, int right, long long cur) -> void {
+        if (cur > n) {
+            return;
+        }
+        if (left == right) {
+            if (cur + (1ll << left) <= n) {
+                cnt += 2;
+            } else if (cur <= n) {
+                cnt++;
+            }
+            return;
+        } else if (left < right) {
+            if (left == 0) {
+                self(self, left + 1, right - 1, cur + (1ll << left) + (1ll << right));
+            } else {
+                self(self, left + 1, right - 1, cur + (1ll << left) + (1ll << right));
+                self(self, left + 1, right - 1, cur);
+            }
+        } else {
+            if (cur <= n) {
+                cnt++;
+            }
+            return;
+        }
+    };
+
+    dfs(dfs, 0, len - 1, cur);
+    ans += cnt;
+    for (i = len - 1; i >= 1; i--) {
+        ans += cntPalindromes(i);
+    }
+
+    return ans;
+}
+
+
+// LC2781
+int longestValidSubstring(string word, vector<string>& forbidden)
+{
+    int i, j;
+    int left;
+    int ans;
+    string t;
+    unordered_set<string> dict;
+
+    for (auto& f : forbidden) {
+        dict.emplace(f);
+    }
+
+    int n = word.size();
+    bool f = false;
+    left = 0;
+    ans = 0;
+    // left维护符合要求的子字符串左边界
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < 10; j++) {
+            if (i - j < left) {
+                f = true;
+                break;
+            }
+            t = word.substr(i - j, j + 1);
+            // cout << i << " " << j << " " << t << endl;
+            if (dict.count(t)) {
+                left = i - j + 1;
+                break;
+            } else {
+                // cout << t << endl;
+                // cout << "#" << " " << i << " " << left << endl << endl;
+                ans = max(ans, j + 1);
+            }
+        }
+        if (f || j == 10) {
+            ans = max(ans, i - left + 1);
+        }
+    }
+    return ans;
+}
+
+
+// LC3699
+// 本题卡vector且时间限制很紧, 采用全局变量 + 普通数组
+// 在类中也可以用static静态变量
+// dp[i][x][0 ~ 1] 第i个数取x且上一个数比它小/大的zigzag数量
+long long dp[2000][2001][2] = {0};
+// preBig[x] - 第i个数取[x, r]的zigzag前缀和
+long long preBig[2002] = {0};
+// preSmall[x] - 第i个数取[l, x]的zigzag前缀和
+long long preSmall[2002] = {0};
+int zigZagArrays(int n, int l, int r)
+{
+    int i, j;
+    int mod = 1e9 + 7;
+    for (i = l; i <= r; i++) {
+        preSmall[i] = i - l + 1;
+        preBig[i] = r - i + 1;
+        // printf("preSmall[%d][%d] = %d\n", 0 , i, preSmall[0][i]);
+        // printf("preBig[%d][%d] = %d\n", 0 , i, preBig[0][i]);
+    }
+    long long ans = 0;
+    for (i = 1; i < n; i++) {
+        preSmall[l - 1] = 0;
+        for (j = l; j <= r; j++) {
+            dp[i][j][0] = preSmall[j - 1];
+            dp[i][j][1] = preBig[j + 1];
+        }
+        preSmall[l - 1] = 0;
+        for (j = l; j <= r; j++) {
+            // preSmall l - j 自然后缀是从大到小
+            preSmall[j] = (preSmall[j - 1] + dp[i][j][1]) % mod;
+            // printf("preSmall[%d][%d] = %d\n", i , j, preSmall[i][j]);
+        }
+        preBig[r + 1]  = 0;
+        for (j = r; j >= l; j--) {
+            preBig[j] = (preBig[j + 1] + dp[i][j][0]) % mod;
+            // printf("preBig[%d][%d] = %d\n", i , j, preBig[i][j]);
+        }
+    }
+    for (j = l; j <= r; j++) {
+        ans = (ans + dp[n - 1][j][0] + dp[n - 1][j][1]);
+    }
+    return ans % mod;
+}
