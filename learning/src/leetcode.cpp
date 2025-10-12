@@ -29138,3 +29138,205 @@ int zigZagArrays(int n, int l, int r)
     }
     return ans % mod;
 }
+
+
+// LC3685
+vector<bool> subsequenceSumAfterCapping(vector<int>& nums, int k)
+{
+    int i, j;
+    int n = nums.size();
+
+    sort(nums.begin(), nums.end());
+
+    // dp[i][j] - 前i个数是否存在和为j的子序列
+    vector<vector<bool>> dp(n + 1, vector<bool>(k + 1, false));
+    dp[0][0] = true;
+    for (i = 1; i <= n; i++) {
+        for (j = k; j >= 0; j--) {
+            // 不选择nums[i - 1]的前i个数能组成的子序列
+            dp[i][j] = dp[i - 1][j];
+            // 选择
+            if (j - nums[i - 1] >= 0 && dp[i][j] == false && dp[i - 1][j - nums[i - 1]]) {
+                dp[i][j] = true;
+            }
+        }
+    }
+
+    int x;
+    int left, right, mid;
+    vector<bool> ans(n);
+    for (x = 1; x <= n; x++) {
+        left = 0;
+        right = n - 1;
+        // nums[i]最后一个小于x的下标
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (nums[mid] <= x) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        auto idx = right;
+        // printf ("x = %d, idx = %d\n", x, idx);
+        if (idx < 0) {
+            if (k % x != 0 || x * n < k) {
+                ans[x - 1] = false;
+            } else {
+                ans[x - 1] = true;
+            }
+            continue;
+        }
+        if (idx == n - 1) {
+            ans[x - 1] = dp[n][k];
+            continue;
+        }
+        // [idx + 1, n - 1]的数都为x
+        if (dp[idx + 1][k]) {
+            ans[x - 1] = true;
+            continue;
+        }
+        int cnt = 1;
+        for (i = idx + 1; i < n; i++) {
+            if (k - x * cnt >= 0 && dp[idx + 1][k - x * cnt]) {
+                ans[x - 1] = true;
+                break;
+            }
+            cnt++;
+        }
+        if (i == n) {
+            ans[x - 1] = false;
+        }
+    }
+
+    return ans;
+}
+
+
+// LC11
+int maxArea(vector<int>& height)
+{
+    int i, j;
+    int n = height.size();
+    int left, right;
+    vector<pair<int, int>> vp;
+    for (i = 0; i < n; i++) {
+        vp.push_back({height[i], i});
+    }
+
+    sort(vp.rbegin(), vp.rend());
+
+    int ans = 0;
+    left = vp[0].second;
+    right = vp[0].second;
+    // cout << left << " " << right << endl;
+    for (i = 1; i < n; i++) {
+        left = min(left, vp[i].second);
+        right = max(right, vp[i].second);
+        // cout << left << " " << right <<endl;
+        ans = max(ans, vp[i].first * (right - left));
+    }
+    return ans;
+}
+
+
+// LC2354
+long long countExcellentPairs(vector<int>& nums, int k)
+{
+    // 两个数a, b  a & b与a | b的置位数之和就是a和b的置位数之和
+    int i;
+    int n;
+    unordered_map<int, int> cntBits;
+
+    for (auto num : nums) {
+        cntBits[num] = popcount(num * 1u);
+    }
+
+    vector<int> bits;
+    for (auto it : cntBits) {
+        bits.emplace_back(it.second);
+    }
+
+    sort(bits.begin(), bits.end());
+
+    int left, right, mid;
+    long long ans = 0;
+    n = bits.size();
+    for (i = 0; i < n; i++) {
+        left = 0;
+        right = n - 1;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (bits[i] + bits[mid] >= k) {
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        ans += n - left;
+    }
+    return ans;
+}
+
+
+// LC1727
+int largestSubmatrix(vector<vector<int>>& matrix)
+{
+    int i, j;
+    int m, n;
+
+    m = matrix.size();
+    n = matrix[0].size();
+    // 对于每一列的连续1前缀和(从上到下)
+    vector<vector<int>> prefix(n, vector<int>(m, 0));
+
+    for (j = 0; j < n; j++) {
+        for (i = 0; i < m; i++) {
+            if (i == 0) {
+                prefix[j][i] = matrix[i][j];
+            } else {
+                if (matrix[i][j]) {
+                    prefix[j][i] = prefix[j][i - 1] + 1;
+                } else {
+                    prefix[j][i] = 0;
+                }
+            }
+        }
+    }
+
+    vector<int> t;
+    int ans = 0;
+    for (i = 0; i < m; i++) {
+        t.clear();
+        for (j = 0; j < n; j++) {
+            t.emplace_back(prefix[j][i]);
+        }
+        sort(t.rbegin(), t.rend());
+        for (j = 0; j < n; j++) {
+            if (t[j] == 0) {
+                break;
+            }
+            ans = max(ans, (j + 1) * t[j]);
+        }
+    }
+    return ans;
+}
+
+
+// LC2749
+int makeTheIntegerZero(int num1, int num2)
+{
+    int i;
+    long long n = num1;
+    for (i = 1; i <= 60; i++) {
+        n -= num2;
+        if (n <= 0) {
+            break;
+        }
+        // 一个数n最多可由n个1组成, 不可能出现i < n的情况
+        if (popcount(n * 1ull) <= i && n >= i) {
+            return i;
+        }
+    }
+    return -1;
+}
