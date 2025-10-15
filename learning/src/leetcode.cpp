@@ -29340,3 +29340,179 @@ int makeTheIntegerZero(int num1, int num2)
     }
     return -1;
 }
+
+
+// LC3710
+int maxPartitionFactor(vector<vector<int>>& points)
+{
+    int i, j;
+    int n = points.size();
+
+    if (n == 2) {
+        return 0;
+    }
+
+    int left, right, mid;
+    vector<vector<int>> dist(n, vector<int>(n));
+
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            dist[i][j] = abs(points[i][0] - points[j][0]) + 
+                        abs(points[i][1] - points[j][1]);
+        }
+    }
+
+    vector<vector<int>> edges;
+    vector<char> colors;
+    bool canDivide = true;
+    auto DfsCheckPartition = [&](auto&& self, int cur, char color) -> void {
+        if (canDivide == false) {
+            return;
+        }
+        colors[cur] = color;
+        for (auto& next : edges[cur]) {
+            if (colors[next] == color) {
+                canDivide = false;
+                return;
+            } else if (colors[next] == ' ') {
+                self(self, next, (color == 'b' ? 'w' : 'b'));
+            }
+        }
+    };
+
+    left = 0;
+    right = 4e8 + 1;
+    while (left <= right) {
+        // mid - n个点分成两部分最小曼哈顿距离, 如果有小于mid的两点距离, 则用一条线把它们连起来表示
+        // 这两点不能在一组, 用二分图染色来判断当前的几个连通分量是否满足条件
+        // 若满足则mid可增大, 否则应减小
+        mid = (right - left) / 2 + left;
+        edges.assign(n, vector<int>());
+        for (i = 0; i < n; i++) {
+            for (j = i + 1; j < n; j++) {
+                if (dist[i][j] < mid) {
+                    edges[i].emplace_back(j);
+                    edges[j].emplace_back(i);
+                }
+            }
+        }
+
+        colors.assign(n, ' ');
+        for (i = 0; i < n; i++) {
+            if (colors[i] == ' ') {
+                canDivide = true;
+                DfsCheckPartition(DfsCheckPartition, i, 'b');
+                if (canDivide == false) {
+                    break;
+                }
+            }
+        }
+        // cout << mid << " " << canDivide << endl;
+        if (canDivide) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    return right;
+}
+
+
+// LC3714
+int longestBalanced(string s)
+{
+    int i;
+    int n = s.size();
+    int ans, cnt;
+
+    ans = 0;
+    cnt = 1;
+    // 单字符
+    for (i = 1; i < n; i++) {
+        if (s[i] == s[i - 1]) {
+            cnt++;
+        } else {
+            ans = max(ans, cnt);
+            cnt = 1;
+        }
+    }
+    ans = max(ans, cnt);
+
+    // 两个字符
+    // pre_a[i] - pre_a[j - 1] = pre_b[i] - pre_b[j - 1] -> 
+    // pre_a[i] - pre_b[i] = pre_a[j - 1] - pre_b[j - 1] 且 pre_c[i] - pre_c[j - 1] = 0
+    vector<vector<int>> pre(n, vector<int>(2, 0)); // 此处有些卡常, 把前缀和数组提到外面, 当然可以用静态变量
+    auto f2 = [&](char a, char b) {
+        int i;
+        int n = s.size();
+        int ans = 0;
+        unordered_map<int, int> diff;
+
+        diff[0] = -1;
+        pre[0][0] = 0;
+        pre[0][1] = 0;
+        for (i = 0; i < n; i++) {
+            if (i > 0) {
+                pre[i] = pre[i - 1];
+            }
+            if (s[i] == a) {
+                pre[i][0]++;
+            } else if (s[i] == b) {
+                pre[i][1]++;
+            } else {
+                diff.clear();
+                diff[0] = i;
+                pre[i][0] = 0;
+                pre[i][1] = 0;
+                continue;
+            }
+
+            auto d = pre[i][0] - pre[i][1];
+            if (diff.count(d)) {
+                ans = max(ans, i - diff[d]);
+            } else {
+                diff[d] = i;
+            }
+        }
+        // cout << a << b << ans << endl;
+        return ans;
+    };
+    ans = max({ans, f2('a', 'b'), f2('b', 'c'), f2('a', 'c')});
+
+    // 三个字符, 与两个字符类似
+    //  pre_a[i] - pre_b[i] = pre_a[j - 1] - pre_b[j - 1]
+    //  pre_b[i] - pre_c[i] = pre_b[j - 1] - pre_c[j - 1]
+    auto f3 = [&](char a, char b, char c) {
+        int i;
+        int n = s.size();
+        int ans = 0;
+        vector<vector<int>> pre(n, vector<int>(3, 0));
+        map<pair<int, int>, int> diff;
+
+        diff[{0, 0}] = -1;
+        for (i = 0; i < n; i++) {
+            if (i > 0) {
+                pre[i] = pre[i - 1];
+            }
+            if (s[i] == a) {
+                pre[i][0]++;
+            } else if (s[i] == b) {
+                pre[i][1]++;
+            } else {
+                pre[i][2]++;
+            }
+
+            pair<int, int> d = {pre[i][0] - pre[i][1], pre[i][1] - pre[i][2]};
+            if (diff.count(d)) {
+                ans = max(ans, i - diff[d]);
+            } else {
+                diff[d] = i;
+            }
+        }
+
+        return ans;
+    };
+    ans = max(ans, f3('a', 'b', 'c'));
+
+    return ans;
+}

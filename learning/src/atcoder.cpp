@@ -2600,3 +2600,133 @@ void ABC_422_D()
     cout << x << endl;
     for (auto a : ans) cout << a << " "; cout << endl;
 }
+
+
+void ABC_426_C()
+{
+    int i, j;
+    int n;
+    int q, x, y;
+    int ans;
+    int curMinVer = 1;
+
+    cin >> n >> q;
+    vector<int> os(n + 1, 1);
+    for (i = 0; i < q; i++) {
+        cin >> x >> y;
+        if (x < curMinVer) {
+            cout << 0 << endl;
+            continue;
+        }
+        ans = 0;
+        j = curMinVer;
+        while (j <= x) {
+            os[y] += os[j];
+            ans += os[j];
+            j++;
+        }
+        curMinVer = x + 1;
+        cout << ans << endl;
+    }
+}
+
+
+void ABC_426_D()
+{
+    int i;
+    int n;
+    int maxLen0, maxLen1, cnt;
+    int cnt0, cnt1;
+    string s;
+
+    cin >> n >> s;
+
+    maxLen0 = maxLen1 = 0;
+    cnt0 = cnt1 = 0;
+    cnt = 1;
+    for (i = 0; i < n; i++) {
+        if (s[i] == '0') {
+            cnt0++;
+        } else {
+            cnt1++;
+        }
+        if (i > 0) {
+            if (s[i] == s[i - 1]) {
+                cnt++;
+            } else {
+                if (s[i] == '0') {
+                    maxLen1 = max(maxLen1, cnt);
+                } else {
+                    maxLen0 = max(maxLen0, cnt);
+                }
+                cnt = 1;
+            }
+        }
+    }
+    if (s[n - 1] == '0') {
+        maxLen0 = max(maxLen0, cnt);
+    } else {
+        maxLen1 = max(maxLen1, cnt);
+    }
+
+    int keep0, keep1;
+
+    // 全变成0, 0的转变cost为2, 1为1, 反之亦然
+    keep0 = cnt1 + cnt0 * 2 - maxLen0 * 2;
+    keep1 = cnt1 * 2 + cnt0 - maxLen1 * 2;
+    cout << min(keep0, keep1) << endl;
+}
+
+
+void ABC_427_D()
+{
+    int i, j;
+    int n, m, k;
+    int a, b;
+    string s;
+    cin >> n >> m >> k >> s;
+
+    vector<vector<int>> edges(n + 1);
+
+    for (i = 0; i < m; i++) {
+        cin >> a >> b;
+        edges[a].emplace_back(b);
+    }
+
+    int alice = 1;
+    int bob = 2;
+    // dp[i][j] - 经过j次操作, 落在i处, 接下来谁会赢 - alice 1  bob 2
+    vector<vector<int>> dp(n + 1, vector<int>(k * 2 + 1));
+
+    for (i = 0; i < n; i++) {
+        dp[i + 1][k * 2] = (s[i] == 'A' ? alice : bob);
+    }
+    int cntA, cntB;
+    for (j = k * 2 - 1; j >= 0; j--) {
+        for (i = 1; i <= n; i++) {
+            cntA = cntB = 0;
+            for (auto& next : edges[i]) {
+                if (dp[next][j + 1] == alice) {
+                    cntA++;
+                } else {
+                    cntB++;
+                }
+            }
+            if (j % 2 == 1) { // bob
+                if (cntB > 0) {
+                    dp[i][j] = bob;
+                } else {
+                    dp[i][j] = alice;
+                }
+            } else { // alice
+                if (cntA > 0) {
+                    dp[i][j] = alice;
+                } else {
+                    dp[i][j] = bob;
+                }
+            }
+        }
+    }
+    // cout << dp[1][0] << endl;
+    cout << (dp[1][0] == alice ? "Alice" : "Bob") << endl;
+}
