@@ -20567,8 +20567,8 @@ int maxFrequency(vector<int>& nums, int k, int numOperations)
 {
     int n = nums.size();
 
-    unordered_map<int, int> num;
-    unordered_set<int> p;
+    unordered_map<long long, int> num;
+    unordered_set<long long> p;
     for (auto n : nums) {
         num[n]++;
         p.emplace(n);
@@ -29460,6 +29460,7 @@ int longestBalanced(string s)
             } else if (s[i] == b) {
                 pre[i][1]++;
             } else {
+                // 遇到第三种字符, 清空记录
                 diff.clear();
                 diff[0] = i;
                 pre[i][0] = 0;
@@ -29515,4 +29516,210 @@ int longestBalanced(string s)
     ans = max(ans, f3('a', 'b', 'c'));
 
     return ans;
+}
+
+
+// LC3720
+string lexGreaterPermutation(string s, string target)
+{
+    int i;
+    int n = s.size();
+    vector<int> dict(26, 0);
+
+    for (auto ch : s) {
+        dict[ch - 'a']++;
+    }
+
+    // 前m位与target前m位一致, 且剩下的字符能组成的字符串能严格大于target m + 1位后面子字符串
+    auto Check = [&target](vector<int>& t, int m) {
+        int i;
+        for (i = 0; i < m; i++) {
+            if (t[target[i] - 'a'] > 0) {
+                t[target[i] - 'a']--;
+            } else {
+                return false;
+            }
+        }
+        string left, cur;
+        // 从大到小枚举
+        for (i = 25; i >= 0; i--) {
+            if (t[i] > 0) {
+                cur.append(t[i], 'a' + i);
+            }
+        }
+        left = target.substr(m);
+        return cur > left;
+    };
+
+    int left, right, mid;
+
+    left = 0;
+    right = n - 1;
+    while (left <= right) {
+        auto t = dict;
+        mid = (right - left) / 2 + left;
+        if (Check(t, mid)) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    // cout << "right = " << right << endl;
+    if (right == -1) {
+        return "";
+    }
+
+    string ans;
+    for (i = 0; i < right; i++) {
+        ans += target[i];
+        dict[target[i] - 'a']--;
+    }
+    // cout << "1. ans = " << ans << endl;
+    // 最小的存在的大于target[right]的字符
+    for (i = 0; i < 26; i++) {
+        if (i + 'a' > target[right] && dict[i] > 0) {
+            ans += 'a' + i;
+            dict[i]--;
+            break;
+        }
+    }
+    // cout << "2. ans = " << ans << endl;
+    // 构造后续字符串, 从小到大枚举
+    for (i = 0; i < 26; i++) {
+        if (dict[i] > 0) {
+            ans.append(dict[i], 'a' + i);
+        }
+    }
+    return ans;
+}
+
+
+// LC1453
+int numPoints(vector<vector<int>>& darts, int r)
+{
+    int i, j, k;
+    int n = darts.size();
+    int dist; // 平方距离
+    int maxDist = r * r * 4;
+    int cnt, ans;
+    double x, y;
+    vector<vector<int>> edges(n);
+
+    ans = 0;
+    for (i = 0; i < n; i++) {
+        for (j = i + 1; j < n; j++) {
+            dist = (darts[i][0] - darts[j][0]) * (darts[i][0] - darts[j][0]) + 
+                (darts[i][1] - darts[j][1]) * (darts[i][1] - darts[j][1]);
+            if (dist > maxDist) {
+                continue;
+            }
+            // 已知圆上两点坐标和其半径, 求圆心坐标, 可能有两个解
+            double t = sqrt(maxDist - dist) / 2 / sqrt(dist);
+            x = (darts[i][0] + darts[j][0]) * 1.0 / 2 - t * (darts[i][1] - darts[j][1]);
+            y = (darts[i][1] + darts[j][1]) * 1.0 / 2 + t * (darts[i][0] - darts[j][0]);
+            cnt = 0;
+            for (k = 0; k < n; k++) {
+                dist = (darts[k][0] - x) * (darts[k][0] - x) + 
+                    (darts[k][1] - y) * (darts[k][1] - y);
+                if (dist > r * r) {
+                    continue;
+                }
+                cnt++;
+            }
+            ans = max(ans, cnt);
+            // cout << "1 " << x << " " << y << " " << cnt << endl;
+            // 可能的第二个圆心坐标
+            x = (darts[i][0] + darts[j][0]) * 1.0 / 2 + t * (darts[i][1] - darts[j][1]);
+            y = (darts[i][1] + darts[j][1]) * 1.0 / 2 - t * (darts[i][0] - darts[j][0]);
+            cnt = 0;
+            for (k = 0; k < n; k++) {
+                dist = (darts[k][0] - x) * (darts[k][0] - x) + 
+                    (darts[k][1] - y) * (darts[k][1] - y);
+                if (dist > r * r) {
+                    continue;
+                }
+                cnt++;
+            }
+            ans = max(ans, cnt);
+            // cout << "2 " << x << " " << y << " " << cnt << endl;
+        }
+    }
+    if (ans == 0) {
+        ans++;
+    }
+    return ans;
+}
+
+
+// LC1340
+int maxJumps(vector<int>& arr, int d)
+{
+    int i, j;
+    int n = arr.size();
+    int ans;
+    int l, r;
+    vector<pair<int, int>> vp;
+    for (i = 0; i < n; i++) {
+        vp.push_back({arr[i], i});
+    }
+
+    sort(vp.begin(), vp.end());
+
+    vector<vector<int>> rangeMaxVal(n, vector<int>(n)); // rangeMaxVal[i][j] - [i, j]区间的最大值
+    for (i = 0; i < n; i++) {
+        for (j = i; j < n; j++) {
+            if (i == j) {
+                rangeMaxVal[i][j] = arr[j];
+            } else {
+                rangeMaxVal[i][j] = max(rangeMaxVal[i][j - 1], arr[j]);
+            }
+            // printf ("rangeMaxVal[%d][%d] = %d\n", i, j, rangeMaxVal[i][j]);
+        }
+    }
+    vector<int> dp(n, 1); // dp[i] - 从i出发能到达的最多坐标
+    ans = 1;
+    for (i = 1; i < n; i++) {
+        for (j = i - 1; j >= 0; j--) {
+            if (vp[i].first == vp[j].first || abs(vp[i].second - vp[j].second) > d) {
+                continue;
+            }
+            l = min(vp[i].second, vp[j].second);
+            r = max(vp[i].second, vp[j].second);
+            if (l + 1 <= r - 1 && rangeMaxVal[l + 1][r - 1] >= arr[vp[i].second]) {
+                continue;
+            }
+            dp[vp[i].second] = max(dp[vp[i].second], dp[vp[j].second] + 1);
+        }
+        ans = max(ans, dp[vp[i].second]);
+    }
+    // for (auto d : dp) cout << d << " "; cout << endl;
+    return ans;
+}
+
+
+// LC668
+int findKthNumber(int m, int n, int k)
+{
+    int i, j;
+    int left, right, mid;
+    int cnt;
+
+    left = 1;
+    right = m * n;
+    // 二分判断mid为第几小数字
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        cnt = 0;
+        j = 1;
+        for (i = 1; i <= m; i++) {
+            cnt += min(mid / j, n);
+            j++;
+        }
+        if (cnt >= k) {
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    return left;
 }

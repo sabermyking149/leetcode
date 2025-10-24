@@ -2730,3 +2730,35 @@ void ABC_427_D()
     // cout << dp[1][0] << endl;
     cout << (dp[1][0] == alice ? "Alice" : "Bob") << endl;
 }
+
+
+void ABC_428_D()
+{
+    int i;
+    int l, r;
+    long long c, d;
+
+    cin >> c >> d;
+
+    long long low, high;
+    long long maxX, minX;
+    long long ans, base;
+
+    l = to_string(c + 1).size();
+    r = to_string(c + d).size();
+    base = pow(10, l - 1);
+    ans = 0;
+    for (i = l; i <= r; i++) {
+        minX = max(base - c, 1ll);
+        maxX = min(base * 10 - c - 1, d);
+        if (to_string(minX + c).size() == to_string(maxX + c).size()) {
+            low = (base * 10 + 1) * c + minX;
+            high = (base * 10 + 1) * c + maxX;
+            if (high >= low) {
+                ans += floor(sqrtl(high)) - ceil(sqrtl(low)) + 1;
+            }
+        }
+        base *= 10;
+    }
+    cout << ans << endl;
+}

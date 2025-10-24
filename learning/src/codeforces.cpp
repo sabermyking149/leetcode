@@ -335,7 +335,8 @@ void CR_1016_D()
         } else {
             d = 4;
         }
-        for (i = 0; i < v1.size(); i++) {
+        int m = v1.size();
+        for (i = 0; i < m; i++) {
             for (int j = 0; j < 4; j++) {
                 if (v1[i] == direction[j][0] && v2[i] == direction[j][1]) {
                     d += j * (1ll << (i + 1)) * (1ll << (i + 1));
@@ -376,7 +377,8 @@ void CR_1016_D()
             y = 2;
         }
         int direction[4][2] = {{0, 0}, {1, 1}, {1, 0}, {0, 1}};
-        for (int i = 0; i < v.size(); i++) {
+        int m = v.size();
+        for (int i = 0; i < m; i++) {
             x += direction[v[i]][0] * (1 << (i + 1));
             y += direction[v[i]][1] * (1 << (i + 1));
         }
@@ -538,7 +540,7 @@ void CR_1029_C()
 
 void ECR_180_C()
 {
-    int i, j, k;
+    int i, j;
     int n;
 
     cin >> n;
@@ -569,4 +571,49 @@ void ECR_180_C()
         }
     }
     cout << ways << endl;
+}
+
+// 交互类型题目模版
+// 两种query
+int q1(int l, int r)
+{
+    cout << "1 " << l << " " << r << endl;
+    cout.flush();
+    int res;
+    cin >> res;
+    return res;
+}
+int q2(int l, int r)
+{
+    cout << "2 " << l << " " << r << endl;
+    cout.flush();
+    int res;
+    cin >> res;
+    return res;
+}
+void CR_1059_D() // 即solve函数
+{
+    int n;
+    int a, b;
+
+    cin >> n;
+
+    a = q1(1, n);
+    b = q2(1, n);
+
+    int len = b - a;
+    int left, right, mid;
+
+    left = 1;
+    right = n;
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        if (q1(1, mid) == q2(1, mid)) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    cout << "! " << left << " " << left + len - 1 << endl;
+    cout.flush();
 }
