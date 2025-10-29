@@ -29723,3 +29723,201 @@ int findKthNumber(int m, int n, int k)
     }
     return left;
 }
+
+
+// LC301
+vector<string> removeInvalidParentheses(string s)
+{
+    int i, j, k;
+    int n = s.size();
+    int cnt;
+
+    cnt = 0;
+    for (i = 0; i < n; i++) {
+        if (s[i] == '(' || s[i] == ')') {
+            cnt++;
+        }
+    }
+    if (cnt == 0) {
+        return {s};
+    }
+
+    auto Check = [](string& s) {
+        int i;
+        int n = s.size();
+        stack<char> st;
+        for (i = 0; i < n; i++) {
+            if (isalpha(s[i])) {
+                continue;
+            }
+            if (st.empty()) {
+                st.push(s[i]);
+                continue;
+            }
+            if (s[i] == ')') {
+                auto t = st.top();
+                if (t == '(') {
+                    st.pop();
+                } else {
+                    st.push(s[i]);
+                }
+            } else {
+                st.push(s[i]);
+            }
+        }
+        return st.empty();
+    };
+
+    int len = (1 << cnt);
+    int delBitCnt;
+    int minDelBitCnt = n;
+    string checkStr;
+    vector<string> ans;
+    unordered_set<string> record;
+
+    for (k = 0; k < len; k++) {
+        delBitCnt = popcount(k * 1ull);
+        if (delBitCnt > minDelBitCnt) {
+            continue;
+        }
+        auto t = k;
+        i = 0;
+        j = n - 1;
+        checkStr.clear();
+        while (i < cnt) {
+            while (isalpha(s[j])) {
+                checkStr += s[j];
+                j--;
+            }
+            if (t % 2 == 0) {
+                checkStr += s[j];
+            }
+            t >>= 1;
+            j--;
+            i++;
+        }
+        // 可能在所有括号前有字符
+        for (i = j; i >= 0; i--) {
+            checkStr += s[i];
+        }
+        reverse(checkStr.begin(), checkStr.end());
+        if (record.count(checkStr)) {
+            continue;
+        }
+        record.emplace(checkStr);
+        // cout << "checkStr = " << checkStr << endl;
+        if (Check(checkStr)) {
+            if (delBitCnt < minDelBitCnt) {
+                minDelBitCnt = delBitCnt;
+                ans.clear();
+            }
+            ans.emplace_back(checkStr);
+        }
+    }
+    return ans;
+}
+
+
+// LC273
+string numberToWords(int num)
+{
+    // 太丑了
+    vector<string> v1 = {"Zero", "One", "Two", "Three", "Four", "Five", "Six", 
+        "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", 
+        "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"};
+
+    vector<string> v2 = {"", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", 
+        "Eighty", "Ninety"};
+
+    vector<string> v3 = {"", "Hundred", "Thousand", "Million", "Billion"};
+
+    auto dfs = [&](auto&& self, int num, int suffix) -> string {
+        int i;
+        if (num == 0) {
+            return "";
+        }
+        if (num < 20) {
+            return v1[num] + (suffix == 0 ? v3[suffix] : " " + v3[suffix]);
+        } else if (num < 100) {
+            auto t = v1[num % 10];
+            return v2[num / 10] + (t != "Zero" ? " " + t : "") + (suffix == 0 ? v3[suffix] : " " + v3[suffix]);
+        } else if (num < 1000) {
+            auto t = self(self, num % 100, 0);
+            return v1[num / 100] + " " + v3[1] + (t != "" ? " " + t : t) + (suffix == 0 ? v3[suffix] : " " + v3[suffix]);
+        }
+        auto a = num / 1000000000;
+        auto b = num / 1000000 % 1000;
+        auto c = num / 1000 % 1000;
+        auto d = num % 1000;
+        vector<string> strs = { self(self, a , 4), 
+                                self(self, b , 3), 
+                                self(self, c , 2), 
+                                self(self, d , 0)};
+        string ans;
+        for (i = 0; i < 4; i++) {
+            if (strs[i] != "") {
+                ans += strs[i] + " ";
+            }
+        }
+        return ans;
+    };
+    string ans = dfs(dfs, num, 0);
+    if (ans == "") {
+        ans = "Zero";
+    }
+    if (ans.back() == ' ') {
+        ans.pop_back();
+    }
+    return ans;
+}
+
+
+// LC3729
+long long numGoodSubarrays(vector<int>& nums, int k)
+{
+    int i, j;
+    int n = nums.size();
+    long long ans;
+    long long cur;
+    unordered_map<int, int> cnt;
+
+    // 先不考虑重复数组
+    ans = 0;
+    cnt[0] = 1;
+    for (i = 0; i < n; i++) {
+        if (i == 0) {
+            cur = nums[i] % k;
+        } else {
+            cur = (cur + nums[i]) % k;
+        }
+        if (cur < 0) {
+            cur += k;
+        }
+        if (cnt.count(cur)) {
+            ans += cnt[cur];
+        }
+        cnt[cur]++;
+    }
+
+    // 找出连续出现的相同数字
+    int len = 1;
+    for (i = 1; i < n; i++) {
+        if (nums[i] == nums[i - 1]) {
+            len++;
+        } else {
+            // 枚举长度
+            for (j = 1; j <= len; j++) {
+                if (nums[i - 1] * 1ll * j % k == 0) {
+                    ans -= len - j;
+                }
+            }
+            len = 1;
+        }
+    }
+    for (j = 1; j <= len; j++) {
+        if (nums[i - 1] * 1ll * j % k == 0) {
+            ans -= len - j;
+        }
+    }
+    return ans;
+}
