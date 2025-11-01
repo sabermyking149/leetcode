@@ -617,3 +617,145 @@ void CR_1059_D() // 即solve函数
     cout << "! " << left << " " << left + len - 1 << endl;
     cout.flush();
 }
+
+
+void CR_1062_E()
+{
+    int i, j;
+    int n, k, x;
+    int t, num;
+
+    cin >> n >> k >> x;
+
+    vector<int> a(n);
+    for (i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    int left, right, mid;
+
+    left = 1;
+    right = x;
+    sort(a.begin(), a.end());
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        t = k;
+
+        if (a[0] >= mid) {
+            t-= a[0] - mid + 1;
+        }
+        for (i = 1; i < n; i++) {
+            num = (a[i] - a[i - 1]) / mid;
+            if (num > 1) {
+                t -= (a[i] - mid) - (a[i - 1] + mid) + 1;
+            }
+        }
+        if (x - a[n - 1] >= mid) {
+            t -= x - a[n - 1] - mid + 1;
+        }
+
+        if (t <= 0) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+
+    // right 最小距离的最大值
+    // cout << right << endl;
+
+    int d = right;
+    if (d == 0) {
+        for (i = 0; i < k; i++) {
+            cout << i << " ";
+        }
+        cout << endl;
+        return;
+    }
+
+    int cur, cnt;
+    vector<int> pos;
+
+    t = k;
+    if (a[0] >= d) {
+        cur = 0;
+        num = min(t, a[0] - d + 1);
+        for (i = 0; i < num; i++) {
+            pos.emplace_back(i);
+        }
+        t -= num;
+    }
+    for (i = 1; i < n; i++) {
+        num = (a[i] - a[i - 1]) / d;
+        if (num > 1) {
+            cnt = (a[i] - d) - (a[i - 1] + d) + 1;
+            cnt = min(t, cnt);
+            cur = a[i - 1] + d;
+            for (j = 0; j < cnt; j++) {
+                pos.emplace_back(cur + j);
+            }
+            t -= cnt;
+            if (t == 0) {
+                break;
+            }
+        }
+    }
+    if (x - a[n - 1] >= d) {
+        cur = a[n - 1] + d;
+        for (i = 0; i < t; i++) {
+            pos.emplace_back(cur + i);
+        }
+    }
+    for (auto p : pos) cout << p << " ";
+    cout << endl;
+}
+
+
+void CR_1062_G()
+{
+    int i, j;
+    int n;
+
+    cin >> n;
+
+    vector<long long> a(n), c(n);
+    for (i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    for (i = 0; i < n; i++) {
+        cin >> c[i];
+    }
+
+    // 去重
+    set<long long> s(a.begin(), a.end());
+    vector<long long> v(s.begin(), s.end());
+
+    // 预处理, a[0] 变为v[j]的代价
+    int m = v.size();
+    vector<long long> dp(m); // dp[j] - 将当前处理元素变为v[j]的最小总代价
+    for (j = 0; j < m; j++) {
+        if (v[j] == a[0]) {
+            dp[j] = 0;
+        } else {
+            dp[j] = c[0];
+        }
+    }
+
+    long long prefixMin;
+    vector<long long> n_dp;
+    for (i = 1; i < n; i++) {
+        prefixMin = LLONG_MAX;
+        n_dp.assign(m, LLONG_MAX);
+        for (j = 0; j < m; j++) {
+            if (prefixMin > dp[j]) {
+                prefixMin = dp[j];
+            }
+            if (prefixMin == LLONG_MAX) {
+                continue;
+            }
+            n_dp[j] = prefixMin + (a[i] == v[j] ? 0 : c[i]);
+        }
+        dp = move(n_dp);
+    }
+    cout << *min_element(dp.begin(), dp.end()) << endl;
+}

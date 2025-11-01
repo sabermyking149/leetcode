@@ -2762,3 +2762,56 @@ void ABC_428_D()
     }
     cout << ans << endl;
 }
+
+
+void ABC_429_E()
+{
+    int i;
+    int n, m;
+    int a, b;
+    cin >> n >> m;
+    vector<vector<int>> edges(n + 1);
+    for (i = 0; i < m; i++) {
+        cin >> a >> b;
+        edges[a].emplace_back(b);
+        edges[b].emplace_back(a);
+    }
+
+    struct node {
+        int from;
+        int cur;
+        int d;
+    };
+
+    string s;
+    cin >> s;
+    queue<node> q;
+    vector<int> dist(n + 1);
+    for (i = 0; i < n; i++) {
+        if (s[i] == 'S') {
+            q.push(node(i + 1, i + 1, 0));
+        }
+    }
+
+    // 访问次数
+    vector<int> visited(n + 1, 0);
+    // src[i] - 当前到i的原始点
+    vector<int> src(n + 1);
+    while (!q.empty()) {
+        auto [from, cur, d] = q.front();
+        q.pop();
+        for (auto& next : edges[cur]) {
+            if (visited[next] < 2 && src[next] != from) {
+                dist[next] += d + 1;
+                visited[next]++;
+                src[next] = from;
+                q.push({from, next, d + 1});
+            }
+        }
+    }
+    for (i = 0; i < n; i++) {
+        if (s[i] == 'D') {
+            cout << dist[i + 1] << endl;
+        }
+    }
+}
