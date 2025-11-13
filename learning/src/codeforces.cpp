@@ -759,3 +759,94 @@ void CR_1062_G()
     }
     cout << *min_element(dp.begin(), dp.end()) << endl;
 }
+
+
+// Testing Round 20
+// B
+void Locate()
+{
+    int i, k;
+    int t, n, x;
+    int left, right, mid;
+    int l, r;
+    int b, res, pos;
+    string type;
+    vector<int> v;
+
+    cin >> type;
+    if (type == "first") {
+        cin >> t;
+        for (i = 0; i < t; i++) {
+            cin >> n;
+            v.assign(n + 1, 0);
+            b = -1;
+            for (k = 1; k <= n; k++) {
+                cin >> v[k];
+                if (v[k] == 1) {
+                    if (b == -1) {
+                        x = 1;
+                        b = 0;
+                    }
+                } else if (v[k] == n) {
+                    if (b == -1) {
+                        x = 0;
+                        b = 0;
+                    }
+                }
+            }
+            cout << x << endl;
+            cout.flush();
+        }
+        // 输出-1表示结束输入
+        cout << -1 << endl;
+        cout.flush();
+    } else {
+        cin >> t;
+        for (i = 0; i < t; i++) {
+            cin >> n >> x;
+
+            // 右边界
+            left = 1;
+            right = n;
+            while (left <= right) {
+                mid = (right - left) / 2 + left;
+                cout << "? 1 " << mid << endl;
+                cout.flush();
+                cin >> res;
+
+                if (res == n - 1) {
+                    right = mid - 1;
+                } else {
+                    left = mid + 1;
+                }
+            }
+            r = left;
+
+            // 左边界
+            left = 1;
+            right = r;
+            while (left <= right) {
+                mid = (right - left) / 2 + left;
+                cout << "? " << mid << " " << r << endl;
+                cout.flush();
+                cin >> res;
+
+                if (res == n - 1) {
+                    left = mid + 1;
+                } else {
+                    right = mid - 1;
+                }
+            }
+            l = right;
+
+            // x 表示大的数的位置
+            if (x == 0) {
+                pos = l;
+            } else {
+                pos = r;
+            }
+            cout << "! " << pos << endl;
+            cout.flush();
+        }
+    }
+}

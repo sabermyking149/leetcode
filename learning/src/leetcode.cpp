@@ -29921,3 +29921,93 @@ long long numGoodSubarrays(vector<int>& nums, int k)
     }
     return ans;
 }
+
+
+// LC3742
+int maxPathScore(vector<vector<int>>& grid, int k)
+{
+    int i, j, p;
+    int m = grid.size();
+    int n = grid[0].size();
+    int c;
+    // dp[pos][k] - 走到pos花费k的最大分数
+    vector<vector<int>> dp(m * n, vector<int>(k + 1, -1));
+
+    dp[0][0] = 0;
+    c = 0;
+    for (i = 1; i < m; i++) {
+        auto ncost = c + (grid[i][0] > 0 ? 1 : 0);
+        if (ncost <= k) {
+            dp[i * n][ncost] = dp[(i - 1) * n][c] + grid[i][0];
+            c = ncost;
+        } else {
+            break;
+        }
+    }
+    c = 0;
+    for (j = 1; j < n; j++) {
+        auto ncost = c + (grid[0][j] > 0 ? 1 : 0);
+        if (ncost <= k) {
+            dp[j][ncost] = dp[j - 1][c] + grid[0][j];
+            c = ncost;
+        } else {
+            break;
+        }
+    }
+
+    for (i = 1; i < m; i++) {
+        for (j = 1; j < n; j++) {
+            for (p = 0; p <= k; p++) {
+                c = (grid[i][j] > 0 ? 1 : 0);
+                if (p - c >= 0) {
+                    if (dp[(i - 1) * n + j][p - c] != -1) {
+                        dp[i * n + j][p] = dp[(i - 1) * n + j][p - c] + grid[i][j];
+                    }
+                    if (dp[i * n + j - 1][p - c] != -1) {
+                        dp[i * n + j][p] = max(dp[i * n + j][p], 
+                                    dp[i * n + j - 1][p - c] + grid[i][j]);
+                    }
+                }
+            }
+        }
+    }
+
+    return *max_element(dp[m * n - 1].begin(), dp[m * n - 1].end());
+}
+
+
+// LC1575
+int countRoutes(vector<int>& locations, int start, int finish, int fuel)
+{
+    int mod = 1e9 + 7;
+    int n = locations.size();
+    // dp[i][j] - 车辆位于i剩余j汽油量时, 要到达finish的路径数
+    vector<vector<long long>> dp(n, vector<long long>(fuel + 1, -1));
+
+    dp[finish][0] = 1;
+    auto dfs = [&](auto&& self, int pos, int rest) -> long long {
+        int i;
+        if (dp[pos][rest] != -1) {
+            return dp[pos][rest];
+        }
+        long long ans = 0;
+        // 走到终点, 剩余汽油可能不为0, 继续运行下去
+        if (pos == finish) {
+            ans = (ans + 1) % mod;
+        }
+
+        int cost;
+        for (i = 0; i < n; i++) {
+            if (locations[pos] == locations[i]) {
+                continue;
+            }
+            cost = abs(locations[i] - locations[pos]);
+            if (rest >= cost) {
+                ans = (ans + self(self, i, rest - cost)) % mod;
+            }
+        }
+        dp[pos][rest] = ans;
+        return ans;
+    };
+    return dfs(dfs, start, fuel);
+}

@@ -2815,3 +2815,42 @@ void ABC_429_E()
         }
     }
 }
+
+
+void ABC_431_D()
+{
+    int i, j;
+    int n;
+
+    cin >> n;
+
+    vector<long long> w(n), h(n), b(n);
+
+    int tolWeight = 0;
+    for (i = 0; i < n; i++) {
+        cin >> w[i] >> h[i] >> b[i];
+        tolWeight += w[i];
+    }
+    // dp[i][w] - 前i个物品, 头部重量为w时, 可以得到的最大"幸福值"
+    // 头部最大weight = tolWeight / 2
+    int maxW = tolWeight / 2;
+    vector<vector<long long>> dp(n + 1, vector<long long>(maxW + 1, -1));
+
+    dp[0][0] = 0;
+    for (i = 1; i <= n; i++) {
+        for (j = 0; j <= maxW; j++) {
+            // body 直接加到body上
+            if (dp[i - 1][j] != -1) {
+                dp[i][j] = max(dp[i][j], dp[i - 1][j] + b[i - 1]);
+            }
+            // head
+            if (j - w[i - 1] >= 0 && dp[i - 1][j - w[i - 1]] != -1) {
+                dp[i][j] = max(dp[i][j], dp[i - 1][j - w[i - 1]] + h[i - 1]);
+            }
+        }
+    }
+
+    long long ans;
+    ans = *max_element(dp[n].begin(), dp[n].end());
+    cout << ans << endl;
+}
