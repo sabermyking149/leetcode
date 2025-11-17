@@ -30011,3 +30011,284 @@ int countRoutes(vector<int>& locations, int start, int finish, int fuel)
     };
     return dfs(dfs, start, fuel);
 }
+
+
+// LC691
+int minStickers(vector<string>& stickers, string target)
+{
+    int i, j, k;
+    int n = stickers.size();
+    int m = target.size();
+    vector<int> dict(26, 0);
+
+    for (i = 0; i < m; i++) {
+        dict[target[i] - 'a']++;
+    }
+    vector<int> cnt(26, 0);
+    vector<string> s;
+    bool f = false;
+    for (i = 0; i < n; i++) {
+        f = false;
+        m = stickers[i].size();
+        for (j = 0; j < m; j++) {
+            if (dict[stickers[i][j] - 'a'] != 0) {
+                f = true;
+            }
+            cnt[stickers[i][j] - 'a']++;
+        }
+        if (f) {
+            s.emplace_back(stickers[i]);
+        }
+    }
+
+    if (s.empty()) {
+        return -1;
+    }
+    for (i = 0; i < 26; i++) {
+        if (dict[i] != 0 && cnt[i] == 0) {
+            return -1;
+        }
+    }
+
+    auto Check = [](vector<int>& a, vector<int>& t) {
+        int i;
+        int n = a.size();
+
+        for (i = 0; i < n; i++) {
+            if (t[i] != 0 && a[i] < t[i]) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    queue<vector<int>> q;
+    map<vector<int>, int> state;
+    for (auto w : s) {
+        cnt.assign(26, 0);
+        m = w.size();
+        for (i = 0; i < m; i++) {
+            if (dict[w[i] - 'a'] != 0) {
+                cnt[w[i] - 'a']++;
+            }
+        }
+        if (state.count(cnt) == 0) {
+            q.push(cnt);
+            state[cnt] = 1;
+        }
+    }
+    int step = 1;
+    int ans = -1;
+
+    n = s.size();
+    while (!q.empty()) {
+        int size = q.size();
+        // cout << size << endl;
+        for (i = 0; i < size; i++) {
+            auto v = q.front();
+            q.pop();
+            if (Check(v, dict)) {
+                ans = step;
+                goto Jump_minStickers;
+            }
+            for (j = 0; j < n; j++) {
+                auto t = v;
+                m = s[j].size();
+                f = false;
+                for (k = 0; k < m; k++) {
+                    if (t[s[j][k] - 'a'] < dict[s[j][k] - 'a']) {
+                        t[s[j][k] - 'a']++;
+                        f = true;
+                    }
+                }
+                if (f && state.count(t) == 0) { 
+                    q.push(t);
+                    state[t] = step + 1;
+                }
+            }
+        }
+        step++;
+    }
+Jump_minStickers:
+    return ans;
+}
+
+
+// LC3748
+vector<long long> countStableSubarrays(vector<int>& nums, vector<vector<int>>& queries)
+{
+    int i;
+    int n = nums.size();
+    vector<vector<int>> ranges;
+    vector<long long> ans;
+    int start = 0;
+    for (i = 1; i < n; i++) {
+        if (nums[i] < nums[i - 1]) {
+            ranges.push_back({start, i - 1});
+            start = i;
+        } 
+    }
+    ranges.push_back({start, n - 1});
+    // for (auto r : ranges) cout << r[0] << " " << r[1] << endl;
+    int m = ranges.size();
+    vector<long long> prefix(m);
+    long long d = ranges[0][1] - ranges[0][0] + 1;
+    long long t;
+
+    prefix[0] = d * (d + 1) / 2;
+    for (i = 1; i < m; i++) {
+        d = ranges[i][1] - ranges[i][0] + 1;
+        prefix[i] = prefix[i - 1] + d * (d + 1) / 2;
+    }
+    int left, right, mid;
+    int l, r;
+    for (auto& q : queries) {
+        left = 0;
+        right = m - 1;
+        // 找到l, r, 在ranges里面的位置
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (ranges[mid][0] <= q[0]) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        l = right;
+
+        left = 0;
+        right = m - 1;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (ranges[mid][1] < q[1]) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        r = left;
+        // printf("[%d %d]\n", l, r);
+
+        // 两侧
+        if (l == r) {
+            d = q[1] - q[0] + 1;
+            t = d * (d + 1) / 2;
+        } else {
+            d = ranges[l][1] - q[0] + 1;
+            t = d * (d + 1) / 2;
+
+            d = q[1] - ranges[r][0] + 1;
+            t += d * (d + 1) / 2;
+        }
+
+        // 中间
+        if (r - 1 >= l) {
+            t += prefix[r - 1] - prefix[l];
+        }
+        ans.emplace_back(t);
+    }
+    return ans;
+}
+
+
+// LC719
+int smallestDistancePair(vector<int>& nums, int k)
+{
+    int i;
+    int n = nums.size();
+    sort(nums.begin(), nums.end());
+
+    int left, right, mid;
+    int l, r, m;
+    int cnt;
+    left = 0x3f3f3f3f;
+    for (i = 1; i < n; i++) {
+        left = min(left, nums[i] - nums[i - 1]);
+    }
+
+    // 双重二分
+    right = nums[n - 1] - nums[0];
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        cnt = 0;
+        for (i = 0; i < n; i++) {
+            l = i;
+            r = n - 1;
+            while (l <= r) {
+                m = (r - l) / 2 + l;
+                if (nums[m] - nums[i] <= mid) {
+                    l = m + 1;
+                } else {
+                    r = m - 1;
+                }
+            }
+            if (r > i) {
+                cnt += r - i;
+                if (cnt > k) {
+                    break;
+                }
+            }
+        }
+        // printf ("cnt = %d\n", cnt);
+        if (cnt < k) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    return left;
+}
+
+
+// LC1563
+int stoneGameV(vector<int>& stoneValue)
+{
+    int i;
+    int n = stoneValue.size();
+    vector<vector<int>> dp(n, vector<int>(n, -1));
+    vector<int> prefix(n);
+
+    prefix[0] = stoneValue[0];
+    for (i = 1; i < n; i++) {
+        prefix[i] = prefix[i - 1] + stoneValue[i];
+    }
+    auto dfs = [&](auto&& self, int l, int r) {
+        int i;
+        if (dp[l][r] != -1) {
+            return dp[l][r];
+        }
+        if (l == r) {
+            dp[l][r] = 0;
+            return 0;
+        }
+        if (l + 1 == r) {
+            dp[l][r] = min(stoneValue[l], stoneValue[r]);
+            return dp[l][r];
+        }
+        int a, b;
+        int t, ans;
+        ans = 0;
+        for (i = l; i <= r - 1; i++) {
+            if (l == 0) {
+                a = prefix[i];
+                b = prefix[r] - a;
+            } else {
+                a = prefix[i] - prefix[l - 1];
+                b = prefix[r] - prefix[i];
+            }
+            if (a > b) {
+                t = b + self(self, i + 1, r);
+            } else if (a < b) {
+                t = a + self(self, l, i);
+            } else {
+                t = a + max(self(self, l, i), self(self, i + 1, r));
+            }
+            ans = max(ans, t);
+        }
+        dp[l][r] = ans;
+        return ans;
+    };
+
+    dfs(dfs, 0, n - 1);
+    return dp[0][n - 1];
+}
