@@ -30292,3 +30292,117 @@ int stoneGameV(vector<int>& stoneValue)
     dfs(dfs, 0, n - 1);
     return dp[0][n - 1];
 }
+
+
+// LC2468
+vector<string> splitMessage(string message, int limit)
+{
+    int i, k;
+    int n = message.size();
+    int t;
+    int left, right, mid;
+    int suffixLen, len, bitLen;
+    vector<string> ans;
+
+    if (limit <= 5) {
+        return ans;
+    }
+
+    // 注意此处不能简单二分, 应为不同位数的段数对应的后缀并不单调, 需要分段讨论
+    bitLen = to_string(n).size();
+    for (k = 1; k <= bitLen; k++) {
+        left = pow(10, k - 1);
+        right = pow(10, k) - 1;
+        len = to_string(right).size();
+
+        // <b/b>
+        if (3 + len * 2 >= limit) {
+            break;
+        }
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            t = n;
+            for (i = 1; i < mid; i++) {
+                suffixLen = 3 + len + to_string(i).size();
+                t -= limit - suffixLen;
+            }
+
+            if (t <= 0) {
+                right = mid - 1;
+            }
+            suffixLen = 3 + len * 2;
+            if (t <= limit - suffixLen) {
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        int cnt = left;
+        int idx;
+
+        if (cnt == pow(10, k)) {
+            continue;
+        }
+
+        idx = 0;
+        string r;
+        for (i = 1; i < cnt; i++) {
+            suffixLen = 3 + to_string(cnt).size() + to_string(i).size();
+            len = limit - suffixLen;
+            r = message.substr(idx, len) + "<" + to_string(i) + "/" + 
+                to_string(cnt) + ">";
+            ans.emplace_back(r);
+            idx += len;
+        }
+        r = message.substr(idx) + "<" + to_string(i) + "/" + 
+                to_string(cnt) + ">";
+        ans.emplace_back(r);
+        // 找到了最小的cnt
+        break;
+    }
+    return ans;
+}
+
+
+// LC3755
+int maxBalancedSubarray(vector<int>& nums)
+{
+    int i;
+    int ans = 0;
+    int n = nums.size();
+
+    if (n < 4) {
+        return 0;
+    }
+
+    // <异或值, 平衡值(奇数-1, 偶数+1)>
+    map<pair<int, int>, int> pos;
+    vector<int> prefix(n);
+    vector<int> cnt(n);
+
+    prefix[0] = nums[0];
+    if (nums[0] % 2 == 1) {
+        cnt[0] = -1;
+    } else {
+        cnt[0] = 1;
+    }
+    pos[{prefix[0], cnt[0]}] = 0;
+    for (i = 1; i < n; i++) {
+        prefix[i] = (prefix[i - 1] ^ nums[i]);
+        cnt[i] = cnt[i - 1] + (nums[i] % 2 == 1 ? -1 : 1);
+
+        if (prefix[i] == 0 && cnt[i] == 0) {
+            ans = max(ans, i + 1);
+            continue;
+        }
+
+        if (pos.count({prefix[i], cnt[i]})) {
+            auto idx = pos[{prefix[i], cnt[i]}];
+            ans = max(ans, i - idx);
+        } else {
+            pos[{prefix[i], cnt[i]}] = i;
+        }
+    }
+    return ans;
+}

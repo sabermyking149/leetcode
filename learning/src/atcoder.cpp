@@ -2854,3 +2854,46 @@ void ABC_431_D()
     ans = *max_element(dp[n].begin(), dp[n].end());
     cout << ans << endl;
 }
+
+
+void ABC_432_C()
+{
+    int i;
+    long long n, x, y, w;
+    long long ans;
+
+    cin >> n >> x >> y;
+
+    vector<long long> a(n);
+    long long sum = 0;
+    for (i = 0; i < n; i++) {
+        cin >> a[i];
+        sum += a[i];
+    }
+    // si + li = ai;
+    // si * x + li * y = w;
+    // li = (w - ai * x) / (y - x) 且要被整除
+    // 所以每个ai * x 都要mod (y - x) 同余
+    long long d = y - x;
+    long long r = a[0] * x % d;
+    for (i = 0; i < n; i++) {
+        if (a[i] * x % d != r) {
+            cout << -1 << endl;
+            return;
+        }
+    }
+    // li 要尽可能大, max(li) = (w - min(ai) * x) / (y - x)
+    // 且此时si = 0
+    sort(a.begin(), a.end());
+
+    w = a[0] * y;
+    ans = 0;
+    for (i = 0; i < n; i++) {
+        if (a[i] * x > w) {
+            cout << -1 << endl;
+            return;
+        }
+        ans += (w - a[i] * x) / d;
+    }
+    cout << ans << endl;
+}
