@@ -1759,15 +1759,15 @@ int FastPow(int a, int b)
     }
     return ans;
 }
-long long FastPow(int a, int b, int mod)
+long long FastPow(long long a, long long b, int mod)
 {
     long long ans = 1;
-    int base = a;
+    long long base = a;
     while (b != 0) {
         if ((b & 1) != 0) {
-            ans = (static_cast<long long>(ans) * base) % mod;
+            ans = (ans * base) % mod;
         }
-        base = (static_cast<long long>(base) * base) % mod;
+        base = (base * base) % mod;
         b >>= 1;
     }
     return ans;
@@ -30402,6 +30402,325 @@ int maxBalancedSubarray(vector<int>& nums)
             ans = max(ans, i - idx);
         } else {
             pos[{prefix[i], cnt[i]}] = i;
+        }
+    }
+    return ans;
+}
+
+
+// LC1900
+vector<int> earliestAndLatest(int n, int firstPlayer, int secondPlayer)
+{
+    if (firstPlayer + secondPlayer == n + 1) {
+        return {1, 1};
+    }
+
+    int maxVal = 0;
+    int minVal = 10;
+    auto dfs = [&](auto self, vector<int>& v, int step, int& maxVal, int& minVal) {
+        int n = v.size();
+        int i, idx1, idx2;
+        idx1 = idx2 = -10;
+        int len, t;
+        for (i = 0; i < n; i++) {
+            if (v[i] == firstPlayer) {
+                idx1 = i;
+            }
+            if (v[i] == secondPlayer) {
+                idx2 = i;
+            }
+        }
+        if (idx1 + idx2 == n - 1) {
+            maxVal = max(maxVal, step);
+            minVal = min(minVal, step);
+            return;
+        }
+        // 暂时不交手
+        int time = n;
+        auto vv = v;
+        if (n - 1 - idx1 != idx1) {
+            time -= 2;
+        }
+        if (n - 1 - idx2 != idx2) {
+            time -= 2;
+        }
+        // 剪枝
+        if (time == 0) {
+            maxVal = max(maxVal, step + 1);
+            minVal = min(minVal, step + 1);
+            return;
+        }
+
+        time >>= 1;
+        len = (1 << time);
+
+        int j, k;
+        vector<int> next((n + 1) / 2);
+        for (i = 0; i < len; i++) {
+            vv = v;
+            if (n - 1 - idx1 != idx1) {
+                vv[n - 1 - idx1] = -1;
+            }
+            if (n - 1 - idx2 != idx2) {
+                vv[n - 1 - idx2] = -1;
+            }
+            t = i;
+            j = 0;
+            k = 0;
+            while (j < time) {
+                while (vv[k] == -1 || vv[k] == firstPlayer || 
+                        vv[k] == secondPlayer) {
+                    k++;
+                }
+                if (t % 2 == 1) {
+                    vv[n - 1 - k] = -1;
+                } else {
+                    vv[k] = -1;
+                }
+                t >>= 1;
+                j++;
+                k++;
+            }
+            k = 0;
+            for (j = 0; j < n; j++) {
+                if (vv[j] == -1) {
+                    continue;
+                }
+                next[k] = vv[j];
+                k++;
+            }
+            self(self, next, step + 1, maxVal, minVal);
+        }
+    };
+    int i;
+    vector<int> v;
+    for (i = 1; i <= n; i++) {
+        v.emplace_back(i);
+    }
+    dfs(dfs, v, 1, maxVal, minVal);
+    return {minVal, maxVal};
+}
+
+
+// LC1591
+bool isPrintable(vector<vector<int>>& targetGrid)
+{
+    int i, j, k;
+    int m = targetGrid.size();
+    int n = targetGrid[0].size();
+    vector<int> rowMax(60 + 1, -1);
+    vector<int> rowMin(60 + 1, 0x3f3f3f3f);
+    vector<int> colMax(60 + 1, -1);
+    vector<int> colMin(60 + 1, 0x3f3f3f3f);
+
+    // 每一种印章的最小矩形大小
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            rowMax[targetGrid[i][j]] = max(rowMax[targetGrid[i][j]], i);
+            rowMin[targetGrid[i][j]] = min(rowMin[targetGrid[i][j]], i);
+            colMax[targetGrid[i][j]] = max(colMax[targetGrid[i][j]], j);
+            colMin[targetGrid[i][j]] = min(colMin[targetGrid[i][j]], j);
+        }
+    }
+
+    vector<vector<int>> edges(61);
+    vector<unordered_set<int>> t(61);
+    unordered_set<int> inValid;
+    for (k = 1; k <= 60; k++) {
+        if (rowMax[k] == -1) {
+            inValid.emplace(k);
+            continue;
+        }
+        for (i = rowMin[k]; i <= rowMax[k]; i++) {
+            for (j = colMin[k]; j <= colMax[k]; j++) {
+                if (targetGrid[i][j] != k) {
+                    t[targetGrid[i][j]].emplace(k);
+                }
+            }
+        }
+    }
+    for (i = 1; i <= 60; i++) {
+        if (t[i].empty()) {
+            continue;
+        }
+        for (auto it : t[i]) {
+            edges[i].emplace_back(it);
+        }
+    }
+
+    vector<int> inDegree(61, 0);
+    // 拓扑排序, 如果出现环, 则不能实现一次性盖章
+    for (i = 1; i <= 60; i++) {
+        if (inValid.count(i)) {
+            inDegree[i] = -1;
+        }
+        for (auto next : edges[i]) {
+            inDegree[next]++;
+        }
+    }
+
+    queue<int> q;
+    for (i = 1; i <= 60; i++) {
+        if (inDegree[i] == 0) {
+            q.push(i);
+        }
+    }
+    // 整体形成了环
+    if (q.empty()) {
+        return false;
+    }
+    while (!q.empty()) {
+        auto node = q.front();
+        q.pop();
+        for (auto next : edges[node]) {
+            inDegree[next]--;
+            if (inDegree[next] == 0) {
+                q.push(next);
+            }
+        }
+    }
+    for (auto in : inDegree) {
+        if (in > 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+// LC2872
+int maxKDivisibleComponents(int n, vector<vector<int>>& edges, vector<int>& values, int k)
+{
+    vector<vector<int>> e(n);
+    for (auto& edge : edges) {
+        e[edge[0]].emplace_back(edge[1]);
+        e[edge[1]].emplace_back(edge[0]);
+    }
+    vector<long long> val(n, -1);
+    // 后缀求节点子树和
+    auto dfs = [&](auto&& self, int cur, int parent) -> long long {
+        if (val[cur] != -1) {
+            return val[cur];
+        } 
+        if (e[cur].size() == 1 && e[cur][0] == parent) {
+            val[cur] = values[cur];
+            return val[cur];
+        }
+        long long ans = values[cur];
+        for (auto next : e[cur]) {
+            if (next != parent) {
+                ans += self(self, next, cur);
+            }
+        }
+        val[cur] = ans;
+        return ans;
+    };
+    dfs(dfs, 0, -1);
+
+    vector<int> ans(n, -1);
+    auto cntNode = [&](auto&& self, int cur, int parent) -> int {
+        if (ans[cur] != -1) {
+            return ans[cur];
+        }
+        if (e[cur].size() == 1 && e[cur][0] == parent) {
+            ans[cur] = (val[cur] % k == 0 ? 1 : 0);
+            return ans[cur];
+        }
+        int ret = (val[cur] % k == 0 ? 1 : 0);
+        for (auto next : e[cur]) {
+            if (next != parent) {
+                ret += self(self, next, cur);
+            }
+        }
+        ans[cur] = ret;
+        return ret;
+    };
+    cntNode(cntNode, 0, -1);
+    return ans[0];
+}
+
+
+// LC1754
+string largestMerge(string word1, string word2)
+{
+    int i;
+    int m = word1.size();
+    int n = word2.size();
+    string ans(m + n, '.');
+    string t1 = word1;
+    string t2 = word2; 
+    for (i = 0; i < m + n; i++) {
+        if (t1 > t2) {
+            ans[i] = t1[0];
+            t1 = t1.substr(1);
+        } else {
+            ans[i] = t2[0];
+            t2 = t2.substr(1);
+        }
+    }
+    return ans;
+}
+
+
+// LC1755
+int minAbsDifference(vector<int>& nums, int goal)
+{
+    int i, j;
+    int n = nums.size();
+
+    if (n == 1) {
+        return min(abs(nums[0] - goal), abs(goal));
+    }
+
+    int p = n / 2;
+    int q = n - p;
+
+    auto f = [](int m, vector<int>& nums) {
+        int i, j;
+        int len = (1 << m);
+        int cur;
+        vector<int> ret;
+        for (i = 0; i < len; i++) {
+            auto t = i;
+            j = 0;
+            cur = 0;
+            while (j < m) {
+                if (t % 2 == 1) {
+                    cur += nums[j];
+                }
+                t >>= 1;
+                j++;
+            }
+            ret.emplace_back(cur);
+        }
+        return ret;
+    };
+
+    vector<int> t1, t2;
+    vector<int> ret1, ret2;
+    for (i = 0; i < n; i++) {
+        if (i < p) {
+            t1.emplace_back(nums[i]);
+        } else {
+            t2.emplace_back(nums[i]);
+        }
+    }
+
+    ret1 = f(p, t1);
+    ret2 = f(q, t2);
+    sort(ret1.begin(), ret1.end());
+    sort(ret2.begin(), ret2.end());
+
+    int ans = INT_MAX;
+
+    i = 0;
+    j = ret2.size() - 1;
+    while (i < ret1.size() && j >= 0) {
+        ans = min(ans, abs(ret1[i] + ret2[j] - goal));
+        if (ret1[i] + ret2[j] > goal) {
+            j--;
+        } else {
+            i++;
         }
     }
     return ans;

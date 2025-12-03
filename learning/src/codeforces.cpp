@@ -850,3 +850,41 @@ void Locate()
         }
     }
 }
+
+
+void CR_1065_C2()
+{
+    int i, j;
+    int n;
+    int s;
+    cin >> n;
+    vector<int> a(n), b(n);
+
+    s = 0;
+    for (i = 0; i < n; i++) {
+        cin >> a[i];
+        s ^= a[i];
+    }
+    for (i = 0; i < n; i++) {
+        cin >> b[i];
+        s ^= b[i];
+    }
+    // s最多21位
+    for (i = 20; i >= 0; i--) {
+        if ((s & (1 << i)) == (1 << i)) {
+            // 最后一个控制最高位的一定是胜者
+            for (j = n - 1; j >= 0; j--) {
+                if (((a[j] & (1 << i)) == (1 << i) && (b[j] & (1 << i)) == 0) || 
+                    ((a[j] & (1 << i)) == 0 && (b[j] & (1 << i)) == (1 << i))) {
+                    if (j % 2 == 0) {
+                        cout << "Ajisai\n";
+                    } else {
+                        cout << "Mai\n";
+                    }
+                    return;
+                }
+            }
+        }
+    }
+    cout << "Tie\n";
+}

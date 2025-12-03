@@ -2897,3 +2897,55 @@ void ABC_432_C()
     }
     cout << ans << endl;
 }
+
+
+void ABC_434_D()
+{
+    int i, j;
+    int n;
+    cin >> n;
+    vector<long long> u(n), d(n), l(n), r(n);
+    
+    vector<vector<long long>> diff(2002, vector<long long>(2002, 0));
+    vector<vector<long long>> grid(2002, vector<long long>(2002, 0));
+    // 二维差分
+    for (i = 0; i < n; i++) {
+        cin >> u[i] >> d[i] >> l[i] >> r[i];
+        diff[u[i]][l[i]]++;
+        diff[u[i]][r[i] + 1]--;
+        diff[d[i] + 1][l[i]]--;
+        diff[d[i] + 1][r[i] + 1]++;
+    }
+
+    int cnt = 0;
+    vector<vector<int>> onlyone(2001, vector<int>(2001, 0));
+    for (i = 1; i <= 2000; i++) {
+        for (j = 1; j <= 2000; j++) {
+            grid[i][j] = diff[i][j] + grid[i][j - 1] + grid[i - 1][j] - grid[i - 1][j - 1];
+            if (grid[i][j] > 0) {
+                cnt++;
+                if (grid[i][j] == 1) {
+                    onlyone[i][j] = 1;
+                }
+            }
+        }
+    }
+
+    // 初始未覆盖
+    int init = 2000 * 2000 - cnt;
+    // 只有1朵云覆盖区域统计
+    vector<vector<int>> prefix_onlyone(2001, vector<int>(2001, 0));
+    for (i = 1; i <= 2000; i++) {
+        for (j = 1; j <= 2000; j++) {
+            prefix_onlyone[i][j] = prefix_onlyone[i][j - 1] + prefix_onlyone[i - 1][j] - prefix_onlyone[i - 1][j - 1]
+                + onlyone[i][j];
+        }
+    }
+    for (i = 0; i < n; i++) {
+        cnt = prefix_onlyone[d[i]][r[i]] - prefix_onlyone[u[i] - 1][r[i]] 
+                - prefix_onlyone[d[i]][l[i] - 1] 
+                + prefix_onlyone[u[i] - 1][l[i] - 1];
+
+        cout << init + cnt << endl;
+    }
+}
