@@ -30725,3 +30725,531 @@ int minAbsDifference(vector<int>& nums, int goal)
     }
     return ans;
 }
+
+
+// LC3565
+vector<vector<int>> findPath(vector<vector<int>>& grid, int k)
+{
+    int m = grid.size();
+    int n = grid[0].size();
+    vector<vector<int>> visited(m, vector<int>(n, 0));
+    vector<vector<int>> route, ans;
+    // 行走的路径中间可以穿插值为0的点
+    auto dfs = [&](auto&& self, int r, int c, int cur, int cnt, bool& find) -> void {
+        if (find) {
+            return;
+        }
+
+        route.push_back({r, c});
+        visited[r][c] = 1;
+        int m = grid.size();
+        int n = grid[0].size();
+        if (cnt == m * n) {
+            find = true;
+            ans = route;
+            return;
+        }
+
+        int i;
+        int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+        for (i = 0; i < 4; i++) {
+            auto nr = r + directions[i][0];
+            auto nc = c + directions[i][1];
+
+            if (nr < 0 || nr >= m || nc < 0 || nc >= n || 
+                visited[nr][nc] == 1 || (grid[nr][nc] != 0 && grid[nr][nc] - cur > 1)) {
+                continue;
+            }
+            self(self, nr, nc, (grid[nr][nc] == 0 ? cur : grid[nr][nc]), cnt + 1, find);
+        }
+        visited[r][c] = 0;
+        route.pop_back();
+    };
+
+    int i, j;
+    bool find = false;
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            if (grid[i][j] == 0 || grid[i][j] == 1) {
+                dfs(dfs, i, j, grid[i][j], 1, find);
+            }
+        }
+    }
+    if (find) {
+        return ans;
+    }
+    return {};
+}
+
+
+// LC3647
+int maxWeight(vector<int>& weights, int w1, int w2)
+{
+    int i, j, k;
+    int n = weights.size();
+    // dp[i][j][k] - 前i个物品, 放入容量分别为j、k的两个袋子的最大总重量
+    vector<vector<vector<int>>> dp(n + 1, vector<vector<int>>(w1 + 1,
+        vector<int>(w2 + 1, 0)));
+
+    for (j = 0; j <= w1; j++) {
+        for (k = 0; k <= w2; k++) {
+            for (i = 1; i <= n; i++) {
+                // 不放入
+                dp[i][j][k] = dp[i - 1][j][k];
+                // 放入, 两种情况
+                if (j - weights[i - 1] >= 0) {
+                    dp[i][j][k] = max(
+                        dp[i][j][k],
+                        dp[i - 1][j - weights[i - 1]][k] + weights[i - 1]);
+                }
+
+                if (k - weights[i - 1] >= 0) {
+                    dp[i][j][k] = max(
+                        dp[i][j][k],
+                        dp[i - 1][j][k - weights[i - 1]] + weights[i - 1]);
+                }
+            }
+        }
+    }
+    return dp[n][w1][w2];
+}
+
+
+// LC1655 (有问题)
+bool canDistribute(vector<int>& nums, vector<int>& quantity)
+{
+    int i, j, k;
+    int m = quantity.size();
+    unordered_map<int, int> cnt;
+
+    for (auto num : nums) {
+        cnt[num]++;
+    }
+    int size = cnt.size();
+
+    vector<int> p;
+    for (auto it : cnt) {
+        p.emplace_back(it.second);
+    }
+
+    // dp[i][j] - 前i个p能否实现状态为j的情况
+    vector<vector<bool>> dp(size + 1, vector<bool>(1 << m, false));
+    for (i = 1; i <= size; i++) {
+        for (j = 0; j < m; j++) {
+            if (dp[i - 1][1 << j]) {
+                dp[i][1 << j] = true;
+                continue;
+            }
+            if (p[i - 1] - quantity[j] >= 0) {
+                dp[i][1 << j] = true;
+            }
+        }
+    }
+    int len = 2;
+    int a, b;
+    while (len <= m) {
+        for (k = 1; k < size; k++) {
+            for (i = 0; i < (1 << m); i++) {
+                a = popcount(i * 1u);
+                if (a != len) {
+                    continue;
+                }
+                for (j = 0; j < (1 << m); j++) {
+                    b = popcount(j * 1u);
+                    if (b != a - 1 || (i & j) != j) {
+                        continue;
+                    }
+                    int pos = log2(i ^ j);
+                    if (dp[k][j]) {
+                        if (p[k] >= quantity[pos]) {
+                            dp[k + 1][i] = true;
+                        }
+                    }
+                }
+            }
+        }
+        len++;
+    }
+    return dp[size][(1 << m) - 1];
+}
+
+
+// LC233
+int countDigitOne(int n)
+{
+    string s = to_string(n);
+    int len = s.size();
+    vector<vector<vector<int>>> dp(len, vector<vector<int>>(len + 1u, vector<int>(2, -1)));
+    // pos - 位置, cnt1 - 之前有多少个1 flag - 是否"紧挨着"上限
+    auto dfs = [&](auto&& self, string& s, int pos, int cnt1, bool flag) -> int {
+        int i;
+        int len = s.size();
+        if (pos == len) {
+            return cnt1;
+        }
+
+        // printf ("%d %d %d\n", pos, cnt1, flag);
+        int state = (flag ? 0 : 1);
+        if (dp[pos][cnt1][state] != -1) {
+            return dp[pos][cnt1][state];
+        }
+
+        int ans = 0;
+        int t, maxVal;
+        if (flag) {
+            maxVal = s[pos] - '0';
+        } else {
+            maxVal = 9;
+        }
+        for (i = 0; i <= maxVal; i++) {
+            t = cnt1;
+            if (i == 1) {
+                t = cnt1 + 1;
+            }
+            if (i == s[pos] - '0') {
+                ans += self(self, s, pos + 1, t, true && flag);
+            } else {
+                ans += self(self, s, pos + 1, t, false);
+            }
+        }
+        dp[pos][cnt1][state] = ans;
+        return ans;
+    };
+
+    return dfs(dfs, s, 0, 0, true);
+}
+
+
+// LC3753
+long long totalWaviness(long long num1, long long num2)
+{
+    struct State {
+        int pos;
+        int pre_num;
+        int pre_pre_num;
+        long long cnt; 
+        int  state1;
+        int state2;
+
+        bool operator<(const State& other) const {
+            if (pos != other.pos) {
+                return pos < other.pos;
+            }
+            if (pre_num != other.pre_num) {
+                return pre_num < other.pre_num;
+            }
+            if (pre_pre_num != other.pre_pre_num) {
+                return pre_pre_num < other.pre_pre_num;
+            }
+            if (cnt != other.cnt) {
+                return cnt < other.cnt;
+            }
+            if (state1 != other.state1) {
+                return state1 < other.state1;
+            }
+            return state2 < other.state2;
+        }
+    };
+
+    long long ans;
+    // flag - 是否紧贴 start - 是否开始统计(前导0不做比较)
+    auto dfs = [&](auto&& self, string& s, int pos, int pre_num, int pre_pre_num, long long cnt, bool flag, bool start, 
+       map<State, long long>& dp) -> long long {
+
+        int i;
+        int len = s.size();
+        if (pos == len) {
+            return cnt;
+        }
+
+        int state1 = (flag ? 0 : 1);
+        int state2 = (start ? 0 : 1);
+        if (dp.count({pos, pre_num, pre_pre_num, cnt, state1, state2})) {
+            return dp[{pos, pre_num, pre_pre_num, cnt, state1, state2}];
+        }
+
+        long long ans = 0;
+        int t, maxVal;
+        if (flag) {
+            maxVal = s[pos] - '0';
+        } else {
+            maxVal = 9;
+        }
+        for (i = 0; i <= maxVal; i++) {
+            if (i == 0 && start == false) {
+                ans += self(self, s, pos + 1, pre_num, pre_pre_num, cnt, false, false, dp);
+            } else {
+                if (pre_num == 10) {
+                    if (i == s[pos] - '0') {
+                        ans += self(self, s, pos + 1, i, pre_pre_num, cnt, flag, true, dp);
+                    } else {
+                        ans += self(self, s, pos + 1, i, pre_pre_num, cnt, false, true, dp);
+                    }
+                } else if (pre_pre_num == 10) {
+                    if (i == s[pos] - '0') {
+                        ans += self(self, s, pos + 1, i, pre_num, cnt, flag, true, dp);
+                    } else {
+                        ans += self(self, s, pos + 1, i, pre_num, cnt, false, true, dp);
+                    }
+                } else {
+                    if ((pre_num > pre_pre_num && i < pre_num) || (pre_num < pre_pre_num && i > pre_num)) {
+                        if (i == s[pos] - '0') {
+                            ans += self(self, s, pos + 1, i, pre_num, cnt + 1, flag, true, dp);
+                        } else {
+                            ans += self(self, s, pos + 1, i, pre_num, cnt + 1, false, true, dp);
+                        }
+                    } else {
+                        if (i == s[pos] - '0') {
+                            ans += self(self, s, pos + 1, i, pre_num, cnt, flag, true, dp);
+                        } else {
+                            ans += self(self, s, pos + 1, i, pre_num, cnt, false, true, dp);
+                        }
+                    }
+                }
+            }
+        }
+        dp[{pos, pre_num, pre_pre_num, cnt, state1, state2}] = ans;
+        return ans;
+    };
+
+    string s1 = to_string(num1 - 1);
+    string s2 = to_string(num2);
+    int len1 = s1.size();
+    int len2 = s2.size();
+    map<State, long long> dp1, dp2;
+    if (num2 <= 100) {
+        return 0;
+    } else if (num1 <= 100) {
+        ans = dfs(dfs, s2, 0, 10, 10, 0, true, false, dp2);
+    } else {
+        ans = dfs(dfs, s2, 0, 10, 10, 0, true, false, dp2) - dfs(dfs, s1, 0, 10, 10, 0, true, false, dp1);
+    }
+    return ans;
+}
+
+
+// LC600
+int findIntegers(int n)
+{
+    string s;
+    int t, len;
+
+    t = n;
+    while (t) {
+        s += t % 2 + '0';
+        t >>= 1;
+    }
+    reverse(s.begin(), s.end());
+    len = s.size();
+    vector<vector<vector<vector<int>>>> dp(len, vector<vector<vector<int>>>(2, 
+        vector<vector<int>>(2, vector<int>(2, -1))));
+    // pos - 位置, pre_num - 上一个bit位的值 flag - 是否"紧挨着"上限 find - 前面是否出现过连续的1
+    auto dfs = [&](auto&& self, string& s, int pos, int pre_num, bool flag, bool find) -> int {
+        int i;
+        int len = s.size();
+        if (pos == len) {
+            if (find) {
+                return 1;
+            }
+            return 0;
+        }
+
+        int state1 = (flag ? 0 : 1);
+        int state2 = (find ? 0 : 1);
+        if (dp[pos][pre_num][state1][state2] != -1) {
+            return dp[pos][pre_num][state1][state2];
+        }
+
+        int ans = 0;
+        int maxVal;
+        if (flag) {
+            maxVal = s[pos] - '0';
+        } else {
+            maxVal = 1;
+        }
+        int add = 0;
+        for (i = 0; i <= maxVal; i++) {
+            if (i == 1 && pre_num == 1) {
+                find = true;
+            }
+            if (i == s[pos] - '0') {
+                ans += self(self, s, pos + 1, i, flag, find);
+            } else {
+                ans += self(self, s, pos + 1, i, false, find);
+            }
+        }
+        dp[pos][pre_num][state1][state2] = ans;
+        return ans;
+    };
+
+    return n + 1 - dfs(dfs, s, 0, 0, true, false);
+}
+
+
+// LC2376 LC1012 两者互逆
+int countSpecialNumbers(int n)
+{
+    string s = to_string(n);
+    int len = s.size();
+
+    vector<vector<vector<vector<int>>>> dp(len, 
+        vector<vector<vector<int>>>(1 << 10, vector<vector<int>>(2, vector<int>(2, -1))));
+    // pos - 位置, mask - 已使用数字组成的二进制码 limit1 - 是否紧贴上限 limit2 - 是否有前导0
+    auto dfs = [&](auto&& self, int pos, int mask, bool limit1, bool limit2) -> int {
+        if (pos == len) {
+            return 1;
+        }
+        int state1 = (limit1 ? 1 : 0);
+        int state2 = (limit2 ? 1 : 0);
+        if (dp[pos][mask][state1][state2] != -1) {
+            return dp[pos][mask][state1][state2];
+        }
+
+        int end;
+        if (limit1) {
+            end = s[pos] - '0';
+        } else {
+            end = 9;
+        }
+        int i;
+        int ans = 0;
+        bool n_limit1 = false;
+        for (i = 0; i <= end; i++) {
+            if ((mask & (1 << i)) != 0) {
+                continue;
+            }
+            if (limit1 && i == end) {
+                n_limit1 = true;
+            } else {
+                n_limit1 = false;
+            }
+            // 有前导0, i = 0 即为此处不计算使用数字
+            if (limit2) {
+                if (i == 0) {
+                    ans += self(self, pos + 1, mask, false, true);
+                } else {
+                    ans += self(self, pos + 1, mask | (1 << i), n_limit1, false);
+                }
+            } else {
+                ans += self(self, pos + 1, mask | (1 << i), n_limit1, false);
+            }
+        }
+        dp[pos][mask][state1][state2] = ans;
+        return ans;
+    };
+    // 从1开始计数, 去掉0
+    return dfs(dfs, 0, 0, true, true) - 1;
+}
+
+
+// LC2719
+int count(string num1, string num2, int min_sum, int max_sum)
+{
+    using sll = __int128;
+    int mod = 1e9 + 7;
+    auto f = [&](string& s) -> sll {
+        // 1 <= num1 <= num2 <= 10^22
+        // max(digit_sum(num)) = 9 * 21 = 189
+        vector<vector<vector<sll>>> dp(22 + 1, 
+            vector<vector<sll>>(189 + 1, vector<sll>(2, -1)));
+        // pos - 位置, curSum - 当前数字和 limit - 是否紧贴上限
+        auto dfs = [&](auto&& self, int pos, int curSum, bool limit) -> sll {
+            int len = s.size();
+            if (pos == len) {
+                return 1;
+            }
+            int state = (limit ? 1 : 0);
+            if (dp[pos][curSum][state] != -1) {
+                return dp[pos][curSum][state];
+            }
+
+            int end;
+            if (limit) {
+                end = s[pos] - '0';
+            } else {
+                end = 9;
+            }
+            int i;
+            sll ans = 0;
+            bool n_limit = false;
+            for (i = 0; i <= end; i++) {
+                if (curSum + i > max_sum) {
+                    break;
+                }
+                // 提前判断能不能满足min_sum
+                if (curSum + i + 9 * (len - pos - 1) < min_sum) {
+                    continue;
+                }
+                if (limit && i == end) {
+                    n_limit = true;
+                } else {
+                    n_limit = false;
+                }
+                // 有前导0, i = 0 即为此处不计算使用数字
+                if (n_limit) {
+                    ans += self(self, pos + 1, curSum + i, true);
+                } else {
+                    ans += self(self, pos + 1, curSum + i, false);
+                }
+            }
+            dp[pos][curSum][state] = ans;
+            return ans;
+        };
+        return dfs(dfs, 0, 0, true);
+    };
+
+    auto MinusOne = [](string& s) {
+        string t = s;
+        int i;
+        int r, d;
+        int len = s.size();
+        reverse(t.begin(), t.end());
+
+        r = 0;
+        for (i = 0; i < len; i++) {
+            if (i == 0) {
+                d = t[i] - '0' - 1;
+                if (d < 0) {
+                    t[i] = '9';
+                    r = 1;
+                } else {
+                    t[i] = d + '0';
+                    r = 0;
+                }
+            } else {
+                d = t[i] - '0' - r;
+                if (d < 0) {
+                    t[i] = '9';
+                    r = 1;
+                } else {
+                    t[i] = d + '0';
+                    r = 0;
+                }
+            }
+        }
+        reverse(t.begin(), t.end());
+        for (i = 0; i < len; i++) {
+            if (t[i] != '0') {
+                return t.substr(i);
+            }
+        }
+        string ans = "0";
+        return ans;
+    };
+#if 0
+    string left = MinusOne(num1);
+    // 注意 __int128非标准C++, cout会编译报错
+    // cout << f(num2) << " " << f(left) << endl;
+    return (f(num2) - f(left)) % mod;
+#endif
+    // 不使用高精度
+    int sum = 0;
+    for (auto ch : num1) {
+        sum += ch - '0';
+    }
+    int add = 0;
+    if (sum >= min_sum && sum <= max_sum) {
+        add = 1;
+    }
+    return (f(num2) - f(num1) + add) % mod;
+}
