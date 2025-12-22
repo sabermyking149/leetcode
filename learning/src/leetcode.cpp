@@ -25853,39 +25853,36 @@ int minMoves(vector<string>& matrix)
 
     int directions[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
     vector<vector<int>> dist(m, vector<int>(n, 0x3f3f3f3f));
-    unordered_map<char, vector<pair<int, int>>> gates;
+    vector<vector<pair<int, int>>> gates(26);
     for (i = 0; i < m; i++) {
         for (j = 0; j < n; j++) {
             if (isalpha(matrix[i][j])) {
-                gates[matrix[i][j]].push_back({i, j});
+                gates[matrix[i][j] - 'A'].push_back({i, j});
             }
         }
     }
 
-    // [距离, r, c, 使用传送门状态]
-    priority_queue<tuple<int, int, int, int>, vector<tuple<int, int, int, int>>, greater<>> pq;
-
-    pq.push({0, 0, 0, 0});
-
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
+    vector<int> used(26, 0);
+    pq.push({0, 0});
+    dist[0][0] = 0;
     while (!pq.empty()) {
-        auto [d, r, c, used] = pq.top();
+        auto [d, pos] = pq.top();
         pq.pop();
-
-        if (dist[r][c] < d) {
-            continue;
-        }
-        dist[r][c] = d;
+        auto r = pos / n;
+        auto c = pos % n;
         if (r == m - 1 && c == n - 1) {
             break;
         }
-        if (isalpha(matrix[r][c]) && (used & 1 << (matrix[r][c] - 'A')) == 0) {
-            for (auto& p : gates[matrix[r][c]]) {
-                if (dist[p.first][p.second] > d) {
-                    dist[p.first][p.second] = d;
-                    used |= 1 << (matrix[r][c] - 'A');
-                    pq.push({d, p.first, p.second, used});
+
+        if (isalpha(matrix[r][c]) && used[matrix[r][c] - 'A'] == 0) {
+            for (auto [nr, nc] : gates[matrix[r][c] - 'A']) {
+                if (dist[nr][nc] > d) {
+                    dist[nr][nc] = d;
+                    pq.push({d, nr * n + nc});
                 }
             }
+            used[matrix[r][c] - 'A'] = 1;
         }
         for (i = 0; i < 4; i++) {
             auto nr = r + directions[i][0];
@@ -25895,10 +25892,11 @@ int minMoves(vector<string>& matrix)
             }
             if (dist[nr][nc] > d + 1) {
                 dist[nr][nc] = d + 1;
-                pq.push({d + 1, nr, nc, used});
+                pq.push({d + 1, nr * n + nc});
             }
         }
     }
+
     return dist[m - 1][n - 1] == 0x3f3f3f3f ? -1 : dist[m - 1][n - 1];
 }
 
@@ -31252,4 +31250,263 @@ int count(string num1, string num2, int min_sum, int max_sum)
         add = 1;
     }
     return (f(num2) - f(num1) + add) % mod;
+}
+
+
+// LC2801
+int countSteppingNumbers(string low, string high)
+{
+    int mod = 1e9 + 7;
+    auto f = [&](string& s) -> long long {
+        int len = s.size();
+        vector<vector<vector<vector<long long>>>> dp(len, 
+            vector<vector<vector<long long>>>(10, 
+                vector<vector<long long>>(2, vector<long long>(2, -1))));
+        // pos - 位置, pre_num - 上一个数字 limit1 - 是否紧贴上限, limit2 - 是否有前导0
+        auto dfs = [&](auto&& self, int pos, int pre_num, bool limit1, bool limit2) -> long long {
+            if (pos == len) {
+                return 1;
+            }
+            int state1 = (limit1 ? 1 : 0);
+            int state2 = (limit2 ? 1 : 0);
+            if (dp[pos][pre_num][state1][state2] != -1) {
+                return dp[pos][pre_num][state1][state2];
+            }
+
+            int end;
+            if (limit1) {
+                end = s[pos] - '0';
+            } else {
+                end = 9;
+            }
+            int i;
+            long long ans = 0;
+            bool n_limit1 = false;
+            for (i = 0; i <= end; i++) {
+                if (limit2 == false && abs(i - pre_num) != 1) {
+                    continue;
+                }
+                if (limit1 && i == end) {
+                    n_limit1 = true;
+                } else {
+                    n_limit1 = false;
+                }
+                if (limit2) {
+                    if (i == 0) {
+                        ans = (ans + self(self, pos + 1, i, false, true)) % mod;
+                    } else {
+                        ans = (ans + self(self, pos + 1, i, n_limit1, false)) % mod;
+                    }
+                } else {
+                    ans = (ans + self(self, pos + 1, i, n_limit1, false)) % mod;
+                }
+            }
+            dp[pos][pre_num][state1][state2] = ans;
+            return ans;
+        };
+        return dfs(dfs, 0, 0, true, true);
+    };
+
+    // cout << f(high) << endl;
+    // cout << f(low) << endl;
+    int i;
+    int add = 1;
+    for (i = 1; i < low.size(); i++) {
+        if (abs(low[i] - low[i - 1]) != 1) {
+            add = 0;
+            break;
+        }
+    }
+    long long ans = (f(high) + mod - f(low) + add) % mod;
+    return ans;
+}
+
+
+// LC2827
+int numberOfBeautifulIntegers(int low, int high, int k)
+{
+    auto f = [&](string& s) -> long long {
+        int len = s.size();
+        vector<vector<vector<vector<vector<long long>>>>> dp(len, 
+            vector<vector<vector<vector<long long>>>>(k, 
+                vector<vector<vector<long long>>>(20 + 1, 
+                    vector<vector<long long>>(2, vector<long long>(2, -1)))));
+        // pos - 位置, r - 余数 diff - 奇数数字 - 偶数数字 + 10 (防止产生负数), state1 - 是否紧贴上限
+        // state2 - 是否有前导0
+        int cnt = 0;
+        auto dfs = [&](auto&& self, int pos, int r, int diff, int state1, int state2) -> long long {
+            int len = s.size();
+            if (pos == len) {
+                if (state2 == 0 && diff == 10 && r == 0) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+
+            if (dp[pos][r][diff][state1][state2] != -1) {
+                return dp[pos][r][diff][state1][state2];
+            }
+
+            int end;
+            if (state1) {
+                end = s[pos] - '0';
+            } else {
+                end = 9;
+            }
+            int i;
+            int n_state1;
+            long long ans = 0;
+            for (i = 0; i <= end; i++) {
+                if (state1 && i == end) {
+                    n_state1 = 1;
+                } else {
+                    n_state1 = 0;
+                }
+                if (state2 && i == 0) {
+                    ans += self(self, pos + 1, 0, 10, n_state1, 1);
+                } else {
+                    ans += self(self, pos + 1, (r * 10 + i) % k, 
+                        diff + (i % 2 == 1 ? 1 : -1), n_state1, 0);
+                }
+            }
+            dp[pos][r][diff][state1][state2] = ans;
+            return ans;
+        };
+
+        return dfs(dfs, 0, 0, 10, 1, 1);
+    };
+
+    int i;
+    int add = 1;
+    string low_s = to_string(low);
+    if (low % k != 0 || low_s.size() % 2 == 1) {
+        add = 0;
+    } else {
+        int diff = 0;
+        int m = low_s.size();
+        for (i = 0; i < m; i++) {
+            if ((low_s[i] - '0') % 2 == 1) {
+                diff++;
+            } else {
+                diff--;
+            }
+        }
+        if (diff != 0) {
+            add = 0;
+        }
+    }
+    string high_s = to_string(high);
+    return f(high_s) - f(low_s) + add;
+}
+
+
+// LC2209
+int minimumWhiteTiles(string floor, int numCarpets, int carpetLen)
+{
+    int i, j;
+    int n = floor.size();
+    // 前i块使用j个地毯能获得的最大黑色地块
+    vector<vector<int>> dp(n, vector<int>(numCarpets + 1, -1));
+    for (i = 0; i < n; i++) {
+        if (i == 0) {
+            dp[i][0] = 1 - (floor[i] - '0');
+        } else {
+            dp[i][0] = dp[i - 1][0] + 1 - (floor[i] - '0');
+        }
+        // printf ("dp[%d][0] = %d\n", i, dp[i][0]);
+        for (j = 1; j <= numCarpets; j++) {
+            // 第i块不覆盖
+            if (i > 0) {
+                dp[i][j] = dp[i - 1][j] + 1 - (floor[i] - '0');
+            }
+            // 覆盖
+            if (i - carpetLen >= 0) {
+                dp[i][j] = max(dp[i][j], dp[i - carpetLen][j - 1] + carpetLen);
+            } else{
+                dp[i][j] = max(dp[i][j], i + 1);
+            }
+            // printf ("dp[%d][%d] = %d\n", i, j, dp[i][j]);
+        }
+    }
+    return n - dp[n - 1][numCarpets];
+}
+
+
+// LC3786
+long long interactionCosts(int n, vector<vector<int>>& edges, vector<int>& group)
+{
+    int i, j;
+    // g[i] - 第i个组对应的一个节点编号, 用于换根dp
+    vector<int> g(21, -1);
+    for (i = 0; i < n; i++) {
+        g[group[i]] = i;
+    }
+    vector<vector<int>> e(n);
+    for (auto& edge : edges) {
+        e[edge[0]].emplace_back(edge[1]);
+        e[edge[1]].emplace_back(edge[0]);
+    }
+
+    // dp[i] - 以节点i为根, 到达某个color的总距离之和
+    vector<long long> dp;
+    // cnt[i] - 以节点i为根, 其子树有对应color的节点数
+    vector<int> cnt;
+    auto dfs = [&](auto&& self, int cur, int p, int color) -> void {
+        if (color == group[cur]) {
+            cnt[cur] = 1;
+        }
+        for (auto next : e[cur]) {
+            if (next == p) {
+                continue;
+            }
+            self(self, next, cur, color);
+            dp[cur] += dp[next] + cnt[next];
+            cnt[cur] += cnt[next];
+        }
+    };
+
+    // ret[i] - 真正的对于每一个节点为根的dp数组
+    vector<long long> ret;
+    int root;
+    auto changeRoot = [&](auto&& self, int cur, int p, int color) -> void {
+        for (auto next : e[cur]) {
+            if (next == p) {
+                continue;
+            }
+            ret[next] = ret[cur] - cnt[next] + cnt[root] - cnt[next];
+            self(self, next, cur, color);
+        }
+    };
+    int count;
+    long long ans = 0;
+    long long cur;
+    for (i = 1; i <= 20; i++) {
+        if (g[i] == -1) {
+            continue;
+        }
+        dp.assign(n, 0);
+        ret.assign(n, 0);
+        cnt.assign(n, 0);
+        dfs(dfs, g[i], -1, i);
+        // for (auto d : dp) cout << d << " "; cout << endl;
+        root = g[i];
+        ret[root] = dp[root];
+        changeRoot(changeRoot, root, -1, i);
+        // for (auto d : ret) cout << d << " "; cout << endl;
+
+        count = 0;
+        cur = 0;
+        for (j = 0; j < n; j++) {
+            if (group[j] == i) {
+                cur += ret[j];
+                count++;
+            }
+        }
+        if (count > 1) {
+            ans += cur / 2;
+        }
+    }
+
+    return ans;
 }

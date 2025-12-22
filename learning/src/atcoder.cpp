@@ -2949,3 +2949,40 @@ void ABC_434_D()
         cout << init + cnt << endl;
     }
 }
+
+
+void ABC_437_C()
+{
+    int i;
+    int n;
+    cin >> n;
+    vector<int> w(n), p(n);
+    vector<pair<long long, long long>> vp;
+    for (i = 0; i < n; i++) {
+        cin >> w[i] >> p[i];
+        vp.push_back({w[i], p[i]});
+    }
+    // 将一头鹿从板子上变为拉板子的状态, 相当于板子上减少了w[i], 同时又增加了p[i]的作用力, 故按w[i] + p[i]降序排列
+    sort(vp.begin(), vp.end(), [](const pair<long long, long long>& a, const pair<long long, long long>& b) {
+        return a.first + a.second > b.first + b.second;
+    });
+    /* for (auto v : vp) {
+        cout << v.first << " " << v.second << endl;
+    } */
+    vector<vector<long long>> prefix(n, vector<long long>(2));
+    prefix[0][0] = vp[0].first;
+    prefix[0][1] = vp[0].second;
+
+    for (i = 1; i < n; i++) {
+        prefix[i][0] = prefix[i - 1][0] + vp[i].first;
+        prefix[i][1] = prefix[i - 1][1] + vp[i].second;
+    }
+    int ans = 0;
+    for (i = 0; i < n; i++) {
+        if (prefix[i][1] >= prefix[n - 1][0] - prefix[i][0]) {
+            ans = n - 1 - i;
+            break;
+        }
+    }
+    cout << ans << endl;
+}
