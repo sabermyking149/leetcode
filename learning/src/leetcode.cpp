@@ -31510,3 +31510,125 @@ long long interactionCosts(int n, vector<vector<int>>& edges, vector<int>& group
 
     return ans;
 }
+
+
+// LC2306
+long long distinctNames(vector<string>& ideas)
+{
+    int i;
+    int len;
+    // 样例有哈希冲突数据, 采用双哈希
+    int base1 = 131;
+    int base2 = 13331;
+    int mod1 = 1e9 + 7;
+    int mod2 = 1e9 + 9;
+    // 首字母为 'a' - 'z' 计数
+    vector<long long> cnt(26, 0);
+    // 后缀哈希
+    vector<vector<pair<long long, long long>>> suffixHash(26);
+    long long cur1, cur2;
+    for (auto& str : ideas) {
+        cnt[str[0] - 'a']++;
+        len = str.size();
+        cur1 = cur2 = 0;
+        for (i = len - 1; i >= 1; i--) {
+            cur1 = (cur1 * base1 + (str[i] - 'a' + 1)) % mod1;
+            cur2 = (cur2 * base2 + (str[i] - 'a' + 1)) % mod2;
+        }
+        suffixHash[str[0] - 'a'].push_back({cur1, cur2});
+    }
+    for (i = 0; i < 26; i++) {
+        if (suffixHash[i].empty()) {
+            continue;
+        }
+        sort(suffixHash[i].begin(), suffixHash[i].end());
+    }
+    int j, p, q;
+    long long ans = 0;
+    long long c;
+    for (i = 0; i < 26; i++) {
+        for (j = 0; j < 26; j++) {
+            if (i == j || suffixHash[i].empty() || suffixHash[j].empty()) {
+                continue;
+            }
+            c = p = q = 0;
+            while (p < suffixHash[i].size() && q < suffixHash[j].size()) {
+                if (suffixHash[i][p] > suffixHash[j][q]) {
+                    q++;
+                } else if (suffixHash[i][p] < suffixHash[j][q]) {
+                    p++;
+                } else {
+                    c++;
+                    q++;
+                    p++;
+                }
+            }
+            ans += (cnt[i] - c) * (cnt[j] - c);
+        }
+    }
+    return ans;
+}
+
+
+// LC3791
+long long countBalanced(long long low, long long high)
+{
+    auto f = [&](long long num) -> long long {
+        string t = to_string(num);
+        int len = t.size();
+        // dp[len][bit][diff][state1][state2] - pos, 当前是否奇数位, 奇数位和 - 偶数位和, 是否紧贴, 是否前导0
+        vector<vector<vector<vector<vector<long long>>>>> dp(len, 
+            vector<vector<vector<vector<long long>>>>(2, 
+                vector<vector<vector<long long>>>(64 * 2, 
+                    vector<vector<long long>>(2, 
+                            vector<long long>(2, -1)))));
+
+        auto dfs = [&](auto&& self, int pos, int bit, 
+            int diff, int state1, int state2) -> long long {
+            if (pos == len) {
+                if (diff == 64) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+            if (dp[pos][bit][diff][state1][state2] != -1) {
+                return dp[pos][bit][diff][state1][state2];
+            }
+
+            long long ret = 0;
+            int i;
+            int end;
+            if (state1) {
+                end = t[pos] - '0';
+            } else {
+                end = 9;
+            }
+            int n_state1, n_state2;
+            for (i = 0; i <= end; i++) {
+                if (state1 && i == end) {
+                    n_state1 = 1;
+                } else {
+                    n_state1 = 0;
+                }
+                if (state2 && i == 0) {
+                    ret += self(self, pos + 1, bit, diff, n_state1, 1);
+                } else {
+                    int d;
+                    if (bit == 0) {
+                        d = i;
+                    } else {
+                        d = -i;
+                    }
+                    ret += self(self, pos + 1, 1 - bit, diff + d, n_state1, 0);
+                }
+            }
+            dp[pos][bit][diff][state1][state2] = ret;
+            return dp[pos][bit][diff][state1][state2];
+        };
+        return dfs(dfs, 0, 0, 64, 1, 1);
+    };
+
+    long long ans = f(high) - f(low - 1);
+    return ans;
+}
