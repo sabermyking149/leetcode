@@ -2986,3 +2986,112 @@ void ABC_437_C()
     }
     cout << ans << endl;
 }
+
+
+void ABC_439_E()
+{
+    int i;
+    int n;
+    int a, b;
+    int ans;
+    vector<pair<int, int>> vp;
+
+    cin >> n;
+    for (i = 0; i < n; i++) {
+        cin >> a >> b;
+        vp.push_back({a, b});
+    }
+
+    sort(vp.begin(), vp.end(), [](const pair<int, int>& a, const pair<int, int>& b) {
+        // 处理同一个放风筝点
+        if (a.first == b.first) {
+            return a.second > b.second;
+        }
+        return a.first < b.first;
+    });
+
+    // 求vp[i].second的最长递增子序列
+
+    vector<int> lower;
+    vector<int> dp(n);
+    int left, right, mid;
+    lower.emplace_back(vp[0].second);
+    ans = 1;
+    dp[0] = 1;
+    for (i = 1; i < n; i++) {
+        left = 0;
+        right = lower.size() - 1;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (lower[mid] < vp[i].second) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        if (left == lower.size()) {
+            if (vp[i].second == lower[right]) {
+                dp[i] = lower.size();
+            } else {
+                lower.emplace_back(vp[i].second);
+                dp[i] = lower.size();
+            }
+        } else {
+            lower[left] = vp[i].second;
+            dp[i] = left + 1;
+        }
+        ans = max(ans, dp[i]);
+    }
+    // for (auto lo : lower) cout << lo << " "; cout << endl;
+    cout << ans << endl;
+}
+
+
+void ABC_440_D()
+{
+    int i;
+    int n, q;
+
+    cin >> n >> q;
+
+    vector<int> a(n);
+    for (i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    sort(a.begin(), a.end());
+
+    int x, y;
+    int cnt1, cnt2;
+    bool f;
+    long long left, right, mid;
+    for (i = 0; i < q; i++) {
+        cin >> x >> y;
+        left = x;
+        right = 2e9;
+        f = false;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            auto it = lower_bound(a.begin(), a.end(), x);
+            if (it == a.end()) {
+                cout << x + y - 1 << endl;
+                f = true;
+                break;
+            }
+            auto it1 = lower_bound(a.begin(), a.end(), mid);
+            if (it1 == a.end() || *it1 > mid) {
+                it1--;
+            }
+            cnt1 = mid - x + 1;
+            cnt2 = it1 - it + 1;
+            if (cnt1 - cnt2 >= y) {
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        if (f == false) {
+            cout << left << endl;
+        }
+    }
+}

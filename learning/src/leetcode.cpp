@@ -125,6 +125,19 @@ long long Combine(int m, int n, map<pair<int, int>, long long>& combineData)
     return combineData[{m, n}];
 }
 
+vector<vector<long long>> Combine(int n, int mod)
+{
+    int i, j;
+    vector<vector<long long>> C(n + 1, vector<long long>(n + 1, 0));
+    for (i = 0; i <= n; i++) {
+        C[i][0] = C[i][i] = 1;
+        for (j = 1; j < i; j++) {
+            C[i][j] = (C[i - 1][j - 1] + C[i - 1][j]) % mod;
+        }
+    }
+    return C;
+}
+
 int TreeNodesNum(TreeNode *root)
 {
     if (root == nullptr) {
@@ -31631,4 +31644,128 @@ long long countBalanced(long long low, long long high)
 
     long long ans = f(high) - f(low - 1);
     return ans;
+}
+
+
+// LC212
+vector<string> findWords(vector<vector<char>>& board, vector<string>& words)
+{
+    int i, j;
+    int m, n;
+
+    // 待查询单词建立前缀树
+    Trie<char> *root = new Trie('/');
+    for (auto& w : words) {
+        Trie<char>::CreateWordTrie(root, w);
+    }
+
+    m = board.size();
+    n = board[0].size();
+    int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+    vector<vector<bool>> visited(m, vector<bool>(n, false));
+    unordered_set<string> tmp;
+    vector<string> ans;
+    auto dfs = [&](auto&& self, int pos, string& word, Trie<char> *cur) -> void {
+        int i;
+        if (cur->IsEnd) {
+            tmp.emplace(word);
+        }
+        // words[i]最大长度为10
+        if (word.size() > 10) {
+            return;
+        }
+        auto r = pos / n;
+        auto c = pos % n;
+        visited[r][c] = true;
+        for (i = 0; i < 4; i++) {
+            auto nr = r + directions[i][0];
+            auto nc = c + directions[i][1];
+            if (nr < 0 || nr >= m || nc < 0 || nc >= n || visited[nr][nc]) {
+                continue;
+            }
+            for (auto& next : cur->children) {
+                if (board[nr][nc] == next->val) {
+                    auto npos = nr * n + nc;
+                    word.push_back(board[nr][nc]);
+                    self(self, npos, word, next);
+                    word.pop_back();
+                }
+            }
+        }
+        visited[r][c] = false;
+    };
+
+    string t;
+    for (i = 0; i < m ; i++) {
+        for (j = 0; j < n; j++) {
+            for (auto& next : root->children) {
+                if (next->val == board[i][j]) {
+                    t.push_back(board[i][j]);
+                    dfs(dfs, i * n + j, t, next);
+                    t.pop_back();
+                    break;
+                }
+            }
+        }
+    }
+    for (auto& w : tmp) {
+        ans.emplace_back(w);
+    }
+    return ans;
+}
+
+
+// LC3796
+int findMaxVal(int n, vector<vector<int>>& restrictions, vector<int>& diff)
+{
+    int i;
+    int inf = 1e9;
+    // 从左到右最大可能值
+    vector<int> front(n);
+
+    // 从右到左最大可能值
+    vector<int> rear(n);
+
+    vector<int> limit(n, inf);
+    for (auto& r : restrictions) {
+        limit[r[0]] = r[1];
+    }
+
+    front[0] = 0;
+    for (i = 1; i < n; i++) {
+        front[i] = min(front[i - 1] + diff[i - 1], limit[i]);
+    }
+
+    rear[n - 1] = min(inf, limit[n - 1]);
+    for (i = n - 2; i >= 0; i--) {
+        rear[i] = min(rear[i + 1] + diff[i], limit[i]);
+    }
+
+    int ans = 0;
+    for (i = 0; i < n; i++) {
+        ans = max(ans, min(front[i], rear[i]));
+    }
+    return ans;
+}
+
+
+// LC3782
+long long lastInteger(long long n)
+{
+    long long numsLeft = n;
+    long long start;
+    long long d;
+    start = 1;
+    d = 1;
+    // 每次删除一遍后, 剩下的都是等差数列
+    while (numsLeft > 1) {
+        if (numsLeft % 2 == 1) {
+            start = start + (numsLeft - 1) * d;
+        } else {
+            start = start + (numsLeft - 2) * d;
+        }
+        d *= -2;
+        numsLeft = (numsLeft + 1) / 2;
+    }
+    return start;
 }

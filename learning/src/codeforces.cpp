@@ -14,6 +14,7 @@
 #include <climits>
 #include <iomanip>
 #include <numeric>
+#include "pub.h"
 using namespace std;
 
 void CR_981_D()
@@ -887,4 +888,30 @@ void CR_1065_C2()
         }
     }
     cout << "Tie\n";
+}
+
+
+void CR_1072_D()
+{
+    int i, j;
+    int n, k;
+    cin >> n >> k;
+    int len = log2(n);
+    int mod = 1e9 + 7;
+    auto C = Combine(len, mod);
+
+    // sum(C(i, j));
+    int sum = 0;
+    for (i = 1; i <= len; i++) {
+        for (j = 1; j <= i; j++) {
+            if (i - 1 + j > k) {
+                // cout << i << ' ' << j << endl;
+                sum += C[i - 1][j - 1];
+            }
+        }
+    }
+    if (len + 1 > k) {
+        sum++;
+    }
+    cout << sum << endl;
 }

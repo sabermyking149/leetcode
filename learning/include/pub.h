@@ -19,6 +19,8 @@ using namespace std;
 constexpr unsigned short w = 1024;
 constexpr int mod = 1000000007;
 
+vector<vector<long long>> Combine(int n, int mod);
+
 struct TreeNode {
     int val;
     TreeNode *left;
