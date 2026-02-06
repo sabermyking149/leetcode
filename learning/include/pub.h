@@ -238,7 +238,7 @@ private:
     int query(int node, int start, int end, int l, int r) {
         if (r < start || end < l) return 0;  // 区间不重叠
         if (l <= start && end <= r) return tree[node];  // 完全包含
-        
+
         int mid = (start + end) / 2;
         int left_sum = query(node * 2 + 1, start, mid, l, r);
         int right_sum = query(node * 2 + 2, mid + 1, end, l, r);
@@ -276,14 +276,14 @@ private:
     int find(int node, int start, int end, int L, int R, int x) {
         if (end < L || start > R) return -1;       // 区间无重叠
         if (tree[node] < x) return -1;         // 区间最大值 <x，直接剪枝
-        
+
         if (start == end) return start;            // 找到叶子节点
-        
+
         int mid = (start + end) / 2;
         // 先查左子树（保证最左边的解）
         int left_pos = find(node * 2 + 1, start, mid, L, R, x);
         if (left_pos != -1) return left_pos;       // 左子树有解
-        
+
         // 左子树无解，再查右子树
         return find(node * 2 + 2, mid + 1, end, L, R, x);
     }

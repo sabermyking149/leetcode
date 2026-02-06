@@ -4551,6 +4551,43 @@ int lengthOfLIS(vector<int> &nums)
     }
     return ans;
 }
+int lengthOfLIS_betterWay(vector<int> &nums)
+{
+    int i;
+    int n = nums.size();
+    int m;
+    int left, right, mid;
+    vector<int> low;
+
+    low.emplace_back(nums[0]);
+    for (i = 1; i < n; i++) {
+        m = low.size();
+        if (nums[i] > low[m - 1]) {
+            low.emplace_back(nums[i]);
+            continue;
+        } else if (nums[i] == low[m - 1]) {
+            continue;
+        }
+        left = 0;
+        right = m - 1;
+        while (left <= right) {
+            mid = ((right - left) >> 1) + left;
+            if (low[mid] == nums[i]) {
+                break;
+            } else if (low[mid] < nums[i]) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        if (left > right) {
+            low[left] = nums[i];
+        }
+    }
+    return low.size();
+}
+
+
 // LC673
 int findNumberOfLIS(vector<int>& nums)
 {
@@ -31768,4 +31805,156 @@ long long lastInteger(long long n)
         numsLeft = (numsLeft + 1) / 2;
     }
     return start;
+}
+
+
+// LC3811
+int alternatingXOR(vector<int>& nums, int target1, int target2)
+{
+    int i, j;
+    int n = nums.size();
+    int mod = 1e9 + 7;
+    vector<int> prefix(n + 1);
+
+    // 如果可分割, xor最终只会出现4种情况 [target1, target1 ^ target2, target2, 0] 循环
+    prefix[0] = 0;
+    for (i = 1; i <= n; i++) {
+        prefix[i] = (prefix[i - 1] ^ nums[i - 1]);
+    }
+    vector<int> xorVal = {target1, target1 ^ target2, target2, 0};
+    // dp[i][0 ~ 3] - 前i个数结尾结果为xorVal[0 ~ 3]的方案数
+    vector<vector<long long>> dp(n + 1, vector<long long>(4, 0));
+    dp[0][3] = 1;
+    long long ans = 0;
+    for (i = 1; i <= n; i++) {
+        for (j = 0; j < 4; j++) {
+            if (prefix[i] == xorVal[j]) {
+                dp[i][j] = dp[i - 1][(j + 3) % 4];
+                if (i == n) {
+                    ans = (ans + dp[i][j]) % mod;
+                }
+            }
+        }
+        // 前缀结果累加
+        for (j = 0; j < 4; j++) {
+            dp[i][j] = (dp[i][j] + dp[i - 1][j]) % mod;
+        }
+    }
+    return ans;
+}
+
+
+// LC3830
+int longestAlternating(vector<int>& nums)
+{
+    int i;
+    int n = nums.size();
+    int ans;
+    vector<int> prefix(n), suffix(n);
+
+    prefix[0] = 1;
+    ans = 1;
+    for (i = 1; i < n; i++) {
+        if (nums[i] == nums[i - 1]) {
+            prefix[i] = 1;
+        } else if (nums[i] > nums[i - 1]) {
+            if (i >= 2) {
+                if (nums[i - 2] > nums[i - 1]) {
+                    prefix[i] = prefix[i - 1] + 1;
+                } else {
+                    prefix[i] = 2;
+                }
+            } else {
+                prefix[i] = 2;
+            }
+        } else {
+            if (i >= 2) {
+                if (nums[i - 2] < nums[i - 1]) {
+                    prefix[i] = prefix[i - 1] + 1;
+                } else {
+                    prefix[i] = 2;
+                }
+            } else {
+                prefix[i] = 2;
+            }
+        }
+        ans = max(ans, prefix[i]);
+    }
+
+    suffix[n - 1] = 1;
+    for (i = n - 2; i >= 0; i--) {
+        if (nums[i] == nums[i + 1]) {
+            suffix[i] = 1;
+        } else if (nums[i] > nums[i + 1]) {
+            if (i + 2 < n) {
+                if (nums[i + 1] < nums[i + 2]) {
+                    suffix[i] = suffix[i + 1] + 1;
+                } else {
+                    suffix[i] = 2;
+                }
+            } else {
+                suffix[i] = 2;
+            }
+        } else {
+            if (i + 2 < n) {
+                if (nums[i + 1] > nums[i + 2]) {
+                    suffix[i] = suffix[i + 1] + 1;
+                } else {
+                    suffix[i] = 2;
+                }
+            } else {
+                suffix[i] = 2;
+            }
+        }
+        ans = max(ans, suffix[i]);
+    }
+    // 枚举断点
+    for (i = 1; i < n - 1; i++) {
+        if (nums[i - 1] < nums[i + 1]) {
+            if (i + 2 < n) {
+                if (nums[i + 2] < nums[i + 1]) {
+                    if (i >= 2) {
+                        if (nums[i - 2] > nums[i - 1]) {
+                            ans = max(ans, prefix[i - 1] + suffix[i + 1]);
+                        } else {
+                            ans = max(ans, suffix[i + 1] + 1);
+                        }
+                    } else {
+                        ans = max(ans, suffix[i + 1] + 1);
+                    }
+                }
+            } else {
+                if (i >= 2) {
+                    if (nums[i - 2] > nums[i - 1]) {
+                        ans = max(ans, prefix[i - 1] + 1);
+                    }
+                } else {
+                    ans = max(ans, 2);
+                }
+            }
+        } else if (nums[i - 1] > nums[i + 1]) {
+            if (i + 2 < n) {
+                if (nums[i + 2] > nums[i + 1]) {
+                    if (i >= 2) {
+                        if (nums[i - 2] < nums[i - 1]) {
+                            ans = max(ans, prefix[i - 1] + suffix[i + 1]);
+                        } else {
+                            ans = max(ans, suffix[i + 1] + 1);
+                        }
+                    } else {
+                        ans = max(ans, suffix[i + 1] + 1);
+                    }
+                }
+            } else {
+                if (i >= 2) {
+                    if (nums[i - 2] < nums[i - 1]) {
+                        ans = max(ans, prefix[i - 1] + 1);
+                    }
+                } else {
+                    ans = max(ans, 2);
+                }
+            }
+        }
+    }
+    return ans;
 }

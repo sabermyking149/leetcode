@@ -915,3 +915,161 @@ void CR_1072_D()
     }
     cout << sum << endl;
 }
+
+
+void CR_1074_E()
+{
+    int i;
+    int n, m, k;
+    string s;
+
+    cin >> n >> m >> k;
+    vector<long long> a(n), b(m);
+    for (i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    set<long long> spikes;
+    for (i = 0; i < m; i++) {
+        cin >> b[i];
+        spikes.emplace(b[i]);
+    }
+    cin >> s;
+    int cur = 0;
+    vector<vector<int>> pos(k, vector<int>(2, 0));
+    for (i = 0; i < k; i++) {
+        if (i > 0) {
+            pos[i] = pos[i - 1];
+        }
+        if (s[i] == 'L') {
+            cur--;
+        } else {
+            cur++;
+        }
+        pos[i][0] = min(pos[i][0], cur);
+        pos[i][1] = max(pos[i][1], cur);
+    }
+
+    // 每个机器人"最后时刻"
+    long long l, r;
+    int left, right, mid;
+    int survival_time, time1, time2;
+    vector<int> ans(k);
+    vector<int> diff(k + 1);
+    for (i = 0; i < n; i++) {
+        auto it = spikes.upper_bound(a[i]);
+        if (it == spikes.end()) {
+            r = INT_MAX;
+        } else {
+            r = *it - a[i];
+        }
+        
+        if (it == spikes.begin()) {
+            l = INT_MAX;
+        } else {
+            l = a[i] - *prev(it);
+        }
+
+        left = 0;
+        right = k - 1;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (abs(pos[mid][0]) < l) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        time1 = right;
+
+        left = 0;
+        right = k - 1;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (pos[mid][1] < r) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        time2 = right;
+        survival_time = min(time1, time2);
+        // cout << survival_time << "\n";
+        if (survival_time < 0) {
+            continue;
+        }
+        diff[0]++;
+        diff[survival_time + 1]--;
+    }
+    ans[0] = diff[0];
+    cout << ans[0];
+    for (i = 1; i < k; i++) {
+        ans[i] = ans[i - 1] + diff[i];
+        cout << " " << ans[i];
+    }
+    cout << "\n";
+}
+
+
+void CR_1076_E()
+{
+    int i;
+    int n;
+    cin >> n;
+
+    vector<long long> a(n);
+    set<long long> s;
+    vector<int> dp(n + 1, -2);
+    for (i = 0; i < n; i++) {
+        cin >> a[i];
+        s.insert(a[i]);
+        dp[a[i]] = 1;
+    }
+    for (i = 1; i <= 3; i++) {
+        if (s.count(i)) {
+            dp[i] = 1;
+        } else if (n >= i) {
+            dp[i] = -1;
+        }
+    }
+
+    auto dfs = [&dp, &s](auto&& self, long long val) -> int {
+        if (dp[val] != -2) {
+            return dp[val];
+        }
+        if (s.count(val)) {
+            dp[val] = 1;
+            return 1;
+        }
+        int i;
+        int ans = 1000;
+        int m = sqrt(val); 
+        for (i = m; i >= 2; i--) {
+            if (val % i == 0) {
+                auto a = self(self, i);
+                if (a == -1) {
+                    continue;
+                }
+                auto b = self(self, val / i);
+                if (b == -1) {
+                    continue;
+                }
+                ans = min(ans, a + b);
+            }
+        }
+        if (ans == 1000) {
+            dp[val] = -1;
+        } else {
+            dp[val] = ans;
+        }
+        return dp[val];
+    };
+    for (i = n; i >= 1; i--) {
+        if (dp[i] == -2) {
+            dfs(dfs, i);
+        }
+    }
+    for (i = 1; i <= n; i++) {
+        cout << dp[i] << " ";
+    }
+    cout << "\n";
+}
