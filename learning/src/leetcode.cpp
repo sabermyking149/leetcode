@@ -31958,3 +31958,114 @@ int longestAlternating(vector<int>& nums)
     }
     return ans;
 }
+
+
+// LC3840
+long long rob(vector<int>& nums, vector<int>& colors)
+{
+    int i;
+    int n = colors.size();
+    int start = 0;
+    int len = 1;
+    long long ans = 0;
+    vector<long long> dp(n);
+    // nums[start...end]最大金额
+    auto f = [&nums, &dp](int start, int end) {
+        int i;
+        long long ans = 0;
+        dp[start] = nums[start];
+        ans = dp[start];
+        for (i = start + 1; i <= end; i++) {
+            dp[i] = max(nums[i] + (i - 2 >= start ? dp[i - 2] : 0), dp[i - 1]);
+            ans = max(ans, dp[i]);
+        }
+        return ans;
+    };
+    for (i = 1; i < n; i++) {
+        if (colors[i] != colors[i - 1]) {
+            start = i - len;
+            ans += f(start, i - 1);
+            len = 1;
+        } else {
+            len++;
+        }
+    }
+    start = n - len;
+    ans += f(start, n - 1);
+    return ans;
+}
+
+
+// LC3850
+int countSequences(vector<int>& nums, long long k)
+{
+    int i;
+    int n = nums.size();
+    long long t = k;
+    vector<int> cnt(3, 0); // k的 2 3 5的因子个数
+    vector<int> primes = {2, 3, 5};
+    // 因式分解
+    if (t != 1) {
+        // 数据范围质因数只能是2 3 5
+        for (i = 0; i < 3; i++) {
+            if (t % primes[i] == 0) {
+                while (t % primes[i] == 0) {
+                    cnt[i]++;
+                    t /= primes[i];
+                }
+            }
+        }
+        if (t > 5) {
+            return 0;
+        }
+    }
+    /* for (auto c : cnt) {
+        cout << c << " ";
+    }
+    cout << endl;
+    */
+    vector<vector<int>> factor(n, vector<int>(3, 0));
+    for (i = 0; i < n; i++) {
+        if (nums[i] == 2) {
+            factor[i][0]++;
+        } else if (nums[i] == 3) {
+            factor[i][1]++;
+        } else if (nums[i] == 4) {
+            factor[i][0] += 2;
+        } else if (nums[i] == 5) {
+            factor[i][2]++;
+        } else if (nums[i] == 6) {
+            factor[i][0]++;
+            factor[i][1]++;
+        }
+    }
+    // 防止出现负下标
+    int dp[21][160][40][40] = {0};
+    int j, p, q;
+    dp[0][80][20][20] = 1;
+    for (i = 1; i <= n; i++) {
+        for (j = 0; j < 160; j++) {
+            for (p = 0; p < 40; p++) {
+                for (q = 0; q < 40; q++) {
+                    if (dp[i - 1][j][p][q] == 0) {
+                        continue;
+                    }
+                    dp[i][j][p][q] += dp[i - 1][j][p][q];
+                    if (j + factor[i - 1][0] < 160 &&
+                        p + factor[i - 1][1] < 40 &&
+                        q + factor[i - 1][2] < 40) {
+                        dp[i][j + factor[i - 1][0]][p + factor[i - 1][1]][q + factor[i - 1][2]] += 
+                            dp[i - 1][j][p][q];
+                    }
+                    if (j - factor[i - 1][0] >= 0 &&
+                        p - factor[i - 1][1] >= 0 &&
+                        q - factor[i - 1][2] >= 0) {
+                        dp[i][j - factor[i - 1][0]][p - factor[i - 1][1]][q - factor[i - 1][2]] += 
+                            dp[i - 1][j][p][q];
+                    }
+                }
+            }
+        }
+    }
+    return dp[n][cnt[0] + 80][cnt[1] + 20][cnt[2] + 20];
+}

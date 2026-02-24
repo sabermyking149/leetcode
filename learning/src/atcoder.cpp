@@ -3095,3 +3095,46 @@ void ABC_440_D()
         }
     }
 }
+
+
+void ABC_446_E()
+{
+    int i, j;
+    int m, a, b;
+    cin >> m >> a >> b;
+
+    const int size = 1000;
+    vector<pair<int, int>> e[size + 1][size + 1];
+    vector<vector<int>> visited(size + 1, vector<int>(size + 1, 0));
+
+    auto dfs = [&](auto&& self, int u, int v) -> void {
+        if (visited[u][v]) {
+            return;
+        }
+        visited[u][v] = 1;
+        for (auto p : e[u][v]) {
+            self(self, p.first, p.second);
+        }
+    };
+
+    // 建图(前驱节点)
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < m; j++) {
+            e[j][(j * a + i * b) % m].push_back({i, j});
+        }
+    }
+    // 所有不符合的(x, y)对
+    for (i = 0; i < m; i++) {
+        dfs(dfs, 0, i);
+        dfs(dfs, i, 0);
+    }
+    int ans = 0;
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < m; j++) {
+            if (visited[i][j] == 0) {
+                ans++;
+            }
+        }
+    }
+    cout << ans << "\n";
+}
