@@ -32069,3 +32069,350 @@ int countSequences(vector<int>& nums, long long k)
     }
     return dp[n][cnt[0] + 80][cnt[1] + 20][cnt[2] + 20];
 }
+
+
+// LC3854
+vector<int> makeParityAlternating(vector<int>& nums)
+{
+    int i;
+    int n = nums.size();
+    int maxVal = *max_element(nums.begin(), nums.end());
+    int minVal = *min_element(nums.begin(), nums.end());
+
+    if (n == 1) {
+        return {0, 0};
+    } else if (maxVal == minVal) {
+        return {n / 2, 1};
+    }
+    // 奇偶交替, 只可能有两种情况
+    vector<int> cnt(2, 0);
+    // 01
+    map<int, int> m;
+    for (i = 0; i < n; i++) {
+        m[nums[i]]++;
+        if (i % 2 == 0) {
+            if (nums[i] % 2 != 0) {
+                cnt[0]++;
+            }
+        } else {
+            if (nums[i] % 2 == 0) {
+                cnt[0]++;
+            }
+        }
+    }
+    // 10
+    for (i = 0; i < n; i++) {
+        if (i % 2 == 0) {
+            if (nums[i] % 2 == 0) {
+                cnt[1]++;
+            }
+        } else {
+            if (nums[i] % 2 != 0) {
+                cnt[1]++;
+            }
+        }
+    }
+    int val = min(cnt[0], cnt[1]);
+    int a, b;
+    a = b = 2e9;
+    auto t = m;
+    if (val == cnt[0]) {
+        for (i = 0; i < n; i++) {
+            if (i % 2 == 0 && nums[i] % 2 != 0) {
+                if (nums[i] == t.begin()->first) {
+                    if (t[nums[i]] == 1) {
+                        t.erase(nums[i]);
+                        t[nums[i] + 1]++;
+                    } else {
+                        t[nums[i]]--;
+                    }
+                }
+                if (nums[i] == prev(t.end())->first) {
+                    if (t[nums[i]] == 1) {
+                        t.erase(nums[i]);
+                        t[nums[i] - 1]++;
+                    } else {
+                        t[nums[i]]--;
+                    }
+                }
+            }
+            if (i % 2 == 1 && nums[i] % 2 == 0) {
+                if (nums[i] == t.begin()->first) {
+                    if (t[nums[i]] == 1) {
+                        t.erase(nums[i]);
+                        t[nums[i] + 1]++;
+                    } else {
+                        t[nums[i]]--;
+                    }
+                }
+                if (nums[i] == prev(t.end())->first) {
+                    if (t[nums[i]] == 1) {
+                        t.erase(nums[i]);
+                        t[nums[i] - 1]++;
+                    } else {
+                        t[nums[i]]--;
+                    }
+                }
+            }
+        }
+        a = abs(t.begin()->first - prev(t.end())->first);
+    }
+    if (val == cnt[1]) {
+        t = m;
+        for (i = 0; i < n; i++) {
+            if (i % 2 == 1 && nums[i] % 2 != 0) {
+                if (nums[i] == t.begin()->first) {
+                    if (t[nums[i]] == 1) {
+                        t.erase(nums[i]);
+                        t[nums[i] + 1]++;
+                    } else {
+                        t[nums[i]]--;
+                    }
+                }
+                if (nums[i] == prev(t.end())->first) {
+                    if (t[nums[i]] == 1) {
+                        t.erase(nums[i]);
+                        t[nums[i] - 1]++;
+                    } else {
+                        t[nums[i]]--;
+                    }
+                }
+                
+            }
+            if (i % 2 == 0 && nums[i] % 2 == 0) {
+                if (nums[i] == t.begin()->first) {
+                    if (t[nums[i]] == 1) {
+                        t.erase(nums[i]);
+                        t[nums[i] + 1]++;
+                    } else {
+                        t[nums[i]]--;
+                    }
+                }
+                if (nums[i] == prev(t.end())->first) {
+                    if (t[nums[i]] == 1) {
+                        t.erase(nums[i]);
+                        t[nums[i] - 1]++;
+                    } else {
+                        t[nums[i]]--;
+                    }
+                }
+            }
+        }
+        b = abs(t.begin()->first - prev(t.end())->first);
+    }
+    return {val, min(a, b)};
+}
+
+
+// LC3812
+vector<int> minimumFlips(int n, vector<vector<int>>& edges, string start, string target)
+{
+    int i;
+    int m = edges.size();
+    vector<int> degree(n, 0);
+    vector<vector<int>> e(n);
+    vector<set<int>> edgeNo(n);
+    for (i = 0; i < m; i++) {
+        degree[edges[i][0]]++;
+        degree[edges[i][1]]++;
+        e[edges[i][0]].emplace_back(edges[i][1]);
+        e[edges[i][1]].emplace_back(edges[i][0]);
+        edgeNo[edges[i][0]].emplace(i);
+        edgeNo[edges[i][1]].emplace(i);
+    }
+    queue<int> q;
+    for (i = 0; i < n; i++) {
+        if (degree[i] == 1) {
+            q.push(i);
+        }
+    }
+    vector<int> ans;
+    while (!q.empty()) {
+        auto node = q.front();
+        q.pop();
+        if (degree[node] < 1) {
+            continue;
+        }
+        degree[node]--;
+        // cout << node << endl;
+        for (auto next : e[node]) {
+            if (degree[next] == 0) {
+                continue;
+            }
+            auto edge = *edgeNo[node].begin();
+            // printf ("node = %d, edge = %d\n", node, edge);
+            edgeNo[node].erase(edge);
+            edgeNo[next].erase(edge);
+            if (start[node] != target[node]) {
+                start[node] = target[node];
+                start[next] = '1' - start[next] + '0';
+                ans.emplace_back(edge);
+            }
+            degree[next]--;
+            if (degree[next] == 1) {
+                q.push(next);
+            }
+        }
+    }
+    // cout << start << " " << target << endl;
+    sort(ans.begin(), ans.end());
+    if (start == target) {
+        return ans;
+    } else {
+        return {-1};
+    }
+}
+
+
+// LC3434
+int maxFrequency_LC3434(vector<int>& nums, int k)
+{
+    int i, j;
+    int x;
+    int n = nums.size();
+    int m;
+    vector<int> prefix(n);
+    for (i = 0; i < n; i++) {
+        if (i > 0) {
+            prefix[i] = prefix[i - 1];
+        }
+        prefix[i] += (nums[i] == k ? 1 : 0);
+    }
+    int ans = 0;
+    vector<pair<int, int>> leftMax;
+    vector<int> idx;
+    for (i = -50; i <= 50; i++) {
+        x = k - i;
+        idx.clear();
+        for (j = 0; j < n; j++) {
+            if (nums[j] == x) {
+                idx.emplace_back(j);
+            }
+        }
+        if (idx.empty()) {
+            continue;
+        }
+        // [l, r] 为所选择的子数组, 满足k的个数为 [0, l - 1]的k + [l, r]中的x + [r + 1, n - 1]的k
+        // prefix[l - 1] - idx[l]的个数 + prefix[n - 1] - prefix[r] + idx[r]的个数 + 1
+        // l <= r且nums[l]和nums[r]都等于x 枚举r, prefix[l - 1] - idx[l]的个数可提前算出来
+        leftMax.clear();
+        m = idx.size();
+        for (j = 0; j < m; j++) {
+            if (j == 0) {
+                if (idx[j] == 0) {
+                    leftMax.push_back({idx[j], -1});
+                } else {
+                    leftMax.push_back({idx[j], prefix[idx[j] - 1] - 1});
+                }
+            } else {
+                leftMax.push_back({idx[j], max(leftMax.back().second, prefix[idx[j] - 1] - (j + 1))});
+            }
+        }
+
+        for (j = 0; j < m; j++) {
+            ans = max(ans, prefix[n - 1] - prefix[idx[j]] + j + 1 + leftMax[j].second + 1);
+        }
+    }
+    return ans;
+}
+
+
+// LC2746
+int minimizeConcatenatedLength(vector<string>& words)
+{
+    int i, l, r;
+    int n = words.size();
+    int m;
+    int inf = 0x3f3f3f3f;
+    int offset;
+    // dp[i][l][r] - 第i个单词完成拼接后, 左边是l, 右边是r的最短长度
+    vector<vector<vector<int>>> dp(n, vector<vector<int>>(26, vector<int>(26, inf)));
+
+    dp[0][words[0][0] - 'a'][words[0].back() - 'a'] = words[0].size();
+    for (i = 1; i < n; i++) {
+        for (l = 0; l < 26; l++) {
+            for (r = 0; r < 26; r++) {
+                if (dp[i - 1][l][r] == inf) {
+                    continue;
+                }
+                m = words[i].size();
+                offset = 0;
+                // 拼接到左边
+                if (words[i].back() - 'a' == l) {
+                    offset = -1;
+                }
+                dp[i][words[i][0] - 'a'][r] = min(dp[i][words[i][0] - 'a'][r], dp[i - 1][l][r] + m + offset);
+
+                // 拼接到右边
+                offset = 0;
+                if (words[i][0] - 'a' == r) {
+                    offset = -1;
+                }
+                dp[i][l][words[i].back() - 'a'] = min(dp[i][l][words[i].back() - 'a'], dp[i - 1][l][r] + m + offset);
+            }
+        }
+    }
+    int ans = inf;
+    for (l = 0; l < 26; l++) {
+        for (r = 0; r < 26; r++) {
+            ans = min(ans, dp[n - 1][l][r]);
+        }
+    }
+    return ans;
+}
+
+
+// LC2503
+vector<int> maxPoints(vector<vector<int>>& grid, vector<int>& queries)
+{
+    int i, j;
+    int k = queries.size();
+    int m = grid.size();
+    int n = grid[0].size();
+    vector<pair<int, int>> vq;
+
+    for (i = 0; i < k; i++) {
+        vq.push_back({queries[i], i});
+    }
+
+    vector<vector<int>> directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    vector<vector<int>> visited(m, vector<int>(n, 0));
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
+    
+    vector<int> ans(k);
+    vector<int> ret;
+    sort(vq.begin(), vq.end());
+
+    int cnt;
+    for (i = 0; i < k; i++) {
+        if (i == 0) {
+            pq.push({grid[0][0], 0});
+            visited[0][0] = 1;
+        }
+        cnt = 0;
+        while (!pq.empty() && pq.top().first < vq[i].first) {
+            auto [val, pos] = pq.top();
+            pq.pop();
+            auto x = pos / n;
+            auto y = pos % n;
+            cnt++;
+            for (j = 0; j < 4; j++) {
+                auto nx = x + directions[j][0];
+                auto ny = y + directions[j][1];
+                if (nx < 0 || nx >= m || ny < 0 || ny >= n || visited[nx][ny]) {
+                    continue;
+                }
+                auto npos = nx * n + ny;
+                visited[nx][ny] = 1;
+                pq.push({grid[nx][ny], npos});
+            }
+        }
+        if (i == 0) {
+            ret.emplace_back(cnt);
+        } else {
+            ret.emplace_back(ret.back() + cnt);
+        }
+        ans[vq[i].second] = ret.back();
+    }
+    return ans;
+}

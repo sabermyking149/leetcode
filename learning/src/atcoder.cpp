@@ -3138,3 +3138,34 @@ void ABC_446_E()
     }
     cout << ans << "\n";
 }
+
+
+void ABC_447_E()
+{
+    int i;
+    int n, m, u, v;
+    int mod = 998244353;
+    cin >> n >> m;
+    vector<pair<int, int>> edges;
+    for (i = 0; i < m; i++) {
+        cin >> u >> v;
+        edges.push_back({u, v});
+    }
+
+    UnionFind uf(n + 1);
+    int cur = n;
+    long long ans = 0;
+    for (i = m - 1; i >= 0; i--) {
+        auto [u, v] = edges[i];
+        // 两个不同rank连通, 连通分量减一
+        if (uf.findSet(u) != uf.findSet(v)) {
+            if (cur - 1 >= 2) {
+                uf.unionSets(u, v);
+                cur--;
+            } else {
+                ans = (ans + FastPow(2, i + 1)) % mod;
+            }
+        }
+    }
+    cout << ans << "\n";
+}

@@ -1073,3 +1073,68 @@ void CR_1076_E()
     }
     cout << "\n";
 }
+
+
+void CR_1084_D()
+{
+    // 两个传送门把排列分割为3段, 中间部分移位轮换, 左右拼接成新串, 轮换完的中间串插入新串中间
+    int i, j;
+    int n, x, y;
+    cin >> n >> x >> y;
+    vector<int> a(n + 1);
+
+    for (i = 1; i <= n; i++) {
+       cin >> a[i];
+    }
+    vector<int> mid, lr;
+    int len1, len2;
+    for (i = 1; i <= x; i++) {
+        lr.emplace_back(a[i]);
+    }
+    for (i = x + 1; i <= y; i++) {
+        mid.emplace_back(a[i]);
+    }
+    len1 = mid.size();
+    for (i = y + 1; i <= n; i++) {
+        
+        lr.emplace_back(a[i]);
+    }
+    len2 = lr.size();
+
+    int idx, minVal;
+    idx = 0;
+    minVal = n + 1;
+    for (i = 0; i < len1; i++) {
+        if (mid[i] < minVal) {
+            minVal = mid[i];
+            idx = i;
+        }
+    }
+    vector<int> n_mid;
+    for (i = idx; i < len1; i++) {
+        n_mid.emplace_back(mid[i]);
+    }
+    for (i = 0; i < idx; i++) {
+        n_mid.emplace_back(mid[i]);
+    }
+    vector<int> ans;
+    bool f = false;
+    for (i = 0; i < len2; i++) {
+        if (lr[i] < n_mid[0]) {
+            ans.emplace_back(lr[i]);
+        } else {
+            if (f == false) {
+                ans.insert(ans.end(), n_mid.begin(), n_mid.end());
+                f = true;
+            }
+            ans.emplace_back(lr[i]);
+        }
+    }
+    if (f == false) {
+        ans.insert(ans.end(), n_mid.begin(), n_mid.end());
+    }
+    for (auto a : ans) {
+        cout << a << " ";
+    }
+    cout << "\n";
+}

@@ -20,6 +20,8 @@ constexpr unsigned short w = 1024;
 constexpr int mod = 1000000007;
 
 vector<vector<long long>> Combine(int n, int mod);
+int FastPow(int a, int b);
+long long FastPow(long long a, long long b, int mod);
 
 struct TreeNode {
     int val;
