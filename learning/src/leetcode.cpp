@@ -32378,7 +32378,7 @@ vector<int> maxPoints(vector<vector<int>>& grid, vector<int>& queries)
     vector<vector<int>> directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
     vector<vector<int>> visited(m, vector<int>(n, 0));
     priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
-    
+
     vector<int> ans(k);
     vector<int> ret;
     sort(vq.begin(), vq.end());
@@ -32413,6 +32413,179 @@ vector<int> maxPoints(vector<vector<int>>& grid, vector<int>& queries)
             ret.emplace_back(ret.back() + cnt);
         }
         ans[vq[i].second] = ret.back();
+    }
+    return ans;
+}
+
+
+// LC2862
+long long maximumSum_LC2862(vector<int>& nums)
+{
+    int i, j, k;
+    int size = nums.size();
+    long long ans, cur;
+    map<vector<int>, vector<int>> factor;
+    vector<int> v;
+    int t, cnt;
+    // 分解质因数
+    for (i = 1; i <= size; i++) {
+        v.clear();
+        if (i <= 3) {
+            v.emplace_back(i);
+            factor[v].emplace_back(i);
+            continue;
+        }
+        t = i;
+        k = sqrt(t);
+        for (j = 2; j <= k; j++) {
+            if (t < j) {
+                break;
+            }
+            if (t % j == 0) {
+                cnt = 0;
+                while (t % j == 0) {
+                    t /= j;
+                    cnt++;
+                }
+                if (cnt % 2 == 1) {
+                    v.emplace_back(j);
+                }
+            }
+        }
+        if (t != 1) {
+            v.emplace_back(t);
+        }
+        if (v.empty()) {
+            factor[{1}].emplace_back(i);
+        } else {
+            factor[v].emplace_back(i);
+        }
+    }
+    ans = *max_element(nums.begin(), nums.end()); // 可以只取一个数
+    for (auto& it : factor) {
+        cur = 0;
+        for (auto id : it.second) {
+            cur += nums[id - 1];
+        }
+        ans = max(ans, cur);
+    }
+    return ans;
+}
+
+
+// LC1998
+bool gcdSort(vector<int>& nums)
+{
+    int i, j;
+    int n = nums.size();
+    int m, t;
+    UnionFind uf(100001);
+    for (i = 0; i < n; i++) {
+        t = nums[i];
+        if (t == 2 || t == 3) {
+            uf.unionSets(nums[i], t);
+            continue;
+        }
+        m = sqrt(t);
+        for (j = 2; j <= m; j++) {
+            if (t < j) {
+                break;
+            }
+            if (t % j == 0) {
+                uf.unionSets(nums[i], j);
+                while (t % j == 0) {
+                    t /= j;
+                }
+            }
+        }
+        if (t != 1) {
+            uf.unionSets(nums[i], t);
+        }
+    }
+    unordered_map<int, priority_queue<int, vector<int>, greater<>>> data;
+    for (i = 0; i < n; i++) {
+        data[uf.findSet(nums[i])].push(nums[i]);
+    }
+    vector<int> ret(n);
+    for (i = 0; i < n; i++) {
+        ret[i] = data[uf.findSet(nums[i])].top();
+        data[uf.findSet(nums[i])].pop();
+    }
+    for (i = 1; i < n; i++) {
+        if (ret[i] < ret[i - 1]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+// LC2242
+int maximumScore(vector<int>& scores, vector<vector<int>>& edges)
+{
+    // 只要求长度为4的合法序列, 可以枚举一条边以及它的两个端点延伸到另两个不同点, 就得到长度4的序列
+    int n = scores.size();
+    vector<vector<pair<int, int>>> e(n);
+    for (auto& edge : edges) {
+        e[edge[0]].emplace_back(edge[1], scores[edge[1]]);
+        e[edge[1]].emplace_back(edge[0], scores[edge[0]]);
+    }
+    int i;
+    for (i = 0; i < n; i++) {
+        sort(e[i].begin(), e[i].end(), [](const pair<int, int>& a, const pair<int, int>& b) {
+            return a.second > b.second;
+        });
+    }
+    int j;
+    int ans = -1;
+    int p, q;
+    for (auto& edge : edges) {
+        p = e[edge[0]].size();
+        q = e[edge[1]].size();
+        // 只需要计算前3个最大点就行
+        for (i = 0; i < min(p, 3); i++) {
+            if (e[edge[0]][i].first == edge[1]) {
+                continue;
+            }
+            for (j = 0; j < min(q, 3); j++) {
+                if (e[edge[1]][j].first == edge[0] || e[edge[0]][i].first == e[edge[1]][j].first) {
+                    continue;
+                }
+                ans = max(ans, e[edge[0]][i].second + e[edge[1]][j].second + scores[edge[0]] + scores[edge[1]]);
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LC2167
+int minimumTime(string s)
+{
+    int i;
+    int n = s.size();
+    // s分为3段[0, i) - [i, j] - (j, n - 1] 前后两段按顺序全删, 中间段使用第3种方法
+    // 总cost: i + n - 1 - j + 2 * (prefix[j] - prefix[i - 1]);
+    // i - 2 * prefix[i - 1] + 2 * prefix[j] - j + n - 1;
+    // min(i - 2 * prefix[i - 1]) 可提前求出
+    vector<int> prefix(n, 0);
+    for (i = 0; i < n; i++) {
+        prefix[i] += (s[i] == '1' ? 1 : 0);
+        if (i > 0) {
+            prefix[i] += prefix[i - 1];
+        }
+    }
+    vector<int> f(n);
+    f[0] = 0;
+    for (i = 1; i < n; i++) {
+        f[i] = min(f[i - 1], i - 2 * prefix[i - 1]);
+    }
+    // for (auto val : f) cout << val << " ";
+    int ans = n;
+    int cur;
+    for (i = 0; i < n; i++) {
+        cur = f[i] + n - 1 + 2 * prefix[i] - i;
+        ans = min(ans, cur);
     }
     return ans;
 }

@@ -3169,3 +3169,74 @@ void ABC_447_E()
     }
     cout << ans << "\n";
 }
+
+
+void ABC_488_D()
+{
+    int i;
+    int n;
+    cin >> n;
+    vector<int> a(n + 1);
+    for (i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+
+    int u, v;
+    vector<vector<int>> edges(n + 1);
+    vector<int> visited(n + 1, 0);
+    for (i = 0; i < n - 1; i++) {
+        cin >> u >> v;
+        edges[u].emplace_back(v);
+        edges[v].emplace_back(u);
+    }
+
+    map<int, int> cnt;
+    // cnt[a[node]] 频次
+    map<int, set<int>, greater<>> freq;
+    vector<string> ans(n + 1);
+    auto dfs = [&](auto&& self, int node) -> void {
+        cnt[a[node]]++;
+        if (cnt[a[node]] == 1) {
+            freq[1].emplace(a[node]);
+        } else {
+            if (freq[cnt[a[node]] - 1].size() == 1) {
+                freq.erase(cnt[a[node]] - 1);
+            } else {
+                freq[cnt[a[node]] - 1].erase(a[node]);
+            }
+            freq[cnt[a[node]]].emplace(a[node]);
+        }
+        if (freq.begin()->first >= 2) {
+            ans[node] = "Yes";
+        } else {
+            ans[node] = "No";
+        }
+        visited[node] = 1;
+        for (auto next : edges[node]) {
+            if (visited[next] == 0) {
+                self(self, next);
+            }
+        }
+        // 还原
+        if (cnt[a[node]] == 1) {
+            if (freq[1].size() == 1) {
+                freq.erase(1);
+            } else {
+                freq[1].erase(node);
+            }
+            cnt.erase(a[node]);
+        } else {
+            if (freq[cnt[a[node]]].size() == 1) {
+                freq.erase(cnt[a[node]]);
+            } else {
+                freq[cnt[a[node]]].erase(a[node]);
+            }
+            freq[cnt[a[node]] - 1].emplace(a[node]);
+            cnt[a[node]]--;
+        }
+    };
+    dfs(dfs, 1);
+    for (i = 1; i <= n; i++) {
+        cout << ans[i] << "\n";
+    }
+}

@@ -236,6 +236,11 @@ public:
     int find(int l, int r, int x) {
         return find(0, 0, n - 1, l, r, x);
     }
+
+    // 统计区间 [L,R] 内大于 x 的元素个数
+    int countGreater(int L, int R, int x) {
+        return countGreater(0, 0, n - 1, L, R, x);
+    }
 private:
     int query(int node, int start, int end, int l, int r) {
         if (r < start || end < l) return 0;  // 区间不重叠
@@ -288,6 +293,35 @@ private:
 
         // 左子树无解，再查右子树
         return find(node * 2 + 2, mid + 1, end, L, R, x);
+    }
+
+    // 统计 >= x 的个数
+    int countGreaterEqual(int node, int start, int end, int L, int R, int x) {
+        if (end < L || start > R) return 0;  // 区间不重叠
+        if (tree[node] < x) return 0;         // 整个区间最大值 < x，剪枝
+        
+        if (start == end) {
+            // 叶子节点，判断是否满足条件
+            return (tree[node] >= x) ? 1 : 0;
+        }
+        
+        int mid = (start + end) / 2;
+        return countGreaterEqual(node * 2 + 1, start, mid, L, R, x) + 
+            countGreaterEqual(node * 2 + 2, mid + 1, end, L, R, x);
+    }
+
+    // 统计 > x 的个数
+    int countGreater(int node, int start, int end, int L, int R, int x) {
+        if (end < L || start > R) return 0;
+        if (tree[node] <= x) return 0;        // 整个区间最大值 <= x，剪枝
+        
+        if (start == end) {
+            return (tree[node] > x) ? 1 : 0;
+        }
+        
+        int mid = (start + end) / 2;
+        return countGreater(node * 2 + 1, start, mid, L, R, x) + 
+            countGreater(node * 2 + 2, mid + 1, end, L, R, x);
     }
 };
 
