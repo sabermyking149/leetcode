@@ -32589,3 +32589,166 @@ int minimumTime(string s)
     }
     return ans;
 }
+
+
+// LC3869
+long long countFancy(long long l, long long r)
+{
+    // 字符串单调性
+    auto Check = [](int num) {
+        int i;
+        auto t = to_string(num);
+        auto m = t.size();
+
+        // 单增
+        for (i = 1; i < m; i++) {
+            if (t[i] <= t[i - 1]) {
+                break;
+            }
+        }
+        if (i == m) {
+            return true;
+        }
+
+        // 单减
+        for (i = 1; i < m; i++) {
+            if (t[i] >= t[i - 1]) {
+                break;
+            }
+        }
+        if (i == m) {
+            return true;
+        }
+
+        return false;
+    };
+    // dp数组 位置 - 上一个数 - 数位和 - 是否保持单增/单减 - 是否紧贴 - 是否前导0
+    // 是否保持单增/单减 0 - 初始  1 - 单增  2 - 单减  3 - 不满足单调条件
+    // 是否紧贴  1 - 是
+    // 是否前导0  1 - 是
+    long long dp[16][10][128][4][2][2];
+    auto f = [&](long long num) -> long long {
+        string t = to_string(num);
+        int len = t.size();
+        memset(dp, -1, sizeof(dp));
+        auto dfs = [&](auto&& self, int pos, int prev, int sum, int monotonicity, int s1, int s2) -> long long {
+            if (pos == len) {
+                if (monotonicity == 1 || monotonicity == 2 || Check(sum)) {
+                    return 1;
+                }
+                return 0;
+            }
+
+            if (dp[pos][prev][sum][monotonicity][s1][s2] != -1) {
+                return dp[pos][prev][sum][monotonicity][s1][s2];
+            }
+
+            long long ans = 0;
+            int i;
+            int end;
+            if (s1) {
+                end = t[pos] - '0';
+            } else {
+                end = 9;
+            }
+            int n_s1;
+            for (i = 0; i <= end; i++) {
+                if (s1 && i == end) {
+                    n_s1 = 1;
+                } else {
+                    n_s1 = 0;
+                }
+                if (s2 && i == 0) {
+                    ans += self(self, pos + 1, 0, 0, 0, n_s1, 1);
+                } else {
+                    if (monotonicity == 3) {
+                        ans += self(self, pos + 1, i, sum + i, 3, n_s1, 0);
+                    } else if (monotonicity == 0) {
+                        if (s2 == 1) { // 第一个数位
+                            ans += self(self, pos + 1, i, sum + i, 0, n_s1, 0);
+                        } else {
+                            if (i > prev) {
+                                ans += self(self, pos + 1, i, sum + i, 1, n_s1, 0);
+                            } else if (i < prev) {
+                                ans += self(self, pos + 1, i, sum + i, 2, n_s1, 0);
+                            } else {
+                                ans += self(self, pos + 1, i, sum + i, 3, n_s1, 0);
+                            }
+                        }
+                    } else if (monotonicity == 1) {
+                        if (i <= prev) {
+                            ans += self(self, pos + 1, i, sum + i, 3, n_s1, 0);
+                        } else {
+                            ans += self(self, pos + 1, i, sum + i, 1, n_s1, 0);
+                        }
+                    } else {
+                        if (i >= prev) {
+                            ans += self(self, pos + 1, i, sum + i, 3, n_s1, 0);
+                        } else {
+                            ans += self(self, pos + 1, i, sum + i, 2, n_s1, 0);
+                        }
+                    }
+                }
+            }
+            dp[pos][prev][sum][monotonicity][s1][s2] = ans;
+            return ans;
+        };
+        return dfs(dfs, 0, 0, 0, 0, 1, 1);
+    };
+
+    long long ans = f(r) - f(l - 1);
+    return ans;
+}
+
+
+// LC2163
+long long minimumDifference(vector<int>& nums)
+{
+    int i, j, k;
+    int n = nums.size();
+
+    // 两个3分点
+    j = n / 3;
+    k = j + n / 3 - 1;
+
+    priority_queue<int, vector<int>> front;
+    priority_queue<int, vector<int>, greater<>> tail;
+    // 下标 j - 1 到 k的front最小sum 和 下标j 到 k + 1 tail最大sum
+    vector<vector<long long>> sum(n, vector<long long>(2));
+    long long sumFront = 0;
+    for (i = 0; i < j; i++) {
+        front.push(nums[i]);
+        sumFront += nums[i];
+    }
+    sum[j - 1][0] = sumFront;
+    for (i = j; i <= k; i++) {
+        if (nums[i] < front.top()) {
+            sumFront -= front.top();
+            front.pop();
+            front.push(nums[i]);
+            sumFront += nums[i];
+        }
+        sum[i][0] = sumFront;
+    }
+
+    long long sumTail = 0;
+    for (i = n - 1; i > k; i --) {
+        tail.push(nums[i]);
+        sumTail += nums[i];
+    }
+    sum[k + 1][1] = sumTail;
+    for (i = k; i >= j; i--) {
+        if (nums[i] > tail.top()) {
+            sumTail -= tail.top();
+            tail.pop();
+            tail.push(nums[i]);
+            sumTail += nums[i];
+        }
+        sum[i][1] = sumTail;
+    }
+    long long ans = LLONG_MAX;
+    for (i = j - 1; i <= k; i++) {
+        ans = min(ans, sum[i][0] - sum[i + 1][1]);
+    }
+    return ans;
+}

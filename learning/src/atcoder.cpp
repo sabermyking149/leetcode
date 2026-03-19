@@ -3240,3 +3240,63 @@ void ABC_488_D()
         cout << ans[i] << "\n";
     }
 }
+
+
+void ABC_489_D()
+{
+    int l, r, d, u;
+    int i;
+    cin >> l >> r >> d >> u;
+    long long ans = 0;
+    int a, b;
+    for (i = d; i <= u; i++) {
+        a = -abs(i);
+        b = -a;
+        // 想象为[a, b] 和 [l, r] 两个区间进行重叠的情况来讨论
+        // 注意三目运算符的优先级低于四则运算
+        if (b % 2 == 1) { // odd
+            if (l >= b) {
+                ans += (r - l + 1) / 2 + ((l % 2 == 0 && r % 2 == 0) ? 1 : 0);
+            } else if (l >= a) {
+                if (r >= b) {
+                    ans += (r - b + 1) / 2;
+                } else {
+                    // 没有满足条件的点
+                }
+            } else {
+                if (r >= b) {
+                    ans += (r - b + 1) / 2;
+                    ans += (a - l + 1) / 2;
+                } else if (r >= a) {
+                    ans += (a - l + 1) / 2;
+                } else {
+                    ans += (r - l + 1) / 2 + ((l % 2 == 0 && r % 2 == 0) ? 1 : 0);
+                }
+            }
+        } else { // even
+            if (l >= b) {
+                ans += (r - l + 1) / 2 + ((l % 2 == 0 && r % 2 == 0) ? 1 : 0);
+            } else if (l >= a) {
+                if (r >= b) {
+                    ans += b - l + 1;
+                    ans += (r - b) / 2;
+                } else {
+                    ans += r - l + 1;
+                }
+            } else {
+                if (r >= b) {
+                    ans += (r - b) / 2;
+                    ans += (a - l) / 2;
+                    ans += b - a + 1;
+                } else if (r >= a) {
+                    ans += r - a + 1;
+                    ans += (a - l) / 2;
+                } else {
+                    ans += (r - l + 1) / 2 + ((l % 2 == 0 && r % 2 == 0) ? 1 : 0);
+                }
+            }
+        }
+        // printf ("ans = %d\n", ans);
+    }
+    cout << ans << "\n";
+}
