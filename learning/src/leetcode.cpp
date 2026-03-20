@@ -32752,3 +32752,52 @@ long long minimumDifference(vector<int>& nums)
     }
     return ans;
 }
+
+
+// LC2858
+vector<int> minEdgeReversals(int n, vector<vector<int>>& edges)
+{
+    vector<vector<pair<int, int>>> e(n);
+    for (auto& edge : edges) {
+        e[edge[0]].emplace_back(edge[1], 1);
+        e[edge[1]].emplace_back(edge[0], 0);
+    }
+
+    vector<int> visited(n, 0);
+    vector<int> dp(n, 0);
+    int nums = 0;
+    // 第一次dfs求第一个点的反转次数
+    auto dfs1 = [&](auto&& self, int node) -> void {
+        visited[node] = 1;
+        for (auto [next, dir] : e[node]) {
+            if (visited[next]) {
+                continue;
+            }
+            if (dir == 0) {
+                nums++;
+            }
+            self(self, next);
+        }
+    };
+    dfs1(dfs1, 0);
+    dp[0] = nums;
+
+    // 换根, 从最初点开始, 如果可以到达子节点, 反转数 = 根节点反转数 +1，反之 -1
+    visited.assign(n, 0);
+    auto dfs2 = [&](auto&& self, int node) -> void {
+        visited[node] = 1;
+        for (auto [next, dir] : e[node]) {
+            if (visited[next]) {
+                continue;
+            }
+            if (dir == 1) {
+                dp[next] = dp[node] + 1;
+            } else {
+                dp[next] = dp[node] - 1;
+            }
+            self(self, next);
+        }
+    };
+    dfs2(dfs2, 0);
+    return dp;
+}
