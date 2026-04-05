@@ -32801,3 +32801,46 @@ vector<int> minEdgeReversals(int n, vector<vector<int>>& edges)
     dfs2(dfs2, 0);
     return dp;
 }
+
+
+// LC2906
+vector<vector<int>> constructProductMatrix(vector<vector<int>>& grid)
+{
+    int i, j;
+    int m = grid.size();
+    int n = grid[0].size();
+    int mod = 12345;
+    vector<int> v;
+
+    // 二维一维化
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            v.emplace_back(grid[i][j] % mod);
+        }
+    }
+
+    int size = m * n;
+    vector<int> prefix(size), suffix(size);
+
+    prefix[0] = v[0];
+    for (i = 1; i < size; i++) {
+        prefix[i] = prefix[i - 1] * v[i] % mod;
+    }
+
+    suffix[size - 1] = v[size - 1];
+    for (i = size - 2; i >= 0; i--) {
+        suffix[i] = suffix[i + 1] *  v[i] % mod;
+    }
+
+    vector<vector<int>> ans(m, vector<int>(n));
+    for (i = 0; i < size; i++) {
+        if (i == 0) {
+            ans[i / n][i % n] = suffix[i + 1];
+        } else if (i == size - 1) {
+            ans[i / n][i % n] = prefix[i - 1];
+        } else {
+            ans[i / n][i % n] = prefix[i - 1] * suffix[i + 1] % mod;
+        }
+    }
+    return ans;
+}
