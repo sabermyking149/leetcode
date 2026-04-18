@@ -3300,3 +3300,96 @@ void ABC_489_D()
     }
     cout << ans << "\n";
 }
+
+
+void ABC_453_D()
+{
+    int i, j;
+    int h, w;
+    int S, G;
+    int base = 1000000;
+
+    vector<vector<int>> directions = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}}; // URDL
+    string dir = "URDL";
+    cin >> h >> w;
+    vector<string> s(h);
+
+    // 二维转一维
+    S = G = -1;
+    for (i = 0; i < h; i++) {
+        cin >> s[i];
+        for (j = 0; j < w; j++) {
+            if (s[i][j] == 'S') {
+                S = i * w + j;
+            }
+            if (s[i][j] == 'G') {
+                G = i * w + j;
+            }
+        }
+    }
+
+    string route;
+    vector<vector<bool>> visited(h * w, vector<bool>(4, false));
+    queue<pair<int, int>> q;
+    // map<pair<int, int>, pair<int, int>> prev; 效率太低
+    unordered_map<int, int> prev; // 上一个位置 = pos + (d + 1) * base
+    q.push({S, 0});
+    while (!q.empty()) {
+        auto [pos, d] = q.front();
+        q.pop();
+        if (pos == G) {
+            cout << "Yes\n";
+            while (pos != S) {
+                route += dir[d];
+                auto cur = pos + (d + 1) * base;
+                pos = prev[cur] % base;
+                d = (prev[cur] - pos) / base - 1;
+                // cout << pos << " " << d << endl;
+            }
+            reverse(route.begin(), route.end());
+            cout << route << "\n";
+            return;
+        }
+        auto x = pos / w;
+        auto y = pos % w;
+        if (s[x][y] == 'o') {
+            auto nx = x + directions[d][0];
+            auto ny = y + directions[d][1];
+            auto npos = nx * w + ny;
+            if (nx < 0 || nx >= h || ny < 0 || ny >= w || s[nx][ny] == '#' || visited[npos][d]) {
+                continue;
+            }
+            visited[npos][d] = true;
+            prev[npos + (d + 1) * base] = pos + (d + 1) * base;
+            q.push({npos, d});
+        } else if (s[x][y] == 'x') {
+            for (i = 0; i < 4; i++) {
+                if (d == i) {
+                    continue;
+                }
+                auto nx = x + directions[i][0];
+                auto ny = y + directions[i][1];
+                auto npos = nx * w + ny;
+                if (nx < 0 || nx >= h || ny < 0 || ny >= w || s[nx][ny] == '#' || visited[npos][i]) {
+                    continue;
+                }
+                visited[npos][i] = true;
+                prev[npos + (i + 1) * base] = pos + (d + 1) * base;
+                q.push({npos, i});
+            }
+        } else {
+            for (i = 0; i < 4; i++) {
+                auto nx = x + directions[i][0];
+                auto ny = y + directions[i][1];
+                auto npos = nx * w + ny;
+                if (nx < 0 || nx >= h || ny < 0 || ny >= w || s[nx][ny] == '#' || visited[npos][i]) {
+                    continue;
+                }
+                visited[npos][i] = true;
+                prev[npos + (i + 1) * base] = pos + (d + 1) * base;
+                q.push({npos, i});
+            }
+        }
+    }
+    cout << "No\n";
+}

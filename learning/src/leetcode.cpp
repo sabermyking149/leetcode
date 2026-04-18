@@ -32844,3 +32844,462 @@ vector<vector<int>> constructProductMatrix(vector<vector<int>>& grid)
     }
     return ans;
 }
+
+
+// LC3900
+int longestBalanced_LC3900(string s)
+{
+    int i;
+    int n = s.size();
+    vector<vector<int>> suffix(n, vector<int>(2, 0));
+    vector<vector<int>> prefix(n, vector<int>(2, 0));
+    if (s[n - 1] == '0') {
+        suffix[n - 1][0]++;
+    } else {
+        suffix[n - 1][1]++;
+    }
+    for (i = n - 2; i >= 0; i--) {
+        suffix[i] = suffix[i + 1];
+        if (s[i] == '0') {
+            suffix[i][0]++;
+        } else {
+            suffix[i][1]++;
+        }
+    }
+    if (s[0] == '0') {
+        prefix[0][0]++;
+    } else {
+        prefix[0][1]++;
+    }
+    for (i = 1; i < n; i++) {
+        prefix[i] = prefix[i - 1];
+        if (s[i] == '0') {
+            prefix[i][0]++;
+        } else {
+            prefix[i][1]++;
+        }
+    }
+    // idx[val].fisrt - 前缀和为val且前缀包含字符'0'的最左边下标
+    // idx[val].second - 前缀和为val且前缀包含字符'1'的最左边下标
+    unordered_map<int, pair<int, int>> idx;
+    int ans = 0;
+    int pre = 0;
+    for (i = 0; i < n; i++) {
+        if (s[i] == '0') {
+            pre--;
+        } else {
+            pre++;
+        }
+        // 不交换
+        if (pre == 0) {
+            ans = max(ans, i + 1);
+        }
+        if (idx.count(pre)) {
+            if (idx[pre].first != -1) {
+                ans = max(ans, i - idx[pre].first);
+                if (idx[pre].second != -1) {
+                    ans = max(ans, i - idx[pre].second);
+                }
+            } else {
+                ans = max(ans, i - idx[pre].second);
+            }
+        }
+
+        // 交换 pre = 2 or -2
+        if (pre == 2 && i + 1 < n && suffix[i + 1][0] > 0) {
+            ans = max(ans, i + 1);
+        }
+        if (pre == -2 && i + 1 < n && suffix[i + 1][1] > 0) {
+            ans = max(ans, i + 1);
+        }
+        if (idx.count(pre + 2)) {
+            if (idx[pre + 2].second != -1 && prefix[idx[pre + 2].second][1] > 0) {
+                ans = max(ans, i - idx[pre + 2].second);
+            }
+            if (i + 1 < n && suffix[i + 1][1] > 0) {
+                if (idx[pre + 2].first != -1) {
+                    ans = max(ans, i - idx[pre + 2].first);
+                }
+                if (idx[pre + 2].second != -1) {
+                    ans = max(ans, i - idx[pre + 2].second);
+                }
+            }
+        }
+        if (idx.count(pre - 2)) {
+            if ((i + 1 < n && suffix[i + 1][0] > 0)) {
+                if (idx[pre - 2].first != -1) {
+                    ans = max(ans, i - idx[pre - 2].first);
+                }
+                if (idx[pre - 2].second != -1) {
+                    ans = max(ans, i - idx[pre - 2].second);
+                }
+            }
+            if (idx[pre - 2].first != -1 && prefix[idx[pre - 2].first][0] > 0) {
+                ans = max(ans, i - idx[pre - 2].first);
+            }
+        }
+
+        if (idx.count(pre) == 0) {
+            idx[pre] = {-1, -1};
+            if (prefix[i][0] > 0) {
+                idx[pre].first = i;
+            }
+            if (prefix[i][1] > 0) {
+                idx[pre].second = i;
+            }
+        } else {
+            if (idx[pre].first == -1 && prefix[i][0] > 0) {
+                idx[pre].first = i;
+            }
+            if (idx[pre].second == -1 && prefix[i][1] > 0) {
+                idx[pre].second = i;
+            }
+        }
+    }
+
+    return ans;
+}
+
+
+// LC956
+int tallestBillboard(vector<int>& rods) // 超时
+{
+    int i, j, k;
+    int idx;
+    int n = rods.size();
+    int len = (1 << n);
+    int ans, sum, tol;
+    vector<int> chosen(n);
+    vector<bool> dp;
+
+    tol = accumulate(rods.begin(), rods.end(), 0);
+
+    vector<int> trySum(tol + 1, 0);
+    for (i = tol / 2 + 1; i <= tol; i++) {
+        trySum[i] = 1;
+    }
+    // 二进制枚举 + dp
+    ans = 0;
+    for (i = 1; i < len; i++) {
+        chosen.assign(n, 0);
+        idx = 0;
+        auto t = i;
+        while (idx < n) {
+            chosen[idx] = t % 2;
+            t >>= 1;
+            idx++;
+        }
+        sum = 0;
+        for (j = 0; j < n; j++) {
+            if (chosen[j]) {
+                sum += rods[j];
+            }
+        }
+
+        // 剪枝
+        if (trySum[sum]) {
+            continue;
+        }
+
+        if (sum <= ans || sum * 2 > tol) {
+            trySum[sum] = 1;
+            continue;
+        }
+
+        dp.assign(sum + 1, false);
+        dp[0] = true;
+        for (j = 0; j < n; j++) {
+            if (chosen[j]) {
+                continue;
+            }
+            for (k = sum; k >= rods[j]; k--) {
+                if (dp[k - rods[j]]) {
+                    dp[k] = true;
+                }
+            }
+            if (dp[sum]) {
+                break;
+            }
+        }
+        if (dp[sum]) {
+            ans = max(ans, sum);
+            trySum[sum] = 1;
+        }
+    }
+    return ans;
+}
+int tallestBillboard_betterWay(vector<int>& rods)
+{
+    int i, j;
+    int n = rods.size();
+    int tol, len;
+
+    tol = accumulate(rods.begin(), rods.end(), 0);
+    // dp[i][j] - 前i个钢筋左边与右边差值为j时, 左边的最大值
+    // 所求dp[n][5000];
+    len = tol + 5000;
+    vector<vector<int>> dp(n + 1, vector<int>(len + 1, -1));
+
+    dp[0][5000] = 0;
+    for (i = 0; i < n; i++) {
+        for (j = 0; j <= len; j++) {
+            if (dp[i][j] == -1) {
+                continue;
+            }
+            dp[i + 1][j] = max(dp[i + 1][j], dp[i][j]); // 不取
+            if (j + rods[i] <= len) { // 放在左边
+                dp[i + 1][j + rods[i]] = max(dp[i + 1][j + rods[i]], dp[i][j] + rods[i]);
+            }
+            if (j - rods[i] >= 0) { // 放在右边
+                dp[i + 1][j - rods[i]] = max(dp[i + 1][j - rods[i]], dp[i][j]);
+            }
+        }
+    }
+    return dp[n][5000] == -1 ? 0 : dp[n][5000];
+}
+
+
+// LC2035
+int minimumDifference_LC2035(vector<int>& nums)
+{
+    int i, j;
+    int n = nums.size() / 2;
+    int m, sum;
+    int ans = INT_MAX;
+
+    vector<int> nums1, nums2;
+    // 对半分
+    nums1.insert(nums1.end(), nums.begin(), nums.begin() + n);
+    nums2.insert(nums2.end(), nums.begin() + n, nums.end());
+
+    unordered_map<int, vector<int>> data1, data2;
+    // 枚举子序列
+    auto f = [](vector<int>& nums, unordered_map<int, vector<int>>& data) {
+        int i, j;
+        int cnt, sum;
+        int n = nums.size();
+        int len = (1 << n);
+        for (i = 0;  i < len; i++) {
+            auto t = i;
+            sum = cnt = j = 0;
+            while (j < n) {
+                if (t % 2 == 1) {
+                    sum += nums[j];
+                    cnt++;
+                } else {
+                    sum -= nums[j];
+                    cnt--;
+                }
+                t >>= 1;
+                j++;
+            }
+            data[cnt].emplace_back(sum);
+        }
+    };
+
+    f(nums1, data1);
+    f(nums2, data2);
+
+    for (auto& it : data1) {
+        sort(it.second.begin(), it.second.end());
+    }
+    for (auto& it : data2) {
+        sort(it.second.begin(), it.second.end());
+    }
+    for (auto& [val, v1] : data1) {
+        // 假设10个数, 前一半 +2 -3 后一半 +3 -2
+        if (data2.count(-val)) {
+            auto& v2 = data2[-val];
+            m = v1.size();
+            n = v2.size();
+            i = 0;
+            j = n - 1;
+            while (i < m && j >= 0) {
+                sum = v1[i] + v2[j];
+                ans = min(ans, abs(sum));
+                if (sum < 0) {
+                    i++;
+                } else if (sum > 0) {
+                    j--;
+                } else {
+                    break;
+                }
+            }
+        }
+    }
+    return ans;
+}
+
+
+// LC1606
+vector<int> busiestServers(int k, vector<int>& arrival, vector<int>& load)
+{
+    int i;
+    int n = arrival.size();
+    set<int> freeServer;
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> busyServer;
+
+    for (i = 0; i < k; i++) {
+        freeServer.emplace(i);
+    }
+
+    vector<int> serverFreq(k, 0);
+    int curTime;
+
+    for (i = 0; i < n; i++) {
+        curTime = arrival[i];
+        while (!busyServer.empty()) {
+            auto [time, serverId] = busyServer.top();
+            if (time > curTime) {
+                break;
+            }
+            freeServer.emplace(serverId);
+            busyServer.pop();
+        }
+
+        if (freeServer.empty()) {
+            continue;
+        }
+
+        auto serverId = i % k;
+        if (freeServer.count(i % k) == 0) {
+            auto it = freeServer.upper_bound(serverId);
+            if (it == freeServer.end()) {
+                serverId = -1;
+                it = freeServer.upper_bound(serverId);
+            }
+            serverId = *it;
+        }
+        // cout << "free " << serverId << "\n";
+        busyServer.push({arrival[i] + load[i], serverId});
+        freeServer.erase(serverId);
+        serverFreq[serverId]++;
+    }
+
+    vector<int> ans;
+    int freq = -1;
+    for (i = 0; i < k; i++) {
+        if (serverFreq[i] > freq) {
+            freq = serverFreq[i];
+            ans.clear();
+            ans.emplace_back(i);
+        } else if (serverFreq[i] == freq) {
+            ans.emplace_back(i);
+        }
+    }
+
+    return ans;
+}
+
+
+// LC1643
+string kthSmallestPath(vector<int>& destination, int k)
+{
+    // 计算 a! / b! / c!   (a = b + c)
+    auto f = [](int a, int b, int c, long long limit) -> long long {
+        if (b > c) {
+            swap (b, c);
+        }
+        int i, j;
+        long long ans = 1;
+        j = 1;
+        for (i = c + 1; i <= a; i++) {
+            ans *= i;
+            while (ans % j == 0 && j <= b) {
+                ans /= j;
+                j++;
+            }
+            if (j >= b && ans > limit) {
+                return -1;
+            }
+        }
+        while (j <= b) {
+            ans /= j;
+            j++;
+        }
+        if (ans > limit) {
+            return -1;
+        }
+        return ans;
+    };
+
+    // 即求第k个排列
+    int cntH = destination[1];
+    int cntV = destination[0];
+    int cnt = cntH + cntV;
+
+    string ans;
+    int nums;
+    while (cntH > 0 && cntV > 0) {
+        nums = f(cnt - 1, cntH - 1, cntV, k);
+        if (nums != -1 && k > nums) {
+            ans += 'V';
+            k -= nums;
+            cntV--;
+        } else {
+            ans += 'H';
+            cntH--;
+        }
+        cnt--;
+    }
+    if (cntH > 0) {
+        ans.append(cntH, 'H');
+    } else {
+        ans.append(cntV, 'V');
+    }
+    return ans;
+}
+
+
+// LC1786
+int countRestrictedPaths(int n, vector<vector<int>>& edges)
+{
+    vector<vector<pair<int, int>>> e(n + 1);
+
+    for (auto& edge : edges) {
+        e[edge[0]].emplace_back(edge[1], edge[2]);
+        e[edge[1]].emplace_back(edge[0], edge[2]);
+    }
+
+    vector<int> dist(n + 1, INT_MAX);
+    // 终点到各点的最短距离
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
+    pq.push({0, n});
+    dist[n] = 0;
+    while (!pq.empty()) {
+        auto [val, node] = pq.top();
+        pq.pop();
+        for (auto [next, w] : e[node]) {
+            if (val + w < dist[next]) {
+                dist[next] = val + w;
+                pq.push({dist[next], next});
+            }
+        }
+    }
+
+    // for (auto d : dist) cout << d << " "; cout << "\n";
+
+    // 从1到n的距离严格递减路径
+    int mod = 1e9 + 7;
+    vector<int> cnt(n + 1, -1);
+    auto dfs = [&](auto&& self, int cur) -> long long {
+        if (cnt[cur] != -1) {
+            return cnt[cur];
+        }
+        if (cur == 1) {
+            return 1;
+        }
+        long long ans = 0;
+        for (auto [next, _] : e[cur]) {
+            if (dist[next] > dist[cur]) {
+                ans = (ans + self(self, next)) % mod;
+            }
+        }
+        cnt[cur] = ans;
+        return ans;
+    };
+
+    dfs(dfs, n);
+
+    return cnt[n];
+}
