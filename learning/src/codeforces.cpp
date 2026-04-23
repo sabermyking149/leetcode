@@ -1138,3 +1138,33 @@ void CR_1084_D()
     }
     cout << "\n";
 }
+
+
+void ECR_189_C()
+{
+    int i;
+    int n;
+    int inf = 0x3f3f3f3f;
+    int offset;
+    vector<string> s(2);
+    cin >> n >> s[0] >> s[1];
+
+    // dp[i][0 ~ 1] 第i列竖着 ~ 横着的最小改变
+    vector<vector<int>> dp(n + 1, vector<int>(2, inf));
+
+    dp[1][0] = (s[0][0] == s[1][0] ? 0 : 1);
+    dp[0][0] = dp[0][1] = 0;
+    for (i = 2; i <= n; i++) {
+        offset = (s[0][i - 1] == s[1][i - 1] ? 0 : 1);
+        dp[i][0] = min(dp[i - 1][0], dp[i - 1][1]) + offset;
+        offset = 0;
+        if (s[0][i - 1] != s[0][i - 2]) {
+            offset++;
+        }
+        if (s[1][i - 1] != s[1][i - 2]) {
+            offset++;
+        }
+        dp[i][1] = min(dp[i - 2][0], dp[i - 2][1]) + offset;
+    }
+    cout << min(dp[n][0], dp[n][1]) << "\n";
+}

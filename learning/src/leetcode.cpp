@@ -5120,53 +5120,8 @@ TreeNode* replaceValueInTree(TreeNode* root)
 class Graph {
 public:
     int n;
-    unordered_map<int, set<vector<int>>> edges;
-    Graph(int n, vector<vector<int>>& edges)
-    {
-        for (auto e : edges) {
-            (this->edges)[e[0]].insert({e[1], e[2]});
-        }
-        this->n = n;
-    }
-    
-    void addEdge(vector<int> edge)
-    {
-        (this->edges)[edge[0]].insert({edge[1], edge[2]});
-    }
-    
-    int shortestPath(int node1, int node2) // 超时
-    {
-        pair<int, int> t;
-        vector<int> nodeDist(n, INT_MAX);
-        queue<pair<int, int>> q;
-
-        if (node1 == node2) {
-            return 0;
-        }
-        q.push({node1, 0});
-        while (q.size()) {
-            t = q.front();
-            q.pop();
-            if (nodeDist[t.first] < t.second) {
-                continue;
-            }
-            nodeDist[t.first] = t.second;
-            for (auto e : edges[t.first]) {
-                if (nodeDist[e[0]] > t.second + e[1]) {
-                    nodeDist[e[0]] = t.second + e[1];
-                    q.push({e[0], t.second + e[1]});
-                }
-            }
-        }
-        return nodeDist[node2] == INT_MAX ? -1 : nodeDist[node2];
-    }
-};
-
-class Graph1 {
-public:
-    int n;
     vector<vector<pair<int, int>>> edges;
-    Graph1(int n, vector<vector<int>>& edges)
+    Graph(int n, vector<vector<int>>& edges)
     {
         this->n = n;
         this->edges = vector<vector<pair<int, int>>>(n);
@@ -5184,28 +5139,27 @@ public:
     {
         pair<int, int> t;
         vector<int> nodeDist(n, INT_MAX);
-        queue<pair<int, int>> q;
+        priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
         if (node1 == node2) {
             return 0;
         }
-        q.push({node1, 0});
-        while (q.size()) {
-            t = q.front();
-            q.pop();
-            if (nodeDist[t.first] < t.second) {
-                continue;
-            }
-            nodeDist[t.first] = t.second;
-            for (auto e : edges[t.first]) {
-                if (nodeDist[e.first] > t.second + e.second) {
-                    nodeDist[e.first] = t.second + e.second;
-                    q.push({e.first, t.second + e.second});
+        pq.push({0, node1});
+        nodeDist[node1] = 0;
+        while (pq.size()) {
+            auto [d, cur] = pq.top();
+            pq.pop();
+
+            for (auto& [next, w] : edges[cur]) {
+                if (nodeDist[next] > d + w) {
+                    nodeDist[next] = d + w;
+                    pq.push({d + w, next});
                 }
             }
         }
         return nodeDist[node2] == INT_MAX ? -1 : nodeDist[node2];
     }
 };
+
 
 // LC2646
 unordered_map<int, int> tripCostData;
@@ -33302,4 +33256,315 @@ int countRestrictedPaths(int n, vector<vector<int>>& edges)
     dfs(dfs, n);
 
     return cnt[n];
+}
+
+
+// LC3906
+long long countGoodIntegersOnPath(long long l, long long r, string directions)
+{
+    auto trans = [](long long t) -> string {
+        string ans;
+        string s = to_string(t);
+        int num = 16 - s.size();
+        if (num > 0) {
+            ans.append(num, '0');
+        }
+        ans += s;
+        return ans;
+    };
+
+    int x, y;
+    x = y = 0;
+    int i;
+    int n = directions.size();
+    set<int> visited;
+    visited.emplace(0);
+    for (i = 0; i < n; i++) {
+        if (directions[i] == 'D') {
+            x++;
+        } else {
+            y++;
+        }
+        visited.emplace(x * 4 + y);
+    }
+
+    auto f = [&](string& s) -> long long {
+        // 位置 - 是否紧贴 - 上一个visited数的值(非递减)
+        long long dp[16][2][10];
+        memset(dp, -1, sizeof(dp));
+        auto dfs = [&](auto&& self, int pos, int limit, int p) -> long long {
+            if (pos == 16) {
+                return 1;
+            }
+            if (dp[pos][limit][p] != -1) {
+                return dp[pos][limit][p];
+            }
+            int n_limit;
+            int end;
+            if (limit == 1) {
+                end = s[pos] - '0';
+            } else {
+                end = 9;
+            }
+
+            int i; // 注意递归内使用外部变量造成i值混乱, 同名要使用局部变量
+            long long ans = 0;
+            for (i = 0; i <= end; i++) {
+                if (limit && (i == end)) {
+                    n_limit = 1;
+                } else {
+                    n_limit = 0;
+                }
+                if (visited.count(pos)) {
+                    if (i < p) {
+                        continue;
+                    }
+                    ans += self(self, pos + 1, n_limit, i);
+                } else {
+                    ans += self(self, pos + 1, n_limit, p);
+                }
+            }
+            dp[pos][limit][p] = ans;
+            return ans;
+        };
+        return dfs(dfs, 0, 1, 0);
+    };
+
+    string b = trans(r);
+    string a = trans(l - 1);
+
+    long long ans = f(b) - f(a);
+    return ans;
+}
+
+
+// LC1862
+int sumOfFlooredPairs(vector<int>& nums)
+{
+    int i, j;
+    int n = nums.size();
+    int mod = 1e9 + 7;
+    int left, right;
+    int maxVal = *max_element(nums.begin(), nums.end());
+    vector<long long> freq(maxVal + 1, 0);
+    vector<long long> prefix(maxVal + 1, 0);
+    for (i = 0; i < n; i++) {
+        freq[nums[i]]++;
+    }
+    for (i = 1; i <= maxVal; i++) {
+        prefix[i] = prefix[i - 1] + freq[i];
+    }
+
+    long long ans = 0;
+    for (i = 1; i <= maxVal; i++) {
+        if (freq[i] == 0) {
+            continue;
+        }
+        for (j = 1; j * i <= maxVal; j++) { // 枚举商j
+            left = i * j;
+            right = min(i * (j + 1) - 1, maxVal);
+            ans += (prefix[right] - prefix[left - 1]) * j * freq[i];
+        }
+    }
+
+    return ans % mod;
+}
+
+
+// LC2577
+int minimumTime(vector<vector<int>>& grid)
+{
+    int i;
+    int m = grid.size();
+    int n = grid[0].size();
+    int cur;
+    int inf = 0x3f3f3f3f;
+
+    // 无法行动
+    if (grid[0][1] >= 2 && grid[1][0] >= 2) {
+        return -1;
+    }
+
+    vector<vector<int>> dist(m, vector<int>(n, inf));
+    vector<vector<int>> directions = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+
+    dist[0][0] = 0;
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
+    pq.push({0, 0});
+    while (!pq.empty()) {
+        auto [time, pos] = pq.top();
+        pq.pop();
+
+        auto x = pos / n;
+        auto y = pos % n;
+
+        for (i = 0; i < 4; i++) {
+            auto nx = x + directions[i][0];
+            auto ny = y + directions[i][1];
+            if (nx < 0 || nx >= m || ny < 0 || ny >= n) {
+                continue;
+            }
+            auto npos = nx * n + ny;
+            if (time + 1 < grid[nx][ny]) { // 需要反复横跳, 每次增长2步
+                auto step = (grid[nx][ny] - time - 1 + 1) / 2;
+                if ((grid[nx][ny] - time) % 2 == 1) {
+                    cur = grid[nx][ny] - 1;
+                } else {
+                    cur = grid[nx][ny];
+                }
+                if (cur + 1 < dist[nx][ny]) {
+                    dist[nx][ny] = cur + 1;
+                    pq.push({dist[nx][ny], npos});
+                }
+            } else {
+                if (time + 1 < dist[nx][ny]) {
+                    dist[nx][ny] = time + 1;
+                    pq.push({dist[nx][ny], npos});
+                }
+            }
+        }
+    }
+    return dist[m - 1][n - 1];
+}
+
+
+// LC2589
+int findMinimumTime(vector<vector<int>>& tasks)
+{
+    int i, j;
+    int n = tasks.size();
+
+    sort (tasks.begin(), tasks.end(), [](const vector<int>& a, const vector<int>& b) {
+        return a[1] < b[1];
+    });
+
+    set<int> usedTime; // 已经使用的时刻
+    for (i = 0; i < n; i++) {
+        auto it = usedTime.lower_bound(tasks[i][0]);
+        if (it == usedTime.end()) {
+            j = tasks[i][1];
+            while (tasks[i][2]) {
+                usedTime.emplace(j);
+                j--;
+                tasks[i][2]--;
+            }
+        } else {
+            while (it != usedTime.end()) {
+                tasks[i][2]--;
+                if (tasks[i][2] == 0) {
+                    break;
+                }
+                it++;
+            }
+            // 还剩下时间段, 放到最后运行
+            j = tasks[i][1];
+            while (tasks[i][2]) {
+                // printf ("j = %d\n", j);
+                if (usedTime.count(j)) {
+                    j--;
+                    continue;
+                }
+                usedTime.emplace(j);
+                j--;
+                tasks[i][2]--;
+            }
+        }
+    }
+    return usedTime.size();
+}
+
+
+// LC2732
+vector<int> goodSubsetofBinaryMatrix(vector<vector<int>>& grid)
+{
+    int i, j;
+    int n = grid[0].size();
+    int m = grid.size();
+    int t, cnt0;
+    vector<vector<int>> bits(32);
+
+    for (i = 0; i < m; i++) {
+        cnt0 = t = 0;
+        for (j = 0; j < n; j++) {
+            t += grid[i][j] * (1 << j);
+            if (grid[i][j] == 0) { // 是否有全0行
+                cnt0++;
+            }
+        }
+        if (cnt0 == n) {
+            return {i};
+        }
+        bits[t].emplace_back(i);
+    }
+
+    auto dfs = [&](auto&& self, vector<int>& cur, int cnt, int num, int& idx) -> void {
+        int n = cur.size();
+        if (idx != -1) {
+            return;
+        }
+        if (cnt == n) {
+            if (!bits[num].empty()) {
+                idx = bits[num][0];
+            }
+            return;
+        }
+        if (cur[cnt] == 1) {
+            self(self, cur, cnt + 1, num, idx);
+        } else {
+            self(self, cur, cnt + 1, num, idx);
+            self(self, cur, cnt + 1, num + (1 << cnt), idx);
+        }
+    };
+
+    int idx;
+    vector<int> ans;
+    for (i = 0; i < m; i++) {
+        idx = -1;
+        dfs(dfs, grid[i], 0, 0, idx);
+        if (idx != -1) {
+            ans = {min(i, idx), max(i, idx)};
+            break;
+        }
+    }
+    return ans;
+}
+
+
+// LC2713
+int maxIncreasingCells(vector<vector<int>>& mat)
+{
+    int i, j, k;
+    int m = mat.size();
+    int n = mat[0].size();
+    int ans;
+
+    unordered_map<int, vector<pair<int, int>>> data;
+    vector<int> maxRow(m, 0);
+    vector<int> maxCol(n, 0);
+    vector<vector<int>> v;
+    // dp[i][j] 从 (i, j) 出发能得到的最大值
+    vector<vector<int>> dp(m, vector<int>(n, 0));
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            v.push_back({mat[i][j], i, j});
+            data[mat[i][j]].emplace_back(i, j);
+        }
+    }
+
+    ans = 0;
+    sort(v.begin(), v.end());
+    for (k = m * n - 1; k >= 0; k--) {
+        auto x = v[k][1];
+        auto y = v[k][2];
+        dp[x][y] = max(maxRow[x], maxCol[y]) + 1;
+        // 只有等矩阵没有v[k][0]的值时, 再更新maxRow和maxCol
+        if (k == 0 || v[k][0] != v[k - 1][0]) {
+            for (auto [i, j] : data[v[k][0]]) {
+                maxRow[i] = max(maxRow[i], dp[i][j]);
+                maxCol[j] = max(maxCol[j], dp[i][j]);
+            }
+        }
+        ans = max(ans, dp[x][y]);
+    }
+    return ans;
 }
