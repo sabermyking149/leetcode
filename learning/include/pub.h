@@ -394,4 +394,35 @@ public:
         return up[u][0];
     }
 };
+
+
+// 树状数组
+struct Fenwick {
+    int n;
+    vector<int> bit;
+    const int INF = -1e9;
+
+    Fenwick(int size) : n(size), bit(size + 2, INF) {}
+    
+    void update(int idx, int val) {
+        idx++; // 转为 1-based
+        while (idx <= n) {
+            bit[idx] = max(bit[idx], val);
+            idx += idx & -idx;
+        }
+    }
+    // 查询 [0, idx] 的最大值
+    int query(int idx) {
+        if (idx < 0) {
+            return INF;
+        }
+        idx++;
+        int res = INF;
+        while (idx > 0) {
+            res = max(res, bit[idx]);
+            idx -= idx & -idx;
+        }
+        return res;
+    }
+};
 #endif

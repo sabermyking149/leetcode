@@ -729,34 +729,7 @@ public:
         return ans;
     }
 };
-#if 0
-static bool Cmp(pair<string, int>& a, pair<string, int>& b)
-{
-    /*if (a.second != b.second) {
-        return a.second > b.second;
-    }*/
-    return a.second > b.second;
 
-}
-#endif
-/*
-vector<string> sortPeople(vector<string>& names, vector<int>& heights)
-{
-    vector<pair<string, int>> vp;
-    int i;
-    int n = names.size();
-    for (i = 0; i < n; i++) {
-        vp.push_back(make_pair(names[i], heights[i]));
-    }
-
-    //sort(vp.begin(), vp.end(), Cmp);
-    vector<string> ans;
-    for (auto p : vp) {
-        ans.emplace_back(p.second);
-    }
-    return ans;
-}
-*/
 
 unordered_set<string> trees;
 unordered_set<string> t;
@@ -33567,4 +33540,132 @@ int maxIncreasingCells(vector<vector<int>>& mat)
         ans = max(ans, dp[x][y]);
     }
     return ans;
+}
+
+
+// LC2122
+vector<int> recoverArray(vector<int>& nums)
+{
+    int i, j, p;
+    int n = nums.size();
+    int k;
+
+    sort (nums.begin(), nums.end());
+
+    // k = (nums[i] - nums[0]) / 2
+    vector<int> ans;
+    vector<int> visited(n);
+    for (i = 1; i < n; i++) {
+        // 枚举每个k
+        if (nums[i] == nums[0] || (nums[i] - nums[0]) % 2 == 1) {
+            continue;
+        }
+        k = (nums[i] - nums[0]) / 2;
+        ans.clear();
+        visited.assign(n, 0);
+        for (j = 0; j < n; j++) {
+            if (visited[j] == 1) {
+                continue;
+            }
+            visited[j] = 1;
+            ans.emplace_back(nums[j] + k);
+            for (p = j + 1; p < n; p++) {
+                if (visited[p]) {
+                    continue;
+                }
+                if (nums[p] == nums[j] + k * 2) {
+                    visited[p] = 1;
+                    break;
+                }
+            }
+            if (p == n) { // 没匹配上 a[i] + k
+                break;
+            }
+        }
+        if (j == n) {
+            break;
+        }
+    }
+    return ans;
+}
+
+
+// 字节面试
+// 反转链表
+ListNode* ReverseLists(ListNode *prev, ListNode* cur) {
+    while  (cur != nullptr) {
+        auto next = cur->next;
+        cur->next = prev;
+        prev = cur;
+        cur = next;
+    }
+    return prev;
+}
+// 有条件的反转字符串
+void ReverseStr(string& s)
+{
+    stack<char> st;
+    string ans;
+    for (auto ch : s) {
+        if (ch == ' ') {
+            while (!st.empty()) {
+                ans += st.top();
+                st.pop();
+            }
+            ans += ch;
+        } else {
+            st.push(ch);
+        }
+    }
+    while (!st.empty()) {
+        ans += st.top();
+        st.pop();
+    }
+    s = ans;
+}
+
+
+// LC354
+int maxEnvelopes(vector<vector<int>>& envelopes)
+{
+    int i;
+    int n = envelopes.size();
+    int m;
+    
+    sort(envelopes.begin(), envelopes.end(), [](const vector<int>& a, const vector<int>& b){
+        if (a[0] != b[0]) {
+            return a[0] < b[0];
+        }
+        return a[1] > b[1]; // 防止出现同身高的问题
+    });
+    vector<int> w(n);
+    for (i = 0; i < n; i++) {
+        w[i] = envelopes[i][1];
+    }
+
+    vector<int> low;
+    int left, right, mid;
+
+    low.emplace_back(w[0]);
+    for (i = 1; i < n; i++) {
+        m = low.size();
+        if (w[i] > low[m - 1]) {
+            low.emplace_back(w[i]);
+            continue;
+        } else if (w[i] == low[m - 1]) {
+            continue;
+        }
+        left = 0;
+        right = m - 1;
+        while (left <= right) {
+            mid = (right - left) / 2 + left;
+            if (low[mid] < w[i]) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        low[left] = w[i];
+    }
+    return low.size();
 }

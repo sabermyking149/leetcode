@@ -1168,3 +1168,82 @@ void ECR_189_C()
     }
     cout << min(dp[n][0], dp[n][1]) << "\n";
 }
+
+
+void CR_1096_D()
+{
+    int i, j;
+    int n;
+
+    cin >> n;
+
+    int size = n * 2;
+    int idx1, idx2;
+    vector<int> a(size);
+    vector<int> visited;
+
+    idx1 = idx2 = -1;
+    for (i = 0; i < size; i++) {
+        cin >> a[i];
+        if (a[i] == 0) {
+            if (idx1 == -1) {
+                idx1 = i;
+            } else {
+                idx2 = i;
+            }
+        }
+    }
+
+    auto CheckPalindromeAndMex = [&](int start, int end) -> int {
+        int len = a.size();
+        int i, j;
+
+        i = start;
+        j = end;
+        while (i >= 0 && j < len) {
+            if (a[i] == a[j]) {
+                visited[a[i]] = 1;
+                i--;
+                j++;
+            } else {
+                break;
+            }
+        }
+        for (i = 0; i < n; i++) {
+            if (visited[i] == 0) {
+                return i;
+            }
+        }
+        return n;
+    };
+
+    int ans = 0;
+
+    visited.assign(n, 0);
+    ans = max(ans, CheckPalindromeAndMex(idx1, idx1));
+
+    visited.assign(n, 0);
+    ans = max(ans, CheckPalindromeAndMex(idx2, idx2));
+
+    // 两个'0'一并组成
+    i = idx1 + 1;
+    j = idx2 - 1;
+    visited.assign(n, 0);
+    bool conflict = false;
+    while (i <= j)
+    {
+        if (a[i] == a[j]) {
+            visited[a[i]] = 1;
+            i++;
+            j--;
+        } else {
+            conflict = true;
+            break;
+        }
+    }
+    if (!conflict) {
+        ans = max(ans, CheckPalindromeAndMex(idx1, idx2));
+    }
+
+    cout << ans << "\n";
+}
