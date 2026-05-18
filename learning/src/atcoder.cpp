@@ -3393,3 +3393,48 @@ void ABC_453_D()
     }
     cout << "No\n";
 }
+
+
+void ABC_458_E()
+{
+    int i;
+    int mod = 998244353;
+    int x1, x2, x3;
+    int n = 2e6;
+
+    cin >> x1 >> x2 >> x3;
+
+    // 1和3不能相邻, 需要用2隔开, x2个"2"的隔板可以产生x2 + 1个间隙
+    // 来分别放置1和3, 相当于x2 + 1个盒子
+    // 从x2 + 1 选k个盒子放置x1个1, 每个盒子不为空
+    // 同时从剩下的 x2 + 1 - k个盒子放置x3个3, 此处允许出现空的盒子
+
+    // 预处理
+    vector<long long> fact(n + 1);
+    fact[0] = 1;
+    for (i = 1; i <= n; i++) {
+        fact[i] = fact[i - 1] * i % mod;
+    }
+
+    vector<long long> inv(n + 1); // 阶乘逆元
+    inv[n] = FastPow(fact[n], mod - 2, mod); // 费马小定理
+    for (i = n - 1; i >= 0; i--) {
+        inv[i] = inv[i + 1] * (i + 1) % mod;
+    }
+
+    int box = min(x2 + 1, x1); // x1 保证能放到每一个盒子 最多盒子数量
+    long long w1, w2, w3;
+    long long ans = 0;
+    for (i = 1; i <= box; i++) {
+        w1 = fact[x2 + 1] * inv[i] % mod * inv[x2 + 1 - i] % mod; // i个盒子的选择
+        w2 = fact[x1 - 1] * inv[i - 1] % mod * inv[x1 - i] % mod; // x1放i个盒子, 隔板法
+        if (x2 - i < 0) {
+            w3 = 0;
+        } else {
+            w3 = fact[x2 - i + x3] * inv[x2 - i] % mod * inv[x3] % mod; // 剩下的盒子放x3, 借球 + 隔板法
+        }
+        ans = (ans + w1 * w2 % mod * w3) % mod;
+    }
+
+    cout << ans << "\n";
+}

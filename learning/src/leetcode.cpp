@@ -138,6 +138,30 @@ vector<vector<long long>> Combine(int n, int mod)
     return C;
 }
 
+// 逆元求组合数
+long long Combine(int n, int k, int mod) // mod要求为质数
+{
+    if (k < 0 || k > n) {
+        return 0;
+    }
+
+    int i;
+    vector<long long> fact(n + 1);
+    fact[0] = 1;
+    for (i = 1; i <= n; i++) {
+        fact[i] = fact[i - 1] * i % mod;
+    }
+
+    vector<long long> inv(n + 1); // 阶乘逆元
+    inv[n] = FastPow(fact[n], mod - 2, mod); // 费马小定理
+    for (i = n - 1; i >= 0; i--) {
+        inv[i] = inv[i + 1] * (i + 1) % mod;
+    }
+
+    // C(n, k) = n! / k! / (n - k)!
+    return fact[n] * inv[k] % mod * inv[n - k] % mod;
+}
+
 int TreeNodesNum(TreeNode *root)
 {
     if (root == nullptr) {
@@ -33668,4 +33692,53 @@ int maxEnvelopes(vector<vector<int>>& envelopes)
         low[left] = w[i];
     }
     return low.size();
+}
+
+
+// LC3934
+int smallestUniqueSubarray(vector<int>& nums)
+{
+    int i;
+    int n = nums.size();
+    int left, right, mid;
+    int mod = 1e9 + 7;
+    long long base = 131;
+    long long hashCode;
+    bool find = false;
+    unordered_map<long long, int> hashCnt;
+
+    left = 1;
+    right = n;
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        hashCode = 0;
+        hashCnt.clear();
+        for (i = 0; i < mid; i++) {
+            hashCode = (hashCode * base + nums[i]) % mod;
+        }
+        // cout << hashCode << endl;
+        hashCnt[hashCode]++;
+
+        for (i = mid; i < n; i++) {
+            hashCode = (
+                (hashCode + mod - FastPow(base, mid - 1, mod) * nums[i - mid] % mod) % mod * 
+                base + nums[i]) % mod;
+            hashCnt[hashCode]++;
+
+            // cout << hashCode << endl;
+        }
+        find = false;
+        for (auto [_, num] : hashCnt) {
+            if (num == 1) {
+                find = true;
+                break;
+            }
+        }
+        if (find) {
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    return left;
 }

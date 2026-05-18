@@ -14,6 +14,7 @@
 #include <climits>
 #include <iomanip>
 #include <numeric>
+#include <cstring>
 #include "pub.h"
 using namespace std;
 
@@ -1246,4 +1247,152 @@ void CR_1096_D()
     }
 
     cout << ans << "\n";
+}
+
+
+// 构造性数位dp
+void CR_1098_C()
+{
+    int i;
+    int n;
+    long long a;
+    cin >> a >> n;
+    vector<int> d(n);
+    
+    for (i = 0; i < n; i++) {
+        cin >> d[i];
+    }
+
+    string s = to_string(a);
+    int len = s.size();
+    string maxLess;
+    // 位置 - 是否紧贴 - 是否前导0
+    // 等长度 最大小于等于a的数字
+    auto dfs = [&](auto&& self, int pos, int state1, int state2, string& cur) -> bool {
+        if (pos == len) {
+            if (!state2) {
+                maxLess = cur;
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        int i;
+        int n_state1, n_state2;
+        int limit = (state1 ? s[pos] - '0' : 9);
+        for (i = n - 1; i >= 0; i--) {
+            if (d[i] > limit) {
+                continue;
+            }
+            if (state2 && d[i] == 0) {
+                continue;
+            }
+            cur.push_back(d[i] + '0');
+            if (d[i] + '0' == s[pos] && state1) {
+                n_state1 = 1;
+            } else {
+                n_state1 = 0;
+            }
+            if (state2 && d[i] == 0) {
+                n_state2 = 1;
+            } else {
+                n_state2 = 0;
+            }
+            if (self(self, pos + 1, n_state1, n_state2, cur)) {
+                return true;
+            }
+            cur.pop_back();
+        }
+
+        if (state2 && pos == len - 1) {
+            // 检查数字集合是否包含 0
+            if (d[0] == 0) {
+                maxLess = "0";
+                return true;
+            }
+        }
+        return false;
+    };
+
+    string cur;
+    bool find = dfs(dfs, 0, 1, 1, cur);
+    if (find == false) {
+        if (len == 1) {
+            maxLess = "-1";
+        } else {
+            maxLess.append(len - 1, d[n - 1] + '0');
+        }
+    }
+    // cout << maxLess << endl;
+
+    // 位置 - 是否紧贴 - 是否前导0
+    // 等长度 最小大于等于a的数字
+    string minGreater;
+    auto dfs1 = [&](auto&& self, int pos, int state1, int state2, string& cur) -> bool {
+        if (pos == len) {
+            if (!state2) {
+                minGreater = cur;
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        int i;
+        int n_state1, n_state2;
+        int limit = (state1 ? s[pos] - '0' : 0);
+        for (i = 0; i < n; i++) {
+            if (d[i] < limit) {
+                continue;
+            }
+            if (state2 && d[i] == 0) {
+                continue;
+            }
+            cur.push_back(d[i] + '0');
+            if (d[i] + '0' == s[pos] && state1) {
+                n_state1 = 1;
+            } else {
+                n_state1 = 0;
+            }
+            if (state2 && d[i] == 0) {
+                n_state2 = 1;
+            } else {
+                n_state2 = 0;
+            }
+            if (self(self, pos + 1, n_state1, n_state2, cur)) {
+                return true;
+            }
+            cur.pop_back();
+        }
+        return false;
+    };
+
+    cur.clear();
+    find = dfs1(dfs1, 0, 1, 1, cur);
+    if (find == false) {
+        if (d[0] == 0) {
+            if (n > 1) {
+                minGreater.append(1, d[1] + '0');
+                minGreater.append(len, d[0] + '0');
+            } else {
+                minGreater = "0";
+            }
+        } else {
+            minGreater.append(len + 1, d[0] + '0');
+        }
+    }
+    // cout << minGreater << endl;
+
+    long long b1, b2;
+    b1 = stoll(maxLess);
+    b2 = stoll(minGreater);
+
+    if (b1 == -1) {
+        cout << abs(a - b2) << "\n";
+    } else if (abs(a - b1) <= abs(a - b2)) {
+        cout << abs(a - b1) << "\n";
+    } else {
+        cout << abs(a - b2) << "\n";
+    }
 }
