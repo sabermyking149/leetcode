@@ -53,13 +53,13 @@ vector<int> GetPrimes(int n)
             }
         }
     }
- 
+
     for (p = 2; p <= n; ++p) {
         if (isPrime[p]) {
             primes.push_back(p);
         }
     }
- 
+
     return primes;
 }
 
@@ -160,6 +160,25 @@ long long Combine(int n, int k, int mod) // mod要求为质数
 
     // C(n, k) = n! / k! / (n - k)!
     return fact[n] * inv[k] % mod * inv[n - k] % mod;
+}
+// n很大, k <= 1e6, 直接公式
+long long Combine(long long n, long long k, int mod) // mod要求为质数
+{
+    int i;
+    if (k < 0 || k > n) {
+        return 0;
+    }
+    if (k > n - k) {
+        k = n - k;  // 选较小的 k
+    }
+
+    long long u = 1;
+    long long d = 1;
+    for (i = 0; i < k; i++) {
+        u = u % mod * ((n - i) % mod) % mod;
+        d = d * (i + 1) % mod;
+    }
+    return u * FastPow(d, mod - 2, mod) % mod; // 费马小定理
 }
 
 int TreeNodesNum(TreeNode *root)
@@ -33741,4 +33760,139 @@ int smallestUniqueSubarray(vector<int>& nums)
         }
     }
     return left;
+}
+
+
+// LC3938
+int maxScore_LC3938(vector<vector<int>>& grid)
+{
+    // 共享路径要么横着,要么竖着, 且矩形边缘不能单独一个cell
+    int i, j;
+    int m = grid.size();
+    int n = grid[0].size();
+    int ans = -0x3f3f3f3f;
+    vector<vector<int>> dp1(m, vector<int>(n));
+
+    // 横着
+    for (i = 0; i < m; i++) {
+        dp1[i][0] = grid[i][0];
+        for (j = 1; j < n; j++) {
+            if (i == 0 || i == m - 1 || j == 0 || j == n - 1) {
+                dp1[i][j] = grid[i][j] + max(dp1[i][j - 1], grid[i][j - 1]);
+            } else {
+                dp1[i][j] = (dp1[i][j - 1] < 0 ? grid[i][j] : grid[i][j] + dp1[i][j - 1]);
+            }
+        }
+    }
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            if (j == 0) {
+                continue;
+            }
+            ans = max(ans, dp1[i][j]);
+        }
+    }
+    // 竖着
+    vector<vector<int>> dp2(n, vector<int>(m));
+    for (j = 0; j < n; j++) {
+        dp2[j][0] = grid[0][j];
+        for (i = 1; i < m; i++) {
+            if (i == 0 || i == m - 1 || j == 0 || j == n - 1) {
+                dp2[j][i] = grid[i][j] + max(dp2[j][i - 1], grid[i - 1][j]);
+            } else {
+                dp2[j][i] = (dp2[j][i - 1] > 0 ? grid[i][j] + dp2[j][i - 1] : grid[i][j]);
+            }
+        }
+    }
+    for (j = 0; j < n; j++) {
+        for (i = 0; i < m; i++) {
+            if (i == 0) {
+                continue;
+            }
+            ans = max(ans, dp2[j][i]);
+        }
+    }
+    return ans;
+}
+
+
+// LC3943
+// 线段树不好处理时, 可采用分块思想
+vector<int> numberOfPairs(vector<int>& nums1, vector<int>& nums2, vector<vector<int>>& queries)
+{
+    int i, j;
+    vector<int> ans;
+    int m = nums1.size();
+    int n = nums2.size();
+    vector<long long> nums2_ll(nums2.begin(), nums2.end());
+    // 分块
+    int size;
+    size = max((int)sqrt(n), 1);
+    int blocknum;
+    if (n % size == 0) {
+        blocknum = n / size;
+    } else {
+        blocknum = n / size + 1;
+    }
+    vector<unordered_map<long long, int>> freq(blocknum);
+    // 懒标记
+    vector<long long> lazy(blocknum, 0);
+    int left, right;
+    for (j = 0; j < blocknum; j++) {
+        int start = j * size;
+        int end = min((j + 1) * size, n);
+        for (int k = start; k < end; k++) {
+            freq[j][nums2_ll[k]]++;
+        }
+    }
+    for (auto& q : queries) {
+        if (q[0] == 1) {
+            left = q[1] / size;
+            right = q[2] / size;
+            if (left == right) {
+                for (j = q[1]; j <= q[2]; j++) {
+                    freq[left][nums2_ll[j]]--;
+                    if (freq[left][nums2_ll[j]] == 0) {
+                        freq[left].erase(nums2_ll[j]);
+                    }
+                    nums2_ll[j] += q[3];
+                    freq[left][nums2_ll[j]]++;
+                }
+            } else {
+                int end = (left + 1) * size;
+                for (j = q[1]; j < end; j++) {
+                    freq[left][nums2_ll[j]]--;
+                    if (freq[left][nums2_ll[j]] == 0) {
+                        freq[left].erase(nums2_ll[j]);
+                    }
+                    nums2_ll[j] += q[3];
+                    freq[left][nums2_ll[j]]++;
+                }
+                for (j = left + 1; j < right; j++) {
+                    lazy[j] += q[3];
+                }
+                int start = right * size;
+                for (j = start; j <= q[2]; j++) {
+                    freq[right][nums2_ll[j]]--;
+                    if (freq[right][nums2_ll[j]] == 0) {
+                        freq[right].erase(nums2_ll[j]);
+                    }
+                    nums2_ll[j] += q[3];
+                    freq[right][nums2_ll[j]]++;
+                }
+            }
+        } else {
+            int cnt = 0;
+            for (i = 0; i < m; i++) {
+                for (j = 0; j < blocknum; j++) {
+                    auto x = q[1] - lazy[j] - nums1[i];
+                    if (freq[j].count(x)) {
+                        cnt += freq[j][x];
+                    }
+                }
+            }
+            ans.emplace_back(cnt);
+        }
+    }
+    return ans;
 }

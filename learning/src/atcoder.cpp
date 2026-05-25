@@ -3438,3 +3438,80 @@ void ABC_458_E()
 
     cout << ans << "\n";
 }
+
+
+void ABC_459_E()
+{
+    int i;
+    int n;
+    int mod = 998244353;
+
+    cin >> n;
+    vector<vector<int>> edges(n + 1);
+    vector<int> p(n + 1);
+    vector<long long> c(n + 1), d(n + 1);
+    for (i = 2; i <= n; i++) {
+        cin >> p[i];
+        edges[p[i]].emplace_back(i);
+    }
+    for (i = 1; i <= n; i++) {
+        cin >> c[i];
+    }
+    for (i = 1; i <= n; i++) {
+        cin >> d[i];
+    }
+    vector<long long> candies(n + 1), need(n + 1);
+    // 后缀糖果数
+    auto dfs1 = [&](auto&& self, int cur) -> long long {
+        if (edges[cur].empty()) {
+            candies[cur] = c[cur];
+            return c[cur];
+        }
+        long long ans = c[cur];
+        for (auto next : edges[cur]) {
+            ans += self(self, next);
+        }
+        candies[cur] = ans;
+        return ans;
+    };
+    // 后缀需求数
+    auto dfs2 = [&](auto&& self, int cur) -> long long {
+        if (edges[cur].empty()) {
+            need[cur] = d[cur];
+            return d[cur];
+        }
+        long long ans = d[cur];
+        for (auto next : edges[cur]) {
+            ans += self(self, next);
+        }
+        need[cur] = ans;
+        return ans;
+    };
+    dfs1(dfs1, 1);
+    dfs2(dfs2, 1);
+
+    for (i = 1; i <= n; i++) {
+        if (candies[i] < need[i]) {
+            cout << 0 << "\n";
+            return;
+        }
+    }
+
+    vector<long long> dp(n + 1);
+    // 后缀组合数学
+    auto dfs3 = [&](auto&& self, int cur) -> long long {
+        if (edges[cur].empty()) {
+            dp[cur] = Combine(candies[cur], need[cur], mod);
+            return dp[cur];
+        }
+        long long ans = Combine(candies[cur] - (need[cur] - d[cur]), d[cur], mod);
+        for (auto next : edges[cur]) {
+            ans = ans * self(self, next) % mod;
+        }
+        dp[cur] = ans;
+        return ans;
+    };
+    dfs3(dfs3, 1);
+    // for (i = 1; i <= n; i++) cout << dp[i] << " ";
+    cout << dp[1] << "\n";
+}

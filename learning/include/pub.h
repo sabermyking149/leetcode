@@ -21,6 +21,7 @@ constexpr int mod = 1000000007;
 
 vector<vector<long long>> Combine(int n, int mod);
 long long Combine(int n, int k, int mod);
+long long Combine(long long n, long long k, int mod);
 int FastPow(int a, int b);
 long long FastPow(long long a, long long b, int mod);
 

@@ -1396,3 +1396,109 @@ void CR_1098_C()
         cout << abs(a - b2) << "\n";
     }
 }
+
+
+void CR_1099_C()
+{
+    int i;
+    int n;
+
+    cin >> n;
+    vector<int> a(n);
+    bool find = false;
+    for (i = 0; i < n; i++) {
+        cin >> a[i];
+        if (a[i] == 1) {
+            find = true;
+        }
+    }
+    if (n == 1) {
+        cout << 0 << "\n";
+        return;
+    }
+
+    auto steps = [](int a) {
+        int cnt = 0;
+        while (a != 1) {
+            if (a % 2 == 0) {
+                a >>= 1;
+            } else {
+                a++;
+            }
+            cnt++;
+        }
+        return cnt;
+    };
+    // a 和 b 的"lca"
+    auto f = [&](int a, int b) {
+        int sa, sb;
+        sa = steps(a);
+        sb = steps(b);
+        if (sa < sb) {
+            swap(sa, sb);
+            swap(a, b);
+        }
+        auto d = sa - sb;
+        while (d) {
+            if (a % 2 == 0) {
+                a >>= 1;
+            } else {
+                a++;
+            }
+            d--;
+        }
+        while (a != b) {
+            if (a % 2 == 0) {
+                a >>= 1;
+            } else {
+                a++;
+            }
+            if (b % 2 == 0) {
+                b >>= 1;
+            } else {
+                b++;
+            }
+        }
+        return a;
+    };
+
+    auto g = [](int a, int k) {
+        int cnt = 0;
+        while (a != k) {
+            if (a % 2 == 0) {
+                a >>= 1;
+            } else {
+                a++;
+            }
+            cnt++;
+        }
+        return cnt;
+    };
+
+    int t = f(a[0], a[1]);
+    for (i = 2; i < n; i++) {
+        t = f(t, a[i]);
+        if (t == 1) {
+            break;
+        }
+    }
+
+    long long ans = 0;
+    for (i = 0; i < n; i++) {
+        ans += g(a[i], t);
+    }
+
+    // printf ("ans = %d\n", ans);
+    if (find) {
+        long long t1 = ans;
+        for (i = 0; i < n; i++) {
+            if (a[i] == 1) {
+                t1++;
+            } else {
+                t1--;
+            }
+        }
+        ans = min(ans, t1);
+    }
+    cout << ans << "\n";
+}
