@@ -45,8 +45,9 @@ vector<int> GetPrimes(int n)
     vector<bool> isPrime(n + 1, true);
     vector<int> primes;
     isPrime[0] = isPrime[1] = false; // 0 和 1 不是质数
- 
-    for (p = 2; p <= sqrt(n); p++) {
+
+    int m = sqrt(n);
+    for (p = 2; p <= m; p++) {
         if (isPrime[p]) {
             for (i = p * p; i <= n; i += p) {
                 isPrime[i] = false;
@@ -31654,7 +31655,7 @@ long long countBalanced(long long low, long long high)
 }
 
 
-// LC212
+// LC212 (增加新测试数据后已不适用, 实际上要特化下Trie树适配此题)
 vector<string> findWords(vector<vector<char>>& board, vector<string>& words)
 {
     int i, j;
@@ -31717,6 +31718,48 @@ vector<string> findWords(vector<vector<char>>& board, vector<string>& words)
     }
     for (auto& w : tmp) {
         ans.emplace_back(w);
+    }
+    return ans;
+}
+vector<string> findWords_LC212(vector<vector<char>>& board, vector<string>& words)
+{
+    int i, j;
+    int m = board.size();
+    int n = board[0].size();
+    int len = min(m * n, 10); // 条件保证words[i]最大长度
+    vector<string> ans;
+    vector<vector<int>> visited(m, vector<int>(n, 0));
+    vector<vector<int>> directions = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+    set<string> dict;
+    for (auto w : words) {
+        dict.emplace(w);
+    }
+    auto dfs = [&](auto&& self, int x, int y, int idx, string& word) -> void {
+        word.push_back(board[x][y]);
+        if (dict.count(word)) {
+            ans.emplace_back(word);
+            dict.erase(word);
+        }
+        visited[x][y] = 1;
+        for (int k = 0; k < 4; k++) {
+            auto nx = x + directions[k][0];
+            auto ny = y + directions[k][1];
+            if (nx < 0 || nx >= m || ny < 0 || ny >= n || visited[nx][ny]) {
+                continue;
+            }
+            if (idx + 1 < len) {
+                self(self, nx, ny, idx + 1, word);
+            }
+        }
+        word.pop_back();
+        visited[x][y] = 0;
+    };
+
+    string w;
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            dfs(dfs, i, j, 0, w);
+        }
     }
     return ans;
 }
@@ -33892,6 +33935,91 @@ vector<int> numberOfPairs(vector<int>& nums1, vector<int>& nums2, vector<vector<
                 }
             }
             ans.emplace_back(cnt);
+        }
+    }
+    return ans;
+}
+
+
+// LC3946
+int maximumSaleItems(vector<vector<int>>& items, int budget)
+{
+    int i, j;
+    int n = items.size();
+    int minVal = 0x3f3f3f3f;
+    int ans = 0;
+    vector<int> freeI(n, 1);
+    for (i = 0; i < n; i++) {
+        minVal = min(minVal, items[i][1]);
+        for (j = 0; j < n; j++) {
+            if (i != j && items[j][0] % items[i][0] == 0) {
+                freeI[i]++;
+            }
+        }
+    }
+    // for (auto f : freeI) cout << f << " "; cout << "\n";
+    // dp[i] - 预算为i能买的最大商品数
+    // 0 / 1 背包
+    vector<int> dp(budget + 1, 0);
+    for (i = 0; i < n; i++) {
+        for (j = budget; j >= 0; j--) {
+            if (j - items[i][1] < 0) {
+                continue;
+            }
+            dp[j] = max(dp[j], dp[j - items[i][1]] + freeI[i]);
+        }
+    }
+    // 剩下的选最便宜的
+    for (i = 0; i <= budget; i++) {
+        ans = max(ans, dp[i] + (budget - i) / minVal);
+    }
+    return ans;
+}
+
+
+// LC3956
+long long maximumSum(vector<int>& nums, int m, int l, int r)
+{
+    int i, k;
+    int n = nums.size();
+    long long inf = LLONG_MIN / 8;
+    // dp[i][j] - 前i个数选j个子数组和最大值
+    vector<vector<long long>> dp(n + 1, vector<long long>(m + 1, inf));
+    for (i = 0; i <= n; i++) {
+        dp[i][0] = 0;
+    }
+
+    vector<long long> prefix(n + 1, 0);
+    for (i = 1; i <= n; i++) {
+        prefix[i] = prefix[i - 1] + nums[i - 1];
+    }
+    deque<int> dq;
+    long long ans = inf;
+    for (k = 1; k <= m; k++) {
+        while (!dq.empty()) {
+            dq.pop_front();
+        }
+        for (i = 1; i <= n; i++) {
+            dp[i][k] = dp[i - 1][k]; // 不选
+
+            if (i - l >= 0) {
+                auto val = dp[i - l][k - 1] - prefix[i - l];
+                while (!dq.empty() &&
+                        val >= dp[dq.back()][k - 1] - prefix[dq.back()]) {
+                    dq.pop_back();
+                }
+                dq.push_back(i - l);
+            }
+            while (!dq.empty() && dq.front() < i - r) {
+                dq.pop_front();
+            }
+            if (!dq.empty()) {
+                auto len = dq.front();
+                dp[i][k] = max(dp[i][k], dp[len][k - 1] + prefix[i] - prefix[len]);
+            }
+            if (i == n) {
+                ans = max(ans, dp[i][k]);
+            }
         }
     }
     return ans;

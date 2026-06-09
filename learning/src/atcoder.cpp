@@ -3515,3 +3515,65 @@ void ABC_459_E()
     // for (i = 1; i <= n; i++) cout << dp[i] << " ";
     cout << dp[1] << "\n";
 }
+
+
+void ABC_461_D()
+{
+    int i, p, q;
+    int h, w, k;
+
+    cin >> h >> w >> k;
+
+    int one = 0;
+    int n = h * w;
+    vector<int> pre;
+    vector<string> grid(h);
+    vector<vector<int>> g(h, vector<int>(w));
+    for (i = 0; i < h; i++) {
+        cin >> grid[i];
+        for (q = 0; q < w; q++) {
+            g[i][q] = grid[i][q] - '0';
+            if (grid[i][q] == '1') {
+                one++;
+            }
+        }
+    }
+    if (one < k) {
+        cout << 0 << "\n";
+        return;
+    }
+
+    auto Cnt = [](vector<int>& nums, int k, vector<int>& pre, int n) -> long long {
+        // unordered_map<int, int> pre; 哈希表被卡
+        pre.assign(n, 0);
+        int i;
+        int len = nums.size();
+        int sum = 0;
+        long long ans = 0;
+        for (i = 0; i < len; i++) {
+            sum += nums[i];
+            if (sum == k) {
+                ans++;
+            }
+            if (sum - k >= 0) {
+                ans += pre[sum - k];
+            }
+            pre[sum]++;
+        }
+        return ans;
+    };
+
+    vector<int> colSum(w, 0);
+    long long ans = 0;
+    for (i = 0; i < h; i++) {
+        colSum.assign(w, 0);
+        for (p = i; p < h; p++) {
+            for (q = 0; q < w; q++) {
+                colSum[q] += g[p][q];
+            }
+            // for (auto v : colSum) cout << v << " "; cout << endl;
+            ans += Cnt(colSum, k, pre, n);
+        }
+    }
+    cout << ans << "\n";
+}
