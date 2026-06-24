@@ -34024,3 +34024,241 @@ long long maximumSum(vector<int>& nums, int m, int l, int r)
     }
     return ans;
 }
+
+
+// LC2430
+int deleteString(string s)
+{
+    int i, j;
+    int n = s.size();
+    int base = 131;
+    int mod = 1e9 + 7;
+    long long val;
+    vector<vector<long long>> hashVal(n, vector<long long>(n));
+
+    for (i = 0; i < n; i++) {
+        val = 0;
+        for (j = i; j < n; j++) {
+            val = (val * base + s[j] - 'a' + 1) % mod;
+            hashVal[i][j] = val;
+        }
+    }
+
+    // dp[i] - 从下标处i开始得到的s[i ~ n - 1]完全删除最大删除数, 所求dp[0]
+    vector<int> dp(n + 1, 0);
+    int len;
+
+    dp[n - 1] = 1;
+    for (i = n - 2; i >= 0; i--) {
+        dp[i] = 1;
+        for (j = i; j < n; j++) {
+            len = j - i + 1;
+            if (i + len * 2 - 1 < n && hashVal[i][i + len - 1] == hashVal[i + len][i + len * 2 - 1]) {
+                dp[i] = max(dp[i], dp[i + len] + 1);
+            }
+        }
+    }
+    return dp[0];
+}
+
+
+// LC1889
+int minWastedSpace(vector<int>& packages, vector<vector<int>>& boxes)
+{
+    int i, j;
+    int n = packages.size();
+    int m = boxes.size();
+    int len;
+    int mod = 1e9 + 7;
+
+    sort(packages.begin(), packages.end());
+    vector<long long> prefix(n, 0);
+
+    prefix[0] = packages[0];
+    for (i = 1; i < n; i++) {
+        prefix[i] = prefix[i - 1] + packages[i];
+    }
+    int left, right, mid;
+    int startId;
+    long long ans = LLONG_MAX;
+    long long cur;
+    for (i = 0; i < m; i++) {
+        sort(boxes[i].begin(), boxes[i].end());
+        if (boxes[i].back() < packages.back()) {
+            continue;
+        }
+        len = boxes[i].size();
+        startId = -1;
+        for (j = 0; j < len; j++) {
+            // packages最后一个小于等于boxes[i][j]的位置
+            left = 0;
+            right = n - 1;
+            while (left <= right) {
+                mid = (right - left) / 2 + left;
+                if (packages[mid] > boxes[i][j]) {
+                    right = mid - 1;
+                } else {
+                    left = mid + 1;
+                }
+            }
+            if (right < 0) {
+                continue;
+            }
+            if (startId == -1) {
+                cur = boxes[i][j] * 1ll * (right + 1) - prefix[right];
+            } else {
+                cur += boxes[i][j] * 1ll * (right - startId) - (prefix[right] - prefix[startId]);
+            }
+            startId = right;
+        }
+        ans = min(ans, cur);
+    }
+
+    return ans == LLONG_MAX ? -1 : ans % mod;
+}
+
+
+// LC68
+vector<string> fullJustify(vector<string>& words, int maxWidth)
+{
+    int i, j;
+    int n = words.size();
+    int cur = 0;
+    vector<vector<string>> data;
+    vector<string> word;
+    for (i = 0; i < n; i++) {
+        if (cur + words[i].size() + 1 <= maxWidth) {
+            word.emplace_back(words[i]);
+            cur += words[i].size() + 1;
+        } else if (cur + words[i].size() == maxWidth) {
+            word.emplace_back(words[i]);
+            cur += words[i].size();
+        } else {
+            data.emplace_back(word);
+            i--;
+            cur = 0;
+            word.clear();
+        }
+    }
+    data.emplace_back(word);
+    /* for (auto d : data) {
+        for (auto w : d) cout << w << " ";
+        cout << "\n";
+    } */
+    int nums;
+    int len, size, size2;
+    int a, b, r;
+    string t;
+    vector<string> ans;
+    size = data.size();
+    for (i = 0; i < size; i++) {
+        nums = data[i].size();
+        len = 0;
+        t.clear();
+        if (nums == 1) {
+            t = data[i][0];
+            t.append(maxWidth - data[i][0].size(), ' ');
+            ans.emplace_back(t);
+            continue;
+        }
+        if (i == size - 1) {
+            for (auto& w : data[i]) {
+                t += w;
+                if (t.size() < maxWidth) {
+                    t.append(1, ' ');
+                }
+            }
+            t.append(maxWidth - t.size(), ' ');
+            ans.emplace_back(t);
+            continue;
+        }
+        for (auto& w : data[i]) {
+            len += w.size();
+        }
+        nums--;
+        a = maxWidth - len;
+        r = a % nums;
+        b = a / nums;
+        size2 = data[i].size();
+        for (j = 0; j < size2; j++) {
+            t += data[i][j];
+            if (j == size2 - 1) {
+                break;
+            }
+            if (r > 0) {
+                t.append(b + 1, ' ');
+                r--;
+            } else {
+                t.append(b, ' ');
+            }
+        }
+        ans.emplace_back(t);
+    }
+    return ans;
+}
+
+
+// LC3971
+int maxTotalValue(vector<int>& value, vector<int>& decay, int m)
+{
+    int i;
+    int n = decay.size();
+    int k;
+    // mid 最低价值
+    int left, right, mid;
+    int equal;
+    int mod = 1e9 + 7;
+    long long cnt, sum;
+
+    left = 0;
+    right = *max_element(value.begin(), value.end());
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        equal = cnt = 0;
+        for (i = 0; i < n; i++) {
+            if (value[i] < mid) {
+                continue;
+            }
+            if ((value[i] - mid) % decay[i] == 0) {
+                equal++;
+                k = (value[i] - mid) / decay[i];
+            } else {
+                k = (value[i] - mid) / decay[i] + 1;
+            }
+            cnt += k;
+            if (cnt > m) {
+                break;
+            }
+        }
+        if (i == n) {
+            if (cnt + equal < m) {
+                right = mid - 1;
+            } else if (cnt == m) {
+                left = mid + 1;
+            } else {
+                left = mid;
+                break;
+            }
+        } else {
+            left = mid + 1;
+        }
+    }
+
+    cnt = sum = 0;
+    for (i = 0; i < n; i++) {
+        if (value[i] < left) {
+            continue;
+        }
+        k = (value[i] - left) / decay[i] + 1;
+        // 统计比left大的情况
+        if ((value[i] - left) % decay[i] == 0) {
+            k--;
+        }
+
+        cnt += k;
+        // 首项为value[i] 公差为 -decay[i] 项数为k
+        sum += (value[i] * 2ll - (k - 1) * decay[i]) * k / 2;
+    }
+    sum += (m - cnt) * left;
+    return sum % mod;
+}

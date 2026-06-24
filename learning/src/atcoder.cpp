@@ -3577,3 +3577,155 @@ void ABC_461_D()
     }
     cout << ans << "\n";
 }
+
+
+void ABC_462_D()
+{
+    int i;
+    int n, d;
+
+    cin >> n >> d;
+
+    vector<vector<int>> p(n + 1, vector<int>(2));
+    vector<int> x(1000001, 0);
+    vector<int> diff(1000002);
+
+    // 对于可能的案发时间 x 
+    // x >= p[i][0], x + d <= p[i][1] ->  p[i][0] <= x <= p[i][1] - d
+    for (i = 1; i <= n; i++) {
+        cin >> p[i][0] >> p[i][1];
+        if (p[i][1] - d >= p[i][0]) {
+            diff[p[i][0]]++;
+            diff[p[i][1] - d + 1]--;
+        }
+    }
+    x[0] = diff[0];
+    for (i = 1; i <= 1000000; i++) {
+        x[i] = x[i - 1] + diff[i];
+    }
+    long long ans = 0;
+    for (i = 0; i <= 1000000; i++) {
+        if (x[i] > 1) {
+            ans += (x[i] - 1) * 1ll * x[i] / 2;
+        }
+    }
+
+    cout << ans << "\n";
+}
+
+
+void ABC_463_E()
+{
+    // 如果要使用传送门, 那么只会使用一次
+    // 不妨把这对传送门抽象为一个虚拟节点p, i到p的距离为xi, p到所有其他节点为xj + y
+    int i;
+    int n, m;
+    int u, v;
+    long long t, y;
+    cin >> n >> m >> y;
+    vector<vector<pair<int, long long>>> edges(n + 2);
+    for (i = 0; i < m; i++) {
+        cin >> u >> v >> t;
+        edges[u].emplace_back(v, t);
+        edges[v].emplace_back(u, t);
+    }
+    vector<long long> x(n + 1);
+    for (i = 1; i <= n; i++) {
+        cin >> x[i];
+        edges[i].emplace_back(n + 1, x[i]);
+        edges[n + 1].emplace_back(i, y + x[i]);
+    }
+
+    long long inf = LLONG_MAX / 4;
+    vector<long long> dist(n + 2, inf);
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<>> pq;
+
+    dist[1] = 0;
+    pq.push({0, 1});
+    while (!pq.empty()) {
+        auto [d, cur] = pq.top();
+        pq.pop();
+        if (dist[cur] < d) {
+            continue;
+        }
+        for (auto& [next, val] : edges[cur]) {
+            if (d + val < dist[next]) {
+                dist[next] = val + d;
+                pq.push({dist[next], next});
+            }
+        }
+    }
+
+    for (i = 2; i <= n; i++) {
+        cout << dist[i] << " ";
+    }
+    cout << "\n";
+}
+void ABC_463_E_2() // 另一种思路, 考虑假如传送门后dist改变的节点, 再做一次dijkstra
+{
+    // 如果要使用传送门, 那么只会使用一次
+    int i;
+    int n, m;
+    int u, v;
+    long long t, y;
+    cin >> n >> m >> y;
+    vector<vector<pair<int, long long>>> edges(n + 1);
+    for (i = 0; i < m; i++) {
+        cin >> u >> v >> t;
+        edges[u].emplace_back(v, t);
+        edges[v].emplace_back(u, t);
+    }
+    vector<long long> x(n + 1);
+    for (i = 1; i <= n; i++) {
+        cin >> x[i];
+    }
+
+    long long inf = LLONG_MAX / 4;
+    vector<long long> dist(n + 1, inf);
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<>> pq;
+
+    dist[1] = 0;
+    pq.push({0, 1});
+    while (!pq.empty()) {
+        auto [d, cur] = pq.top();
+        pq.pop();
+        if (dist[cur] < d) {
+            continue;
+        }
+        for (auto& [next, val] : edges[cur]) {
+            if (d + val < dist[next]) {
+                dist[next] = val + d;
+                pq.push({dist[next], next});
+            }
+        }
+    }
+
+    long long minFrom = LLONG_MAX;
+    for (i = 1; i <= n; i++) {
+        minFrom = min(minFrom, dist[i] + x[i]);
+    }
+
+    for (i = 2; i <= n; i++) {
+        if (dist[i] > minFrom + y + x[i]) {
+            dist[i] = minFrom + y + x[i];
+            pq.push({dist[i], i});
+        }
+    }
+    while (!pq.empty()) {
+        auto [d, cur] = pq.top();
+        pq.pop();
+        if (dist[cur] < d) {
+            continue;
+        }
+        for (auto& [next, val] : edges[cur]) {
+            if (d + val < dist[next]) {
+                dist[next] = val + d;
+                pq.push({dist[next], next});
+            }
+        }
+    }
+    for (i = 2; i <= n; i++) {
+        cout << dist[i] << " ";
+    }
+    cout << "\n";
+}
