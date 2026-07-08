@@ -5165,7 +5165,9 @@ public:
         while (pq.size()) {
             auto [d, cur] = pq.top();
             pq.pop();
-
+            if (nodeDist[cur] < d) {
+                continue;
+            }
             for (auto& [next, w] : edges[cur]) {
                 if (nodeDist[next] > d + w) {
                     nodeDist[next] = d + w;
@@ -7360,6 +7362,74 @@ int maximumSafenessFactor(vector<vector<int>>& grid)
         }
     }
     return right < 0 ? 0 : right;
+}
+int maximumSafenessFactor_20260701(vector<vector<int>>& grid)
+{
+    int i, j;
+    int n = grid.size();
+    int inf = 0x3f3f3f3f;
+    vector<vector<int>> safe(n, vector<int>(n, inf));
+    queue<int> q;
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            if (grid[i][j] == 1) {
+                safe[i][j] = 0;
+                q.push({i * n + j});
+            }
+        }
+    }
+    vector<vector<int>> dir = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+    while (!q.empty()) {
+        int i;
+        auto pos = q.front();
+        q.pop();
+        auto x = pos / n;
+        auto y = pos % n; 
+        for (i = 0; i < 4; i++) {
+            auto nx = x + dir[i][0];
+            auto ny = y + dir[i][1];
+            if (nx < 0 || nx >= n || ny < 0 || ny >= n || safe[nx][ny] != inf) {
+                continue;
+            }
+            safe[nx][ny] = safe[x][y] + 1;
+            auto npos = nx * n + ny;
+            q.push(npos);
+        }
+    }
+    /* for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            printf ("%d ", safe[i][j]);
+        }
+        cout << "\n";
+    } */
+
+    int left, right, mid;
+    left = 0;
+    right = min(safe[0][0], safe[n - 1][n - 1]);
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        vector<vector<bool>> visited(n, vector<bool>(n, false));
+        auto dfs = [&](auto&& self, int x, int y, int limit) -> void {
+            visited[x][y] = true;
+            int k;
+            for (k = 0; k < 4; k++) {
+                auto nx = x + dir[k][0];
+                auto ny = y + dir[k][1];
+                if (nx < 0 || nx >= n || ny < 0 || ny >= n || visited[nx][ny] || 
+                    safe[nx][ny] < limit) {
+                    continue;
+                }
+                self(self, nx, ny, limit);
+            }
+        };
+        dfs(dfs, 0, 0, mid);
+        if (visited[n - 1][n - 1]) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    return right;
 }
 
 
@@ -25892,6 +25962,9 @@ int minMoves(vector<string>& matrix)
         pq.pop();
         auto r = pos / n;
         auto c = pos % n;
+        if (dist[r][c] < d) {
+            continue;
+        }
         if (r == m - 1 && c == n - 1) {
             break;
         }
@@ -33282,6 +33355,9 @@ int countRestrictedPaths(int n, vector<vector<int>>& edges)
     while (!pq.empty()) {
         auto [val, node] = pq.top();
         pq.pop();
+        if (dist[node] < val) {
+            continue;
+        }
         for (auto [next, w] : e[node]) {
             if (val + w < dist[next]) {
                 dist[next] = val + w;
@@ -33456,7 +33532,9 @@ int minimumTime(vector<vector<int>>& grid)
 
         auto x = pos / n;
         auto y = pos % n;
-
+        if (dist[x][y] < time) {
+            continue;
+        }
         for (i = 0; i < 4; i++) {
             auto nx = x + directions[i][0];
             auto ny = y + directions[i][1];
@@ -34261,4 +34339,310 @@ int maxTotalValue(vector<int>& value, vector<int>& decay, int m)
     }
     sum += (m - cnt) * left;
     return sum % mod;
+}
+
+
+// LC1697
+vector<bool> distanceLimitedPathsExist(int n, vector<vector<int>>& edgeList, vector<vector<int>>& queries)
+{
+    int i;
+    int m, size;
+
+    m = queries.size();
+    vector<vector<int>> vq(m);
+    for (i = 0; i < m; i++) {
+        vq[i].insert(vq[i].end(), queries[i].begin(), queries[i].end());
+        vq[i].emplace_back(i);
+    }
+
+    int idx;
+    UnionFind uf(n + 1);
+    vector<bool> ans(m, false);
+
+    // 边长和限制都从小到大排
+    sort(edgeList.begin(), edgeList.end(), [](const vector<int>& a, const vector<int>& b) {
+        return a[2] < b[2];
+    });
+    sort(vq.begin(), vq.end(), [](const vector<int>& a, const vector<int>& b) {
+        return a[2] < b[2];
+    });
+
+    idx = 0;
+    size = edgeList.size();
+    for (auto& q : vq) {
+        for (i = idx; i < size; i++) {
+            if (q[2] > edgeList[i][2]) {
+                uf.unionSets(edgeList[i][0], edgeList[i][1]);
+            } else {
+                idx = i;
+                break;
+            }
+        }
+        ans[q[3]] = (uf.findSet(q[0]) == uf.findSet(q[1]));
+        if (i == size) {
+            idx = size;
+        }
+    }
+
+    return ans;
+}
+
+
+// LC1955
+int countSpecialSubsequences(vector<int>& nums)
+{
+    int i;
+    int n = nums.size();
+    int mod = 1e9 + 7;
+    int cnt0;
+    // dp01[i] - 前i个数字的01子序列数量
+    vector<long long> dp01(n, 0);
+    // dp[i] - 前i个数字的012子序列数量
+    vector<long long> dp(n, 0);
+
+    cnt0 = 0;
+    for (i = 0; i < n; i++) {
+        if (i > 0) {
+            dp01[i] = dp01[i - 1];
+            dp[i] = dp[i - 1];
+        }
+        if (nums[i] == 0) {
+            cnt0++;
+        } else if (nums[i] == 1) {
+            // 两处乘以2都表示 当前不选 + 选择当前再简单放在已形成的子序列后面
+            dp01[i] = (dp01[i] * 2 + FastPow(2, cnt0, mod) - 1) % mod;
+        } else {
+            dp[i] = (dp[i] * 2 + dp01[i]) % mod;
+        }
+    }
+    return dp[n - 1];
+}
+
+
+// LC2334
+int validSubarraySize(vector<int>& nums, int threshold)
+{
+    int i, k;
+    int n = nums.size();
+    int ans;
+    int maxVal = *max_element(nums.begin(), nums.end());
+
+    if (threshold / n > maxVal) {
+        return -1;
+    }
+    if (maxVal > threshold) {
+        return 1;
+    }
+
+    // left[i] - nums[i]左边第一个小于nums[i] 的位置
+    // right[i] - nums[i]右边第一个小于nums[i] 的位置
+    vector<int> left(n), right(n);
+    stack<int> st;
+
+    for (i = 0; i < n; i++) {
+        if (st.empty()) {
+            st.push(i);
+            continue;
+        }
+        if (nums[st.top()] > nums[i]) {
+            while (!st.empty() && nums[st.top()] > nums[i]) {
+                right[st.top()] = i;
+                st.pop();
+            }
+        }
+        st.push(i);
+    }
+    while (!st.empty()) {
+        right[st.top()] = n;
+        st.pop();
+    }
+
+    for (i = n - 1; i >= 0; i--) {
+        if (st.empty()) {
+            st.push(i);
+            continue;
+        }
+        if (nums[st.top()] > nums[i]) {
+            while (!st.empty() && nums[st.top()] > nums[i]) {
+                left[st.top()] = i;
+                st.pop();
+            }
+        }
+        st.push(i);
+    }
+    while (!st.empty()) {
+        left[st.top()] = -1;
+        st.pop();
+    }
+
+    // for (auto r : right) cout << r << " "; cout << "\n";
+    // for (auto l : left) cout << l << " "; cout << "\n";
+
+    ans = -1;
+    for (i = 0; i < n; i++) {
+        k = right[i] - left[i] - 1;
+        if (threshold / k < nums[i]) {
+            ans = k;
+            break;
+        }
+    }
+    return ans;
+}
+
+
+// 求区间[l, r] 异或和
+long long IntervalXOR(long long l, long long r)
+{
+    // xor[l ... r] = xor[0 ... r] ^ xor[0 ... l - 1]
+    // xor总是连续4个数循环
+    auto calc = [](long long n) -> long long {
+        if (n % 4 == 0) {
+            return n;
+        } else if (n % 4 == 1) {
+            return 1ll;
+        } else if (n % 4 == 2) {
+            return n + 1;
+        } else {
+            return 0ll;
+        }
+    };
+
+    if (l == 0) {
+        return calc(r);
+    }
+    return calc(r) ^ calc(l - 1);
+}
+
+
+// LC2025
+int waysToPartition(vector<int>& nums, int k)
+{
+    int i;
+    int n = nums.size();
+    unordered_map<long long, vector<int>> offsets; // k - nums[i];
+    vector<long long> prefix(n);
+
+    prefix[0] = nums[0];
+    offsets[k - nums[0]].emplace_back(0);
+    for (i = 1; i < n; i++) {
+        prefix[i] = prefix[i - 1] + nums[i];
+        offsets[k - nums[i]].emplace_back(i);
+    }
+
+    int ans = 0;
+    long long suf;
+    for (i = 0; i < n - 1; i++) {
+        suf = prefix[n - 1] - prefix[i];
+        if (prefix[i] == suf) {
+            ans++;
+            continue;
+        }
+        long long diff = suf - prefix[i];
+        if (offsets.count(diff) && offsets[diff][0] <= i) {
+            ans++;
+            continue;
+        }
+
+        diff = prefix[i] - suf;
+        if (offsets.count(diff) && offsets[diff].back() >= i) {
+            ans++;
+        }
+    }
+    return ans;
+}
+
+
+// LC2492
+int minScore(int n, vector<vector<int>>& roads)
+{
+    int inf = 0x3f3f3f3f;
+    vector<vector<pair<int, int>>> edges(n + 1);
+
+    for (auto& r : roads) {
+        edges[r[0]].push_back({r[1], r[2]});
+        edges[r[1]].push_back({r[0], r[2]});
+    }
+
+    vector<int> dist(n + 1, inf);
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
+
+    pq.push({inf, 1});
+    dist[1] = inf;
+    while (!pq.empty()) {
+        auto [d, cur] = pq.top();
+        pq.pop();
+        if (dist[cur] < d) {
+            continue;
+        }
+        for (auto& [next, val] : edges[cur]) {
+            auto v = min(d, val);
+            if (dist[next] > v) {
+                dist[next] = v;
+                pq.push({v, next});
+            }
+        }
+    }
+    return dist[n];
+}
+
+
+// LC3984
+int divisibleGame(vector<int>& nums)
+{
+    int i, j, p;
+    int k;
+    int n = nums.size();
+    int mod = 1e9 + 7;
+    long long maxSum = LLONG_MIN;
+    vector<vector<long long>> sum(n, vector<long long>(n, 0));
+    map<int, vector<int>> factorIdx;
+    for (i = 0; i < n; i++) {
+        auto t = nums[i];
+        k = sqrt(t);
+        for (p = 2; p <= k; p++) {
+            if (t < p) {
+                break;
+            }
+            if (t % p == 0) {
+                factorIdx[p].emplace_back(i);
+                while (t % p == 0) {
+                    t /= p;
+                }
+            }
+        }
+        if (t != 1) {
+            factorIdx[t].emplace_back(i);
+        }
+        sum[i][i] = nums[i];
+        for (j = i + 1; j < n; j++) {
+            sum[i][j] = sum[i][j - 1] + nums[j];
+        }
+    }
+
+    long long alice, bob;
+    long long val;
+    for (auto& [factor, v] : factorIdx) {
+        int len = v.size();
+        for (i = 0; i < len; i++) {
+            alice = 0;
+            for (j = i; j < len; j++) {
+                alice += nums[v[j]];
+                bob = sum[v[i]][v[j]] - alice;
+                if (alice - bob > maxSum) {
+                    maxSum = alice - bob;
+                    val = factor;
+                }
+                maxSum = max(maxSum, alice - bob);
+            }
+        }
+    }
+    if (maxSum == LLONG_MIN) { // 只有1
+        return -2 % mod + mod;
+    }
+
+    maxSum *= val;
+    if (maxSum < 0) {
+        return maxSum % mod + mod;
+    }
+    return maxSum % mod;
 }
