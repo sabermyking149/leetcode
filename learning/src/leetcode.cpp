@@ -34646,3 +34646,105 @@ int divisibleGame(vector<int>& nums)
     }
     return maxSum % mod;
 }
+
+
+// 面试题 17.24. 最大子矩阵
+vector<int> getMaxMatrix(vector<vector<int>>& matrix)
+{
+    int i, j, k;
+    int n = matrix.size();
+    int m = matrix[0].size();
+
+    // 按列枚举每一个子数组和, 这些子数组和可以再看成求最大子数组和
+    vector<long long> colSum, dp(m);
+    vector<int> ans, cur;
+    long long maxVal = LLONG_MIN;
+    for (i = 0; i < n; i++) {
+        colSum.assign(m, 0);
+        for (k = i; k < n; k++) {
+            for (j = 0; j < m; j++) {
+                colSum[j] += matrix[k][j];
+            }
+
+            // colSum的最大子数组和
+            cur = {i, 0, k, 0};
+            dp[0] = colSum[0];
+            if (dp[0] > maxVal) {
+                maxVal = dp[0];
+                ans = cur;
+            }
+            for (j = 1; j < m; j++) {
+                if (dp[j - 1] > 0) {
+                    dp[j] = dp[j - 1] + colSum[j];
+                    cur[3] = j;
+                    if (dp[j] > maxVal) {
+                        maxVal = dp[j];
+                        ans = cur;
+                    }
+                } else {
+                    dp[j] = colSum[j];
+                    cur = {i, j, k, j};
+                    if (dp[j] > maxVal) {
+                        maxVal = dp[j];
+                        ans = cur;
+                    }
+                }
+            }
+        }
+    }
+    // cout << maxVal << '\n';
+    return ans;
+}
+
+
+// LC3988
+vector<string> createGrid(int m, int n, int k)
+{
+    int i;
+    vector<string> ans(m, string(n, '.'));
+
+    // 特例特判
+    if (m == 3 && n == 3 && k == 4) {
+        ans[0][2] = '#';
+        ans[2][0] = '#';
+        return ans;
+    }
+    if (n >= k) {
+        if (m == 1) {
+            if (k == 1) {
+                return ans;
+            } else {
+                return {};
+            }
+        }
+        if (k != n) {
+            ans[0][k] = '#';
+        }
+        if (m == 2) {
+            return ans;
+        }
+        for (i = 0; i < n - 1; i++) {
+            ans[2][i] = '#';
+        }
+    } else if (m >= k) {
+        if (n == 1) {
+            if (k == 1) {
+                return ans;
+            } else {
+                return {};
+            }
+        }
+        if (k != m) {
+            ans[k][0] = '#';
+        }
+        if (n == 2) {
+            return ans;
+        }
+        for (i = 0; i < m - 1; i++) {
+            ans[i][2] = '#';
+        }
+    } else {
+        return {};
+    }
+    return ans;
+}

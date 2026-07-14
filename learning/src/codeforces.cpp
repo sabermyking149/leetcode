@@ -1502,3 +1502,56 @@ void CR_1099_C()
     }
     cout << ans << "\n";
 }
+
+
+void CR_1108_C()
+{
+    // n个数的选择组合是 2^n, 选择奇数个和偶数个的方案都为2^(n - 1) (包括空集)
+    int i;
+    int n;
+
+    cin >> n;
+
+    vector<int> a(n);
+    for (i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    int mod = 1e9 + 7;
+    int cnt;
+    vector<pair<int, long long>> vp;
+
+    cnt = 1;
+    for (i = 1; i < n; i++) {
+        if (a[i] == a[i - 1]) {
+            cnt++;
+        } else {
+            vp.push_back({a[i - 1], cnt});
+            cnt = 1;
+        }
+    }
+    vp.push_back({a[n - 1], cnt});
+    // 选偶数个相同数字
+    long long cur = 1;
+    for (auto [_, freq] : vp) {
+        cur = cur * FastPow(2, freq - 1, mod) % mod;
+    }
+
+    long long ans = 0;
+    ans = (ans + cur) % mod; 
+    // 没有 -1 或 只有 -1
+    if (vp[0].first != -1 || (vp.size() == 1 && vp[0].first == -1)) {
+        cout << ans << "\n";
+        return;
+    }
+
+    int len = vp.size();
+    // 包含-1的奇数个不同数字
+    // -1 3 4, -1 2 2 2 2 3 4
+    for (i = 1; i < len; i++) {
+        if (vp[i - 1].first + 1 == vp[i].first) {
+            ans = (ans + cur) % mod;
+        }
+    }
+    cout << ans << "\n";
+}

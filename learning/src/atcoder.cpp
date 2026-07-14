@@ -3729,3 +3729,90 @@ void ABC_463_E_2() // 另一种思路, 考虑假如传送门后dist改变的节�
     }
     cout << "\n";
 }
+
+
+// 交互题
+string query_ABC_466_C(int l, int r)
+{
+    cout << "? " << l << " " << r << "\n";
+    cout.flush();
+    string res;
+    cin >> res;
+    return res;
+}
+void ABC_466_C()
+{
+    int i;
+    int n;
+    long long ans = 0;
+    int left, right;
+
+    cin >> n;
+
+    left = 1;
+    right = 2;
+    while (left <= n) {
+        if (query_ABC_466_C(left, right) == "Yes") {
+            right++;
+            if (right > n) {
+                break;
+            }
+        } else {
+            ans += right - 1 - left;
+            left++;
+            if (right == left) {
+                right++;
+                if (right > n) {
+                    break;
+                }
+            }
+        }
+    }
+    long long len = right - 1 - left;
+    ans += (len + 1) * len / 2;
+    cout << "! " << ans << "\n";
+    cout.flush();
+}
+
+
+void ABC_466_E()
+{
+    int i, j;
+    int n, k;
+    long long ans = 0;
+    cin >> n >> k;
+    vector<long long> a(n + 1), b(n + 1);
+    for (i = 1; i <= n; i++) {
+        cin >> a[i] >> b[i];
+    }
+
+    if (k >= n) {
+        for (i = 1; i <= n; i++) {
+            ans += max(a[i], b[i]);
+        }
+        cout << ans << "\n";
+        return;
+    }
+
+    long long inf = -1e18;
+    // dp[i][k][0 ~ 1] - 前i个数, 已翻转了k个, 当前是否在翻转的子数组中
+    vector<vector<vector<long long>>> dp(n + 1, vector<vector<long long>>(k + 1, 
+        vector<long long>(2, inf)));
+
+    dp[0][0][0] = 0;
+    for (i = 1; i <= n; i++) {
+        for (j = 0; j <= k; j++) {
+            dp[i][j][0] = max(dp[i - 1][j][0], dp[i - 1][j][1]) + a[i]; // 不翻转
+            if (j + 1 <= k) {
+                dp[i][j + 1][1] = max(dp[i - 1][j][1], dp[i - 1][j][0]) + b[i]; // 翻转, 创建新组
+            }
+            if (dp[i - 1][j][1] != inf) {
+               dp[i][j][1] = max(dp[i][j][1], dp[i - 1][j][1] + b[i]); // 翻转, 不建新组
+            }
+        }
+    }
+    for (i = 0; i <= k; i++) {
+        ans = max({ans, dp[n][i][0], dp[n][i][1]});
+    }
+    cout << ans << "\n";
+}
