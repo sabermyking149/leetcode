@@ -34748,3 +34748,125 @@ vector<string> createGrid(int m, int n, int k)
     }
     return ans;
 }
+
+
+// LC3994
+int minAdjacentSwaps(vector<int>& nums, int a, int b)
+{
+    int i;
+    int n = nums.size();
+    int mod = 1e9 + 7;
+    for (i = 0; i < n; i++) {
+        if (nums[i] < a) {
+            nums[i] = 0;
+        } else if (nums[i] <= b) {
+            nums[i] = 1;
+        } else {
+            nums[i] = 2;
+        }
+    }
+
+    // 最终就是要变成形如 [0, 0, 0, 1, 1, 2, 2] 的递增序列
+    long long ans = 0;
+    int cnt12 = 0;
+    for (i = 0; i < n; i++) {
+        if (nums[i] != 0) {
+            cnt12++;
+        } else {
+            ans += cnt12;
+        }
+    }
+
+    // 2换到后面, 这个时候就只统计'1'的数量
+    int cnt1 = 0;
+    for (i = n - 1; i >= 0; i--) {
+        if (nums[i] == 1) {
+            cnt1++;
+        } else if (nums[i] == 2) {
+            ans += cnt1;
+        }
+    }
+    return ans % mod;
+}
+
+
+// LC3998
+vector<bool> transformStr(string s, vector<string>& strs)
+{
+    int i, k;
+    int n = s.size();
+    vector<int> cnt(2, 0);
+    vector<vector<int>> idxP(2);
+    for (i = 0; i < n; i++) {
+        cnt[s[i] - '0']++;
+        idxP[s[i] - '0'].emplace_back(i);
+    }
+
+    int m = strs.size();
+    int cnt0, cnt1;
+    vector<bool> ans(m);
+    for (k = 0; k < m; k++) {
+        cnt0 = cnt1 = 0;
+        vector<vector<int>> idxQ(2);
+        for (i = 0; i < n; i++) {
+            if (strs[k][i] == '0') {
+                cnt0++;
+            } else if (strs[k][i] == '1') {
+                cnt1++;
+            }
+        }
+        if (cnt0 > cnt[0] || cnt1 > cnt[1]) {
+            ans[k] = false;
+            continue;
+        }
+
+        // 需要将'?'置换成'1'的个数
+        int num = cnt[1] - cnt1;
+
+        // 贪心构造strs[k][i] - 1尽量放后面, 0尽量放前面
+        i = n - 1;
+        // cout << num << "\n";
+        while (num && i >= 0) {
+            if (strs[k][i] == '?') {
+                strs[k][i] = '1';
+                num--;
+            }
+            i--;
+        }
+        for (i = 0; i < n; i++) {
+            if (strs[k][i] == '?') {
+                strs[k][i] = '0';
+            }
+            idxQ[strs[k][i] - '0'].emplace_back(i);
+        }
+        // cout << s << " " << strs[k][i] << "\n";
+
+        // 1010 -> 0101
+        // 如果字符串 s -> t 则 除了0和1的个数相等外, s对应的0的下标 >= t对应的0的下标
+        // s对应的1的下标 <= t对应的0的下标
+        auto check = [](vector<int>& a, vector<int>& b, int type) -> bool {
+            int i;
+            int n = a.size();
+            for (i = 0; i < n; i++) {
+                if (type == 1) {
+                    if (a[i] < b[i]) {
+                        return false;
+                    }
+                } else {
+                    if (a[i] > b[i]) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        };
+
+        if (check(idxP[0], idxQ[0], 1)) {
+            ans[k] = true;
+        } else {
+            ans[k] = false;
+        }
+    }
+
+    return ans;
+}

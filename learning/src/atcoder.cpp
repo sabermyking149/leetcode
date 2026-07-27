@@ -3816,3 +3816,75 @@ void ABC_466_E()
     }
     cout << ans << "\n";
 }
+
+
+void AWC_116_D()
+{
+    int i;
+    int n, m;
+    long long maxW, maxP;
+    cin >> n >> m;
+
+    vector<pair<long long, long long>> vp(n);
+
+    maxW = 0;
+    for (i = 0; i < n; i++) {
+        cin >> vp[i].first >> vp[i].second;
+        maxW = max(maxW, vp[i].first);
+    }
+    vector<long long> p(m);
+    maxP = 0;
+    for (i = 0; i < m; i++) {
+        cin >> p[i];
+        maxP = max(maxP, p[i]);
+    }
+
+    if (maxP > maxW) {
+        cout << "-1\n";
+        return;
+    }
+
+    sort(vp.begin(), vp.end());
+    sort(p.begin(), p.end());
+
+    int idx;
+    long long left, right, mid;
+    long long curT;
+
+    left = 1;
+    right = 1e18;
+    while (left <= right) {
+        mid = (right - left) / 2 + left;
+        // cout << left << " " << right << " " << mid << "\n";
+        curT = 0;
+        idx = 0;
+        for (i = 0; i < m; i++) {
+            if (p[i] <= vp[idx].first) {
+                if (curT + vp[idx].second <= mid) {
+                    curT += vp[idx].second;
+                    // cout << curT << "\n";
+                } else {
+                    idx++;
+                    if (idx == n) {
+                        break;
+                    }
+                    curT = 0;
+                    i--;
+                }
+            } else {
+                idx++;
+                if (idx == n) {
+                    break;
+                }
+                curT = 0;
+                i--;
+            }
+        }
+        if (i == m) {
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    cout << left << "\n";
+}

@@ -219,21 +219,22 @@ public:
         lazy.resize(max_size);
         build(nums, 0, 0, n - 1);
     }
-    // 查询区间和
+    // 查询区间和/最大值
     int query(int l, int r) {
         return query(0, 0, n - 1, l, r);
     }
 
-    // 更新某个位置的值
-    void update(int index, int val) {
-        update(0, 0, n - 1, index, val);
+    // 下标加法
+    void add(int index, int val) {
+        range_add(index, index, val);
     }
 
-    // 区间更新
-    void range_update(int l, int r, int val) {
-        range_update(0, 0, n - 1, l, r, val);
+    // 区间加法
+    void range_add(int l, int r, int val) {
+        range_add(0, 0, n - 1, l, r, val);
     }
 
+    // 下面的函数需要基于最大值线段树
     // 查询第一个大于等于x的位置
     int find(int l, int r, int x) {
         return find(0, 0, n - 1, l, r, x);
@@ -248,27 +249,16 @@ private:
         if (r < start || end < l) return 0;  // 区间不重叠
         if (l <= start && end <= r) return tree[node];  // 完全包含
 
+        push_down(node, start, end);
         int mid = (start + end) / 2;
         int left_sum = query(node * 2 + 1, start, mid, l, r);
         int right_sum = query(node * 2 + 2, mid + 1, end, l, r);
         return left_sum + right_sum;
+        // 如果是最大值线段树, query则是求区间最大值
+        // return max(left_sum, right_sum);
     }
 
-    void update(int node, int start, int end, int index, int val) {
-        if (start == end) {
-            tree[node] = val;
-        } else {
-            int mid = (start + end) / 2;
-            if (index <= mid) {
-                update(node * 2 + 1, start, mid, index, val);
-            } else {
-                update(node * 2 + 2, mid + 1, end, index, val);
-            }
-            tree[node] = tree[node * 2 + 1] + tree[node * 2 + 2];  // 更新父节点
-        }
-    }
-
-    void range_update(int node, int start, int end, int l, int r, int val) {
+    void range_add(int node, int start, int end, int l, int r, int val) {
         if (r < start || end < l) return;  // 区间不重叠
         if (l <= start && end <= r) {
             tree[node] += val * (end - start + 1);
@@ -277,8 +267,8 @@ private:
         }
         push_down(node, start, end);
         int mid = (start + end) / 2;
-        range_update(node * 2 + 1, start, mid, l, r, val);
-        range_update(node * 2 + 2, mid + 1, end, l, r, val);
+        range_add(node * 2 + 1, start, mid, l, r, val);
+        range_add(node * 2 + 2, mid + 1, end, l, r, val);
         tree[node] = tree[node * 2 + 1] + tree[node * 2 + 2];
     }
 
@@ -288,6 +278,7 @@ private:
 
         if (start == end) return start;            // 找到叶子节点
 
+        push_down(node, start, end);
         int mid = (start + end) / 2;
         // 先查左子树（保证最左边的解）
         int left_pos = find(node * 2 + 1, start, mid, L, R, x);
@@ -306,7 +297,7 @@ private:
             // 叶子节点，判断是否满足条件
             return (tree[node] >= x) ? 1 : 0;
         }
-        
+        push_down(node, start, end);
         int mid = (start + end) / 2;
         return countGreaterEqual(node * 2 + 1, start, mid, L, R, x) + 
             countGreaterEqual(node * 2 + 2, mid + 1, end, L, R, x);
@@ -320,7 +311,7 @@ private:
         if (start == end) {
             return (tree[node] > x) ? 1 : 0;
         }
-        
+        push_down(node, start, end);
         int mid = (start + end) / 2;
         return countGreater(node * 2 + 1, start, mid, L, R, x) + 
             countGreater(node * 2 + 2, mid + 1, end, L, R, x);
