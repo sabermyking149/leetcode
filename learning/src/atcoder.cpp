@@ -3888,3 +3888,235 @@ void AWC_116_D()
     }
     cout << left << "\n";
 }
+
+
+void AWC_120_E()
+{
+    int i, j, k;
+    int n, q;
+    string p;
+
+    cin >> n >> q >> p;
+
+    vector<string> s(n + 1);
+    for (i = 1; i <= n; i++) {
+        cin >> s[i];
+    }
+
+    // 考虑到字符串字符只有H、M、L, 为避免哈希冲突, 采用双哈希
+    long long base1 = 131;
+    long long base2 = 13331;
+    int mod1 = 1e9 + 7;
+    int mod2 = 1e9 + 9;
+
+    // P的正序字符串哈希和逆序字符串哈希
+    int len = p.size();
+    vector<vector<long long>> hashCode(len, vector<long long>(2, 0)), hashCode_r(len, vector<long long>(2, 0));
+
+    hashCode[0][0] = p[0] - 'A' + 1;
+    hashCode[0][1] = p[0] - 'A' + 1;
+    for (i = 1; i < len; i++) {
+        hashCode[i][0] = (hashCode[i - 1][0] * base1 + p[i] - 'A' + 1) % mod1;
+        hashCode[i][1] = (hashCode[i - 1][1] * base2 + p[i] - 'A' + 1) % mod2;
+    }
+    hashCode_r[len - 1][0] = p[len - 1] - 'A' + 1;
+    hashCode_r[len - 1][1] = p[len - 1] - 'A' + 1;
+    for (i = len - 2; i >= 0; i--) {
+        hashCode_r[i][0] = (hashCode_r[i + 1][0] * base1 + p[i] - 'A' + 1) % mod1;
+        hashCode_r[i][1] = (hashCode_r[i + 1][1] * base2 + p[i] - 'A' + 1) % mod2;
+    }
+
+    // 同时预处理s[i]的所有长度为len的子字符串的字符串哈希
+    long long cur1, cur2;
+    vector<map<pair<long long, long long>, int>> sHashCode(n + 1);
+    for (i = 1; i <= n; i++) {
+        if (s[i].size() < len) {
+            continue;
+        }
+        cur1 = cur2 = 0;
+        for (j = 0; j < len; j++) {
+            cur1 = (cur1 * base1 + (s[i][j] - 'A' + 1)) % mod1;
+            cur2 = (cur2 * base2 + (s[i][j] - 'A' + 1)) % mod2;
+        }
+
+        sHashCode[i][{cur1, cur2}]++;
+
+        int size = s[i].size();
+        for (j = len; j < size; j++) {
+            cur1 = ((cur1 + mod1 - (s[i][j - len] - 'A' + 1) * FastPow(base1, len - 1, mod1) % mod1) * base1 % mod1 +
+                (s[i][j] - 'A' + 1)) % mod1;
+
+            cur2 = ((cur2 + mod2 - (s[i][j - len] - 'A' + 1) * FastPow(base2, len - 1, mod2) % mod2) * base2 % mod2 +
+                (s[i][j] - 'A' + 1)) % mod2;
+
+            sHashCode[i][{cur1, cur2}]++;
+        }
+    }
+
+    int idx, l, r;
+    long long p1, p2;
+    for (k = 0; k < q; k++) {
+        cin >> idx >> l >> r;
+
+        // 对于区间[l - 1, r - 1] 取反, 用hashCode_r 和hashCode 拼接
+        l--;
+        r--;
+
+        if (l == 0) {
+            if (r == len - 1) {
+                p1 = hashCode_r[0][0];
+                p2 = hashCode_r[0][1];
+            } else {
+                p1 = ((hashCode_r[0][0] + mod1 - hashCode_r[r + 1][0] * FastPow(base1, r + 1, mod1) % mod1) * FastPow(base1, len - r - 1, mod1) % mod1 + 
+                    hashCode[len - 1][0] + mod1 - hashCode[r][0] * FastPow(base1, len - r - 1, mod1) % mod1) % mod1;
+                p2 = ((hashCode_r[0][1] + mod2 - hashCode_r[r + 1][1] * FastPow(base2, r + 1, mod2) % mod2) * FastPow(base2, len - r - 1, mod2) % mod2 + 
+                    hashCode[len - 1][1] + mod2 - hashCode[r][1] * FastPow(base2, len - r - 1, mod2) % mod2) % mod2;
+            }
+        } else {
+            if (r == len - 1) {
+                p1 = (hashCode[l - 1][0] * FastPow(base1, len - l, mod1) + hashCode_r[l][0]) % mod1;
+                p2 = (hashCode[l - 1][1] * FastPow(base2, len - l, mod2) + hashCode_r[l][1]) % mod2;
+            } else {
+                p1 = (hashCode[l - 1][0] * FastPow(base1, len - l, mod1) + 
+                    ((hashCode_r[l][0] + mod1 - hashCode_r[r + 1][0] * FastPow(base1, r - l + 1, mod1)) % mod1) * FastPow(base1, len - r - 1, mod1) % mod1 + 
+                        hashCode[len - 1][0] + mod1 - hashCode[r][0] * FastPow(base1, len - r - 1, mod1) % mod1) % mod1;
+                p2 = (hashCode[l - 1][1] * FastPow(base2, len - l, mod2) + 
+                    ((hashCode_r[l][1] + mod2 - hashCode_r[r + 1][1] * FastPow(base2, r - l + 1, mod2)) % mod2) * FastPow(base2, len - r - 1, mod2) % mod2 + 
+                        hashCode[len - 1][1] + mod2 - hashCode[r][1] * FastPow(base2, len - r - 1, mod2) % mod2) % mod2;
+            }
+        }
+
+        if (sHashCode[idx].count({p1, p2})) {
+            cout << sHashCode[idx][{p1, p2}] << "\n";
+        } else {
+            cout << "0\n";
+        }
+    }
+}
+
+
+void AWC_123_E()
+{
+    int i, j, z;
+    int n, m, k;
+    int u, v, w;
+    int num, no;
+    long long t;
+    cin >> n >> m >> k >> t;
+
+    vector<vector<pair<int, long long>>> edges(n + 1);
+    for (i = 0; i < m; i++) {
+        cin >> u >> v >> w;
+        edges[u].push_back({v, w});
+    }
+    vector<vector<int>> missions(k + 1);
+    vector<long long> p(k + 1);
+    // 所有missions里的城市集合, 加上出发城市1 不超过15
+    set<int> s;
+    s.emplace(1);
+    for (i = 1; i <= k; i++) {
+        cin >> num;
+        for (j = 0; j < num; j++) {
+            cin >> no;
+            s.emplace(no);
+            missions[i].emplace_back(no);
+        }
+        cin >> p[i];
+    }
+
+    // 对每个"重要城市"的mask位置进行关系对应
+    int len = s.size();
+    unordered_map<int, int> cityidx; // 城市编号对应下标
+    vector<int> idx(len); // 下标对应的城市编号
+    i = 0;
+    for (auto it : s) {
+        cityidx[it] = i;
+        idx[i] = it;
+        i++;
+    }
+
+    long long inf = 1e15;
+    vector<vector<long long>> dist(len, vector<long long>(len, inf));
+
+    for (i = 0; i < len; i++) {
+        // 从每个城市出发计算最短距离
+        int cur = idx[i];
+        priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<>> pq;
+        vector<long long> d(n + 1, inf);
+
+        pq.push({0, cur});
+        d[cur] = 0;
+        while (!pq.empty()) {
+            auto [val, cur] = pq.top();
+            pq.pop();
+            if (d[cur] < val) {
+                continue;
+            }
+            for (auto& [next, v] : edges[cur]) {
+                if (val + v < d[next]) {
+                    d[next] = val + v;
+                    pq.push({val + v, next});
+                }
+            }
+        }
+        for (j = 1; j <= n; j++) {
+            if (cityidx.count(j)) {
+                dist[i][cityidx[j]] = d[j];
+            }
+        }
+    }
+
+    /* for (i = 0; i < len; i++) {
+        for (j = 0; j < len; j++) {
+            cout << idx[i] << " -> " << idx[j] << " : " << dist[i][j] << "\n";
+        }
+    } */
+
+    // dp[mask][i] - 形成mask且停留在城市idx[i]的最少花费时间
+    vector<vector<long long>> dp(1 << len, vector<long long>(len, inf));
+
+    // 城市1对应下标0, mask = 1
+    dp[1][0] = 0;
+    for (i = 1; i < (1 << len); i++) {
+        for (j = 0; j < len; j++) {
+            if (dp[i][j] >= inf || ((i & 1 << j) == 0)) {
+                continue;
+            }
+            for (z = 0; z < len; z++) {
+                if ((i & 1 << z) == 1 << z) { // 重复访问
+                    continue;
+                }
+                auto n_mask = (i | 1 << z);
+                dp[n_mask][z] = min(dp[n_mask][z], dp[i][j] + dist[j][z]);
+            }
+        }
+    }
+
+    // 枚举mask和missions
+    vector<int> missionsMask(k + 1);
+    for (z = 1; z <= k; z++) {
+        auto mask = 0;
+        for (auto s : missions[z]) {
+            mask |= 1 << cityidx[s];
+        }
+        missionsMask[z] = mask;
+    }
+
+    long long ans = 0;
+    long long sum;
+    for (i = 1; i < (1 << len); i++) {
+        for (j = 0; j < len; j++) {
+            if (dp[i][j] > t) {
+                continue;
+            }
+            sum = 0;
+            for (z = 1; z <= k; z++) {
+                if ((i & missionsMask[z]) == missionsMask[z]) {
+                    sum += p[z];
+                }
+            }
+            ans = max(ans, sum);
+        }
+    }
+    cout << ans << "\n";
+}

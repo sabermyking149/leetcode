@@ -85,6 +85,53 @@ bool IsPrime(int n)
     }
     return true;
 }
+// Miller-Rabin 判断大质数
+bool IsPrime(long long n) {
+    // 小质数快速检查
+    long long small_primes[] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29};
+    for (long long p : small_primes) {
+        if (n % p == 0) {
+            if (n == p) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    // 将 n-1 分解为 d * 2^s
+    long long d = n - 1;
+    int s = 0;
+    while (d % 2 == 0) {
+        d /= 2;
+        s++;
+    }
+
+    // 确定性测试的底集
+    long long bases[] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37};
+
+    for (long long a : bases) {
+        if (a >= n) {
+            break;
+        }
+        long long x = FastPow((__int128)a, (__int128)d, n); // 快速幂 a^d % n
+        if (x == 1 || x == n - 1) {
+            continue;
+        }
+        bool composite = true;
+        for (int i = 0; i < s - 1; i++) {
+            x = (__int128)x * x % n;
+            if (x == n - 1) {
+                composite = false;
+                break;
+            }
+        }
+        if (composite) {
+            return false;
+        }
+    }
+    return true;
+}
 
 
 // 仅针对小数据的数组全排列(非去重)
@@ -1793,6 +1840,19 @@ long long FastPow(long long a, long long b, int mod)
 {
     long long ans = 1;
     long long base = a;
+    while (b != 0) {
+        if ((b & 1) != 0) {
+            ans = (ans * base) % mod;
+        }
+        base = (base * base) % mod;
+        b >>= 1;
+    }
+    return ans;
+}
+long long FastPow(__int128 a, __int128 b, long long mod) // 针对于 Miller-Rabin判断大质数
+{
+    __int128 ans = 1;
+    __int128 base = a;
     while (b != 0) {
         if ((b & 1) != 0) {
             ans = (ans * base) % mod;
