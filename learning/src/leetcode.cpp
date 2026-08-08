@@ -19713,6 +19713,56 @@ vector<int> remainingMethods(int n, int k, vector<vector<int>>& invocations)
 
     return ans;
 }
+vector<int> _remainingMethods(int n, int k, vector<vector<int>>& invocations)
+{
+    // 类似拓扑排序的方式
+    int i;
+    vector<vector<int>> edges(n);
+    vector<int> degree(n, 0);
+    for (auto& in : invocations) {
+        edges[in[0]].emplace_back(in[1]);
+        degree[in[1]]++;
+    }
+
+    long long ed;
+    vector<int> ans;
+    unordered_set<long long> e; // 已访问过的边
+    queue<int> q;
+    unordered_set<int> us;
+
+    q.push(k);
+    us.emplace(k);
+    while (!q.empty()) {
+        auto cur = q.front();
+        q.pop();
+        for (auto next : edges[cur]) {
+            ed = (cur * 1ll) << 24 | next;
+            if (degree[next] == 0 || e.find(ed) != e.end()) {
+                continue;
+            }
+            us.emplace(next);
+            e.emplace(ed);
+            degree[next]--;
+            q.push(next);
+        }
+    }
+    // for (auto d : degree) cout << d << " "; cout << "\n";
+    for (auto val : us) {
+        // 完全排除某一块可疑方法, 其连通块的入度都应该为0
+        if (degree[val] != 0) {
+            for (i = 0; i < n; i++) {
+                ans.emplace_back(i);
+            }
+            return ans;
+        }
+    }
+    for (i = 0; i < n; i++) {
+        if (us.find(i) == us.end()) {
+            ans.emplace_back(i);
+        }
+    }
+    return ans;
+}
 
 
 // LC416
@@ -34926,6 +34976,45 @@ vector<bool> transformStr(string s, vector<string>& strs)
         } else {
             ans[k] = false;
         }
+    }
+
+    return ans;
+}
+
+
+// LC4007
+int maximumWidth(vector<int>& planks)
+{
+    int i, j;
+    int n = planks.size();
+    int sum;
+    int ans = 0;
+    unordered_map<int, int> size;
+    unordered_map<int, int> um;
+    for (i = 0; i < n; i++) {
+        um[planks[i]]++;
+    }
+    vector<int> p;
+    for (auto [v, _] : um) {
+        p.emplace_back(v);
+    }
+
+    int len = p.size();
+    unordered_map<int, int> ret;
+
+    for (i = 0; i < len; i++) {
+        // 单木板
+        ret[p[i]] += um[p[i]];
+        // 相同长度拼接
+        ret[p[i] * 2] += um[p[i]] / 2;
+        for (j = i + 1; j < len; j++) {
+            sum = p[i] + p[j];
+            ret[sum] += min(um[p[i]], um[p[j]]);
+        }
+    }
+
+    for (auto [_, val] : ret) {
+        ans = max(ans, val);
     }
 
     return ans;

@@ -4120,3 +4120,171 @@ void AWC_123_E()
     }
     cout << ans << "\n";
 }
+
+
+void AWC_127_D()
+{
+    int i;
+    int n, m;
+    int u, v, c;
+    long long k;
+
+    cin >> n >> m >> k;
+
+    vector<vector<pair<int, long long>>> edges(n + 1);
+
+    // 最小生成树, Prim
+    int cnt;
+    long long ans = 0;
+
+    for (i = 0; i < m; i++) {
+        cin >> u >> v >> c;
+        edges[u].push_back({v, c});
+        edges[v].push_back({u, c});
+    }
+
+    vector<bool> visited(n + 1, false);
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<>> pq;
+
+    cnt = 0;
+    ans = 0;
+    pq.push({0, 1});
+    long long maxVal = 0;
+    while (cnt < n) {
+        auto [d, cur] = pq.top();
+        pq.pop();
+        if (visited[cur]) {
+            continue;
+        }
+        visited[cur] = true;
+        ans += d;
+        maxVal = max(maxVal, d);
+        cnt++;
+        for (auto [next, val] : edges[cur]) {
+            if (!visited[next]) {
+                pq.push({val, next});
+            }
+        }
+    }
+    ans += k * maxVal;
+    cout << ans << "\n";
+}
+
+
+void AWC_127_E()
+{
+    int i, k;
+    int l, m;
+    string s, t;
+
+    cin >> l >> m >> s >> t;
+
+    // 分别求s, t的前后缀 正序字符串哈希
+    long long base = 13331;
+    int mod = 1e9 + 7;
+
+    vector<long long> prefixS(l);
+    prefixS[0] = s[0] - '0' + 1;
+    for (i = 1; i < l; i++) {
+        prefixS[i] = (prefixS[i - 1] * base + s[i] - '0' + 1) % mod;
+    }
+
+    vector<long long> prefixT(m);
+    prefixT[0] = t[0] - '0' + 1;
+    for (i = 1; i < m; i++) {
+        prefixT[i] = (prefixT[i - 1] * base + t[i] - '0' + 1) % mod;
+    }
+
+    vector<long long> suffixS(l);
+    suffixS[l - 1] = s[l - 1] - '0' + 1;
+    for (i = l - 2; i >= 0; i--) {
+        suffixS[i] = (suffixS[i + 1] + FastPow(base, l - i - 1, mod) * (s[i] - '0' + 1)) % mod;
+    }
+
+    vector<long long> suffixT(m);
+    suffixT[m - 1] = t[m - 1] - '0' + 1;
+    for (i = m - 2; i >= 0; i--) {
+        suffixT[i] = (suffixT[i + 1] + FastPow(base, m - i - 1, mod) * (t[i] - '0' + 1)) % mod;
+    }
+
+    int ans = 0;
+    // s + t
+    for (k = 0; k < l; k++) {
+        if (prefixT[k] == suffixS[l - 1 - k]) {
+            ans = max(ans, k + 1);
+        }
+    }
+    // t + s
+    for (k = 0; k < l; k++) {
+        if (prefixS[k] == suffixT[m - 1 - k]) {
+            ans = max(ans, k + 1);
+        }
+    }
+
+    cout << ans << "\n";
+}
+
+
+void AWC_129_D()
+{
+    int i, j;
+    int h, w;
+    int start, end;
+    cin >> h >> w;
+    vector<string> g(h);
+
+    for (i = 0; i < h; i++) {
+        cin >> g[i];
+        for (j = 0; j < w; j++) {
+            if (g[i][j] == 'S') {
+                start = i * w + j;
+            }
+            if (g[i][j] == 'G') {
+                end = i * w + j;
+            }
+        }
+    }
+
+    int direction[4][2] = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
+    int inf = 0x3f3f3f3f;
+    vector<vector<int>> dist(h, vector<int>(w, inf));
+
+    dist[start / w][start % w] = 0;
+    // 0 - 1 bfs 要保证队列有序性从而提高效率, 对于cost = 0, push_front; cost = 1, push_back
+    deque<pair<int, int>> q;
+    q.push_back({0, start});
+    while (!q.empty()) {
+        auto [val, pos] = q.front();
+        q.pop_front();
+        auto r = pos / w;
+        auto c = pos % w;
+
+        if (dist[r][c] < val) {
+            continue;
+        }
+
+        for (int i = 0; i < 4; i++) {
+            auto nr = r + direction[i][0];
+            auto nc = c + direction[i][1];
+
+            if (nr < 0 || nr >= h || nc < 0 || nc >= w || g[nr][nc] == 'B') {
+                continue;
+            }
+            auto npos = nr * w + nc;
+            if (g[nr][nc] == 'P') {
+                if (dist[nr][nc] > val + 1) {
+                    dist[nr][nc] = val + 1;
+                    q.push_back({val + 1, npos});
+                }
+            } else {
+                 if (val < dist[nr][nc]) {
+                    dist[nr][nc] = val;
+                    q.push_front({val, npos});
+                }
+            }
+        }
+    }
+
+    int ans = dist[end / w][end % w];
+    cout << (ans == inf ? -1 : ans) << "\n";
+}

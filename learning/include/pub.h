@@ -180,12 +180,12 @@ public:
 // 线段树
 class SegmentTree {
 private:
-    vector<int> tree;  // 线段树数组
-    vector<int> lazy;  // 延迟标记数组, 用于区间更新
+    vector<long long> tree;  // 线段树数组
+    vector<long long> lazy;  // 延迟标记数组, 用于区间更新
     int n;            // 原始数组大小
 
     // 构建线段树
-    void build(const vector<int>& nums, int node, int start, int end) {
+    void build(const vector<long long>& nums, int node, int start, int end) {
         if (start == end) {
             tree[node] = nums[start];
         } else {
@@ -193,8 +193,8 @@ private:
             build(nums, node * 2 + 1, start, mid);    // 左子树
             build(nums, node * 2 + 2, mid + 1, end);  // 右子树
             tree[node] = tree[node * 2 + 1] + tree[node * 2 + 2];  // 求和
-            // 若是查找最大值, 聚合线段树用max效率更高
-            // tree[node] = max(tree[node * 2 + 1], tree[node * 2 + 2]);
+            // 若是查找最大值, 应该使用聚合线段树, 如下
+            // tree[node] = max(tree[node * 2 + 1], tree[node * 2 + 2]); // 求最大值
         }
     }
     void push_down(int node, int start, int end) {
@@ -211,7 +211,7 @@ private:
         }
     }
 public:
-    SegmentTree(const vector<int>& nums) {
+    SegmentTree(const vector<long long>& nums) {
         n = nums.size();
         int height = (int)ceil(log2(n));  // 树的高度
         int max_size = 2 * (int)pow(2, height) - 1;  // 线段树最大节点数
@@ -220,45 +220,45 @@ public:
         build(nums, 0, 0, n - 1);
     }
     // 查询区间和/最大值
-    int query(int l, int r) {
+    long long query(int l, int r) {
         return query(0, 0, n - 1, l, r);
     }
 
     // 下标加法
-    void add(int index, int val) {
+    void add(int index, long long val) {
         range_add(index, index, val);
     }
 
     // 区间加法
-    void range_add(int l, int r, int val) {
+    void range_add(int l, int r, long long val) {
         range_add(0, 0, n - 1, l, r, val);
     }
 
     // 下面的函数需要基于最大值线段树
     // 查询第一个大于等于x的位置
-    int find(int l, int r, int x) {
+    int find(int l, int r, long long x) {
         return find(0, 0, n - 1, l, r, x);
     }
 
     // 统计区间 [L,R] 内大于 x 的元素个数
-    int countGreater(int L, int R, int x) {
+    int countGreater(int L, int R, long long x) {
         return countGreater(0, 0, n - 1, L, R, x);
     }
 private:
-    int query(int node, int start, int end, int l, int r) {
+    long long query(int node, int start, int end, int l, int r) {
         if (r < start || end < l) return 0;  // 区间不重叠
         if (l <= start && end <= r) return tree[node];  // 完全包含
 
         push_down(node, start, end);
         int mid = (start + end) / 2;
-        int left_sum = query(node * 2 + 1, start, mid, l, r);
-        int right_sum = query(node * 2 + 2, mid + 1, end, l, r);
+        long long left_sum = query(node * 2 + 1, start, mid, l, r);
+        long long right_sum = query(node * 2 + 2, mid + 1, end, l, r);
         return left_sum + right_sum;
         // 如果是最大值线段树, query则是求区间最大值
         // return max(left_sum, right_sum);
     }
 
-    void range_add(int node, int start, int end, int l, int r, int val) {
+    void range_add(int node, int start, int end, int l, int r, long long val) {
         if (r < start || end < l) return;  // 区间不重叠
         if (l <= start && end <= r) {
             tree[node] += val * (end - start + 1);
@@ -272,7 +272,7 @@ private:
         tree[node] = tree[node * 2 + 1] + tree[node * 2 + 2];
     }
 
-    int find(int node, int start, int end, int L, int R, int x) {
+    int find(int node, int start, int end, int L, int R, long long x) {
         if (end < L || start > R) return -1;       // 区间无重叠
         if (tree[node] < x) return -1;         // 区间最大值 <x，直接剪枝
 
@@ -289,7 +289,7 @@ private:
     }
 
     // 统计 >= x 的个数
-    int countGreaterEqual(int node, int start, int end, int L, int R, int x) {
+    int countGreaterEqual(int node, int start, int end, int L, int R, long long x) {
         if (end < L || start > R) return 0;  // 区间不重叠
         if (tree[node] < x) return 0;         // 整个区间最大值 < x，剪枝
         
@@ -304,7 +304,7 @@ private:
     }
 
     // 统计 > x 的个数
-    int countGreater(int node, int start, int end, int L, int R, int x) {
+    int countGreater(int node, int start, int end, int L, int R, long long x) {
         if (end < L || start > R) return 0;
         if (tree[node] <= x) return 0;        // 整个区间最大值 <= x，剪枝
         
