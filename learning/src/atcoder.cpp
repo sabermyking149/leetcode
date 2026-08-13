@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cmath>
 #include <string>
+#include <cstring>
 #include <vector>
 #include <algorithm>
 #include <map>
@@ -4287,4 +4288,195 @@ void AWC_129_D()
 
     int ans = dist[end / w][end % w];
     cout << (ans == inf ? -1 : ans) << "\n";
+}
+
+
+void AWC_131_E()
+{
+    long long n;
+    int k; // <= 153
+
+    cin >> n >> k;
+
+    auto f = [&](long long n) -> long long {
+        string t = to_string(n);
+        int len = t.size();
+        long long dp[19][10][2][2][154];
+        memset (dp, -1, sizeof(dp));
+        // 位置 - 上一个数 - 是否紧贴 - 是否前导0 - "fluctuation value"(数字数位间差的绝对值之和)
+        auto dfs = [&](auto&& self, int pos, int prev_num, int state1, int state2, int sum) -> long long {
+            if (pos == len) {
+                if (state2) {
+                    return 0;
+                }
+                if (sum == k) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+            if (dp[pos][prev_num][state1][state2][sum] != -1) {
+                return dp[pos][prev_num][state1][state2][sum];
+            }
+
+            int d;
+            int end;
+
+            if (state1) {
+                end = t[pos] - '0';
+            } else {
+                end = 9;
+            }
+            int n_state1, n_state2, n_sum;
+            long long ans = 0;
+            for (d = 0; d <= end; d++) {
+                if (state1) {
+                    if (d != t[pos] - '0') {
+                        n_state1 = 0;
+                    } else {
+                        n_state1 = 1;
+                    }
+                } else {
+                    n_state1 = state1;
+                }
+
+                if (state2) {
+                    if (d == 0) {
+                        n_state2 = 1;
+                        ans += self(self, pos + 1, 0, n_state1, n_state2, sum);
+                    } else {
+                        n_state2 = 0;
+                        ans += self(self, pos + 1, d, n_state1, n_state2, sum);
+                    }
+                } else { // 不含前导零
+                    n_state2 = state2;
+                    if (pos == 0) {
+                        ans += self(self, pos + 1, d, n_state1, n_state2, sum);
+                    } else {
+                        n_sum = sum + abs(d - prev_num);
+                        if (n_sum > k) {
+                            continue;
+                        }
+                        ans += self(self, pos + 1, d, n_state1, n_state2, n_sum);
+                    }
+                }
+            }
+            dp[pos][prev_num][state1][state2][sum] = ans;
+            return ans;
+        };
+
+        return dfs(dfs, 0, 0, 1, 1, 0);
+    };
+
+    cout << f(n) << "\n";
+}
+
+
+void AWC_132_D()
+{
+    int i, j;
+    int n, q;
+    int u, v;
+    cin >> n >> q;
+
+    vector<int> h(n + 1);
+    vector<vector<int>> edges(n + 1);
+
+    for (i = 1; i <= n; i++) {
+        cin >> h[i];
+    }
+    int p;
+    for (i = 2; i <= n; i++) {
+        cin >> p;
+        edges[p].emplace_back(i);
+        edges[i].emplace_back(p);
+    }
+
+    // 最长下降子序列
+    auto CalcLDS = [](vector<int>& seq) -> int {
+        int i;
+        int n = seq.size();
+        int left, right, mid;
+        vector<int> higher;
+
+        for (i = 0; i < n; i++) {
+            if (higher.empty()) {
+                higher.emplace_back(seq[i]);
+                continue;
+            }
+            if (seq[i] < higher.back()) {
+                higher.emplace_back(seq[i]);
+                continue;
+            }
+
+            left = 0;
+            right = higher.size() - 1;
+            while (left <= right) {
+                mid = (right - left) / 2 + left;
+                if (higher[mid] <= seq[i]) {
+                    right = mid - 1;
+                } else {
+                    left = mid + 1;
+                }
+            }
+            higher[left] = seq[i];
+        }
+
+        return higher.size();
+    };
+
+    BinaryLiftingLCA bll(edges, 1);
+    vector<int> route, seq;
+    for (i = 0; i < q; i++) {
+        cin >> u >> v;
+        route = bll.getPath(u, v);
+        auto len = route.size();
+        seq.clear();
+        for (j = 0; j < len; j++) {
+            seq.emplace_back(h[route[j]]);
+        }
+        cout << CalcLDS(seq) << "\n";
+    }
+}
+
+
+void AWC_134_D()
+{
+    int i, j, k;
+    int n, m, q;
+    cin >> n >> m >> q;
+
+    long long ans;
+    int h;
+    long long v;
+    vector<pair<int, long long>> vp;
+    for (i = 0; i < n; i++) {
+        cin >> h >> v;
+        vp.push_back({h, v});
+    }
+
+    // dp[l][r][w] - [l, r] 预算w的最大满意值
+    vector<vector<vector<long long>>> dp(n, vector<vector<long long>>(n, vector<long long>(m + 1, 0)));
+    for (i = 0; i < n; i++) {
+        for (j = 0; j <= m; j++) {
+            if (j >= vp[i].first) {
+                dp[i][i][j] = vp[i].second;
+            }
+        }
+    }
+    for (i = 0; i < n; i++) {
+        for (j = i + 1; j < n; j++) {
+            dp[i][j] = dp[i][j - 1];
+            for (k = m; k >= vp[j].first; k--) {
+                dp[i][j][k] = max(dp[i][j][k], dp[i][j][k - vp[j].first] + vp[j].second);
+            }
+        }
+    }
+    int l, r, x;
+    for (i = 0; i < q; i++) {
+        cin >> l >> r >> x;
+        l--;
+        r--;
+        cout << dp[l][r][x] << "\n";
+    }
 }

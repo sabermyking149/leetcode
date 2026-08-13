@@ -386,6 +386,40 @@ public:
         }
         return up[u][0];
     }
+
+    // 两个节点间的距离
+    int distance(int u, int v)
+    {
+        int c = lca(u, v);
+        return depth[u] + depth[v] - depth[c] * 2;
+    }
+
+    // 节点 u -> v 路径
+    vector<int> getPath(int u, int v)
+    {
+        int c = lca(u, v);
+        vector<int> path;
+
+        // u -> c
+        int cur = u;
+        while (cur != c) {
+            path.emplace_back(cur);
+            cur = up[cur][0];
+        }
+        path.emplace_back(c);
+
+        // c -> v
+        vector<int> tmp;
+        cur = v;
+        while (cur != c) {
+            tmp.emplace_back(cur);
+            cur = up[cur][0];
+        }
+        reverse(tmp.begin(), tmp.end());
+        path.insert(path.end(), tmp.begin(), tmp.end());
+
+        return path;
+    }
 };
 
 

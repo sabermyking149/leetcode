@@ -1555,3 +1555,49 @@ void CR_1108_C()
     }
     cout << ans << "\n";
 }
+
+
+void CR_1115_C()
+{
+    int i, j;
+    int n, m;
+    cin >> n >> m;
+    vector<int> v(n);
+    for (i = 0; i < n; i++) {
+        cin >> v[i];
+    }
+
+    vector<vector<int>> a(n, vector<int>(m));
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < m; j++) {
+            cin >> a[i][j];
+        }
+    }
+    if (m == 1) {
+        cout << "1\n";
+        return;
+    }
+
+    int ans = m;
+    int cnt;
+    long long t;
+    multiset<int, greater<>> ms;
+    for (i = n - 1; i >= 0; i--) {
+        for (j = 0; j < m; j++) {
+            ms.emplace(a[i][j]);
+        }
+        t = cnt = 0;
+        for (auto it : ms) {
+            t += it;
+            cnt++;
+            if (t >= v[i]) {
+                ans = min(ans, cnt);
+                break;
+            }
+            if (cnt == m) {
+                break;
+            }
+        }
+    }
+    cout << ans << "\n";
+}
