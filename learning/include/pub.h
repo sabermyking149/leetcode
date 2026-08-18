@@ -318,6 +318,224 @@ private:
     }
 };
 
+class SegmentTree_Combine {
+private:
+    vector<long long> sumTree;   // 区间和
+    vector<long long> maxTree;   // 区间最大值
+    vector<long long> minTree;   // 区间最小值
+    vector<long long> lazy;      // 延迟标记
+    int n;
+
+    // 构建线段树
+    void build(const vector<long long>& nums, int node, int start, int end) {
+        if (start == end) {
+            sumTree[node] = nums[start];
+            maxTree[node] = nums[start];
+            minTree[node] = nums[start];
+        } else {
+            int mid = start + (end - start) / 2;
+            build(nums, node * 2 + 1, start, mid);
+            build(nums, node * 2 + 2, mid + 1, end);
+            push_up(node);
+        }
+    }
+
+    // 向上更新
+    void push_up(int node) {
+        sumTree[node] = sumTree[node * 2 + 1] + sumTree[node * 2 + 2];
+        maxTree[node] = max(maxTree[node * 2 + 1], maxTree[node * 2 + 2]);
+        minTree[node] = min(minTree[node * 2 + 1], minTree[node * 2 + 2]);
+    }
+
+    // 向下传递延迟标记
+    void push_down(int node, int start, int end) {
+        if (lazy[node] != 0 && start != end) {
+            int mid = start + (end - start) / 2;
+            long long val = lazy[node];
+            int left = node * 2 + 1;
+            int right = node * 2 + 2;
+
+            // 更新左子树
+            sumTree[left] += val * (mid - start + 1);
+            maxTree[left] += val;
+            minTree[left] += val;
+            lazy[left] += val;
+
+            // 更新右子树
+            sumTree[right] += val * (end - mid);
+            maxTree[right] += val;
+            minTree[right] += val;
+            lazy[right] += val;
+
+            lazy[node] = 0;
+        }
+    }
+
+public:
+    // 构造函数
+    SegmentTree_Combine(const vector<long long>& nums) {
+        n = nums.size();
+        if (n == 0) return;
+        int height = (int)ceil(log2(n));
+        int max_size = 2 * (int)pow(2, height) - 1;
+        sumTree.resize(max_size);
+        maxTree.resize(max_size);
+        minTree.resize(max_size);
+        lazy.resize(max_size, 0);
+        build(nums, 0, 0, n - 1);
+    }
+
+    // 区间加法
+    void range_add(int l, int r, long long val) {
+        if (l > r) swap(l, r);
+        range_add(0, 0, n - 1, l, r, val);
+    }
+
+    void add(int index, long long val) {
+        range_add(index, index, val);
+    }
+
+    // 区间求和
+    long long query_sum(int l, int r) {
+        if (l > r) swap(l, r);
+        return query_sum(0, 0, n - 1, l, r);
+    }
+
+    // 区间最大值
+    long long query_max(int l, int r) {
+        if (l > r) swap(l, r);
+        return query_max(0, 0, n - 1, l, r);
+    }
+
+    // 区间最小值
+    long long query_min(int l, int r) {
+        if (l > r) swap(l, r);
+        return query_min(0, 0, n - 1, l, r);
+    }
+
+    // 查找第一个 ≥ x 的位置
+    int find_first_ge(int L, int R, long long x) {
+        return find_first_ge(0, 0, n - 1, L, R, x);
+    }
+
+    // 统计 ≥ x 的个数
+    int count_ge(int L, int R, long long x) {
+        return count_ge(0, 0, n - 1, L, R, x);
+    }
+
+    // 统计 > x 的个数
+    int count_gt(int L, int R, long long x) {
+        return count_gt(0, 0, n - 1, L, R, x);
+    }
+
+    long long query(int index) {
+        return query(0, 0, n - 1, index);
+    }
+private:
+    // 区间加法
+    void range_add(int node, int start, int end, int l, int r, long long val) {
+        if (r < start || end < l) return;
+        if (l <= start && end <= r) {
+            sumTree[node] += val * (end - start + 1);
+            maxTree[node] += val;
+            minTree[node] += val;
+            lazy[node] += val;
+            return;
+        }
+        push_down(node, start, end);
+        int mid = start + (end - start) / 2;
+        range_add(node * 2 + 1, start, mid, l, r, val);
+        range_add(node * 2 + 2, mid + 1, end, l, r, val);
+        push_up(node);
+    }
+
+    // 区间求和
+    long long query_sum(int node, int start, int end, int l, int r) {
+        if (r < start || end < l) return 0;
+        if (l <= start && end <= r) return sumTree[node];
+        push_down(node, start, end);
+        int mid = start + (end - start) / 2;
+        return query_sum(node * 2 + 1, start, mid, l, r) +
+               query_sum(node * 2 + 2, mid + 1, end, l, r);
+    }
+
+    // 区间最大值
+    long long query_max(int node, int start, int end, int l, int r) {
+        if (r < start || end < l) return LLONG_MIN;
+        if (l <= start && end <= r) return maxTree[node];
+        push_down(node, start, end);
+        int mid = start + (end - start) / 2;
+        return max(query_max(node * 2 + 1, start, mid, l, r),
+                   query_max(node * 2 + 2, mid + 1, end, l, r));
+    }
+
+    // 单点查询
+    long long query(int node, int start, int end, int index) {
+        if (start == end) {
+            return sumTree[node];
+        }
+        push_down(node, start, end);
+        int mid = (start + end) / 2;
+        if (index <= mid) {
+            return query(node * 2 + 1, start, mid, index);
+        } else {
+            return query(node * 2 + 2, mid + 1, end, index);
+        }
+    }
+    // 区间最小值
+    long long query_min(int node, int start, int end, int l, int r) {
+        if (r < start || end < l) return LLONG_MAX;
+        if (l <= start && end <= r) return minTree[node];
+        push_down(node, start, end);
+        int mid = start + (end - start) / 2;
+        return min(query_min(node * 2 + 1, start, mid, l, r),
+                   query_min(node * 2 + 2, mid + 1, end, l, r));
+    }
+
+    // 查找第一个 ≥ x 的位置
+    int find_first_ge(int node, int start, int end, int L, int R, long long x) {
+        if (end < L || start > R) return -1;
+        if (maxTree[node] < x) return -1;
+        if (start == end) return start;
+
+        push_down(node, start, end);
+        int mid = start + (end - start) / 2;
+
+        int left_res = find_first_ge(node * 2 + 1, start, mid, L, R, x);
+        if (left_res != -1) return left_res;
+
+        return find_first_ge(node * 2 + 2, mid + 1, end, L, R, x);
+    }
+
+    // 统计 ≥ x 的个数
+    int count_ge(int node, int start, int end, int L, int R, long long x) {
+        if (end < L || start > R) return 0;
+        if (maxTree[node] < x) return 0;
+        if (start == end) {
+            return (maxTree[node] >= x) ? 1 : 0;
+        }
+
+        push_down(node, start, end);
+        int mid = start + (end - start) / 2;
+        return count_ge(node * 2 + 1, start, mid, L, R, x) +
+               count_ge(node * 2 + 2, mid + 1, end, L, R, x);
+    }
+
+    // 统计 > x 的个数
+    int count_gt(int node, int start, int end, int L, int R, long long x) {
+        if (end < L || start > R) return 0;
+        if (maxTree[node] <= x) return 0;
+        if (start == end) {
+            return (maxTree[node] > x) ? 1 : 0;
+        }
+
+        push_down(node, start, end);
+        int mid = start + (end - start) / 2;
+        return count_gt(node * 2 + 1, start, mid, L, R, x) +
+               count_gt(node * 2 + 2, mid + 1, end, L, R, x);
+    }
+};
+
 
 // 二进制提升法最近公共祖先节点
 class BinaryLiftingLCA {

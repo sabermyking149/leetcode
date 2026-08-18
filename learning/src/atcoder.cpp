@@ -4480,3 +4480,59 @@ void AWC_134_D()
         cout << dp[l][r][x] << "\n";
     }
 }
+
+
+void AWC_136_C()
+{
+    int i, j;
+    int n;
+    cin >> n;
+    vector<int> h(n + 1);
+    vector<int> prefixMax(n + 1, 0);
+    for (i = 1; i <= n; i++) {
+        cin >> h[i];
+        prefixMax[i] = max(prefixMax[i - 1], h[i]);
+    }
+    if (n <= 2) {
+        cout << n - 1 << "\n";
+        return;
+    }
+
+    vector<int> visible(n + 1, 0);
+
+    visible[1] = 1;
+    int cur = h[1];
+    int cnt = 1;
+    for (i = 2; i <= n; i++) {
+        if (h[i] > cur) {
+            visible[i] = 1;
+            cur = h[i];
+            cnt++;
+        }
+    }
+    if (cnt == n) {
+        cout << n - 1 << "\n";
+        return;
+    }
+
+    int base = cnt;
+    int ans = base;
+    int gain;
+    for (i = 1; i <= n; i++) {
+        if (visible[i] == 0) {
+            continue;
+        }
+        auto cur = prefixMax[i - 1];
+        j = i + 1;
+        gain = 0;
+        while (j <= n && visible[j] != 1) {
+            if (h[j] > cur) {
+                gain++;
+                cur = h[j];
+            }
+            j++;
+        }
+        ans = max(ans, base - 1 + gain);
+    }
+    cout << ans << "\n";
+}

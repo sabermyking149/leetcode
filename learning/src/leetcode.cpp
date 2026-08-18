@@ -35019,3 +35019,210 @@ int maximumWidth(vector<int>& planks)
 
     return ans;
 }
+
+
+// LC4026
+int maximumGap(string skill, string station)
+{
+    int i, j;
+    int n = skill.size();
+    int m = station.size();
+
+    if (n == 1) {
+        return 0;
+    }
+
+    // left[i], right[i] - skill[i] 在station中能匹配的子序列的最左端下标和最右端下标
+    vector<int> left(n);
+    j = 0;
+    for (i = 0; i < m; i++) {
+        if (skill[j] == station[i]) {
+            left[j] = i;
+            j++;
+            if (j == n) {
+                break;
+            }
+        }
+    }
+    vector<int> right(n);
+    
+    j = n - 1;
+    for (i = m - 1; i >= 0; i--) {
+        if (skill[j] == station[i]) {
+            right[j] = i;
+            j--;
+            if (j == -1) {
+                break;
+            }
+        }
+    }
+    // 最大间隔, 只考虑相邻字符
+    int ans = 0;
+    for (i = 1; i < n; i++) {
+        ans = max(ans, right[i] - left[i - 1]);
+    }
+    return ans;
+}
+
+
+// LC4027
+long long elevatorRequests(int n, int start, vector<vector<int>>& requests)
+{
+    int i, j, k;
+    int m = requests.size();
+    int len = (1 << m);
+    long long inf = 1e15;
+    // dp[mask][i] 形成 mask情况且最后完成第i个请求的最短时间
+    vector<vector<long long>> dp(len, vector<long long>(m, inf));
+
+    for (i = 0; i < m; i++) {
+        dp[1 << i][i] = max(abs(requests[i][1] - start), requests[i][0]);
+    }
+
+    for (i = 1; i < len; i++) {
+        for (j = 0; j < m; j++) {
+            if (dp[i][j] == inf) {
+                continue;
+            }
+
+            for (k = 0; k < m; k++) {
+                if ((i & (1 << k)) != 0) {
+                    continue;
+                }
+                dp[i | (1 << k)][k] = min(dp[i | (1 << k)][k], dp[i][j] + 
+                    max(static_cast<long long>(abs(requests[j][1] - requests[k][1])), requests[k][0] - dp[i][j]));
+            }
+        }
+    }
+    long long ans;
+    ans = *min_element(dp[len - 1].begin(), dp[len - 1].end());
+    return ans;
+}
+
+
+// LC1568
+int minDays(vector<vector<int>>& grid)
+{
+    int i, j, k;
+    int m = grid.size();
+    int n = grid[0].size();
+    int cntGrid;
+
+    vector<vector<int>> visited(m, vector<int>(n, 0));
+    vector<vector<int>> directions = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+    vector<vector<int>> edges(n * m);
+    auto dfs = [&](auto&& self, int pos) -> void {
+        int i;
+        auto x = pos / n;
+        auto y = pos % n;
+
+        visited[x][y] = 1;
+        cntGrid++;
+        for (i = 0; i < 4; i++) {
+            auto nx = x + directions[i][0];
+            auto ny = y + directions[i][1];
+            if (nx < 0 || nx >= m || ny < 0 || ny >= n || grid[nx][ny] == 0) {
+                continue;
+            }
+            
+            auto npos = nx * n + ny;
+            if (visited[nx][ny] == 0) {
+                self(self, npos);
+            }
+        }
+    };
+
+    int cnt = 0;
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            if (visited[i][j] || grid[i][j] == 0) {
+                continue;
+            }
+            cntGrid = 0;
+            dfs(dfs, i * n + j);
+            cnt++;
+        }
+    }
+
+    // 多于1个连通块不需要处理
+    if (cnt > 1) {
+        return 0;
+    }
+    // 特殊情况: 只有1个2块陆地拼接减2, 只有1个1块陆地减1
+    if (cntGrid <= 2) {
+        return cntGrid;
+    }
+
+    // 只有一个连通块, 考虑这个无向图是否存在割点, 存在减1; 不存在减2;
+    // Tarjan
+    // 重新建图
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            if (grid[i][j] == 0) {
+                continue;
+            }
+            for (k = 0; k < 4; k++) {
+                auto nx = i + directions[k][0];
+                auto ny = j + directions[k][1];
+                if (nx < 0 || nx >= m || ny < 0 || ny >= n || grid[nx][ny] == 0) {
+                    continue;
+                }
+                auto pos = i * n + j;
+                auto npos = nx * n + ny;
+                edges[pos].emplace_back(npos);
+                // edges[npos].emplace_back(pos);
+            }
+        }
+    }
+    /* for (i = 0; i < m * n; i++) {
+        cout << i << ": ";
+        for (auto j : edges[i]) cout << j << " "; cout << "\n";
+    } */
+
+    int idx;
+    vector<int> points;
+    vector<int> visited1(m * n, 0);
+    vector<int> dfs_num(m * n);
+    vector<int> low(m * n);
+
+    idx = 0;
+    // 此处是求割点, 与LC1192求割边, 略有不同
+    auto tarjan = [&](auto&& self, int cur, int parent) -> void {
+        visited1[cur] = 1;
+        dfs_num[cur] = low[cur] = idx;
+        idx++;
+        int child = 0;
+        for (auto it : edges[cur]) {
+            if (it == parent) {
+                continue;
+            }
+            if (visited1[it] == 0) {
+                child++;
+                self(self, it, cur);
+                low[cur] = min(low[cur], low[it]);
+                if (dfs_num[cur] <= low[it] && parent != -1) {
+                    points.push_back(cur);
+                }
+            } else {
+                low[cur] = min(low[cur], dfs_num[it]);
+            }
+        }
+        if (child >= 2 && parent == -1) {
+            points.push_back(cur);
+        }
+    };
+
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < n; j++) {
+            if (visited1[i * n + j] == 0 && grid[i][j]) {
+                tarjan(tarjan, i * n + j, - 1);
+                break;
+            }
+        }
+    }
+
+    if (points.empty()) {
+        return 2;
+    }
+    return 1;
+}
