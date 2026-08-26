@@ -4536,3 +4536,65 @@ void AWC_136_C()
     }
     cout << ans << "\n";
 }
+
+
+void AWC_141_E()
+{
+    int i, j, k;
+    int n;
+
+    cin >> n;
+    vector<long long> c(n);
+    vector<vector<long long>> w(n, vector<long long>(n));
+
+    for (i = 0; i < n; i++) {
+        cin >> c[i];
+    }
+
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            cin >> w[i][j];
+        }
+    }
+
+    int size = 1 << n;
+    // dp[i][j] - 达成二进制状态为i且最后一个建筑是j的最小cost
+    vector<vector<long long>> dp(size, vector<long long>(n, LLONG_MAX));
+
+    // 预处理不同剩余建筑的offset
+    vector<vector<long long>> offsets(n, vector<long long>(size, 0));
+    for (i = 0; i < n; i++) {
+        for (j = 1; j < size; j++) {
+            for (k = 0; k < n; k++) {
+                if ((1 << k & j) == 1 << k) {
+                    offsets[i][j] += w[i][k];
+                }
+            }
+        }
+    }
+    for (i = 0; i < n; i++) {
+        dp[1 << i][i] = c[i] + offsets[i][(size - 1) ^ (1 << i)];
+    }
+
+    for (i = 1; i < size; i++) {
+        for (j = 0; j < n; j++) {
+            if (dp[i][j] == LLONG_MAX) {
+                continue;
+            }
+            for (k = 0; k < n; k++) {
+                if ((i & 1 << k) != 0) {
+                    continue;
+                }
+                auto n_mask = (i | 1 << k);
+
+                dp[n_mask][k] = min(dp[n_mask][k], dp[i][j] + c[k] + offsets[k][(size - 1) ^ n_mask]);
+            }
+        }
+    }
+    long long ans = LLONG_MAX;
+    for (i = 0; i < n; i++) {
+        ans = min(ans, dp[size - 1][i]);
+    }
+
+    cout << ans << "\n";
+}

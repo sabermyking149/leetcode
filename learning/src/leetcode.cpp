@@ -86,7 +86,11 @@ bool IsPrime(int n)
     return true;
 }
 // Miller-Rabin 判断大质数
-bool IsPrime(long long n) {
+bool IsPrime(long long n)
+{
+    if (n == 1) {
+        return false;
+    }
     // 小质数快速检查
     long long small_primes[] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29};
     for (long long p : small_primes) {
@@ -35225,4 +35229,42 @@ int minDays(vector<vector<int>>& grid)
         return 2;
     }
     return 1;
+}
+
+
+// LC1639
+int numWays(vector<string>& words, string target)
+{
+    int i, j;
+    int m = words.size();
+    int len = words[0].size();
+    int n = target.size();
+    int mod = 1e9 + 7;
+    if (len < n) {
+        return 0;
+    }
+    vector<vector<int>> cnt(len, vector<int>(26, 0));
+    for (j = 0; j < len; j++) {
+        for (i = 0; i < m; i++) {
+            cnt[j][words[i][j] - 'a']++;
+        }
+    }
+
+    // dp[i][j] - 可选字符串前j个字符组成target前i个字符的子序列个数
+    vector<vector<long long>> dp(n + 1, vector<long long>(len + 1, 0));
+    dp[0][0] = 1;
+    for (j = 0; j <= len; j++) {
+        dp[0][j] = 1; // 一个字符都不选
+    }
+    for (i = 1; i <= n; i++) {
+        for (j = 1; j <= len; j++) {
+            dp[i][j] = dp[i][j - 1]; // 不选
+            auto val = cnt[j - 1][target[i - 1] - 'a'];
+            if (val != 0) {
+                dp[i][j] = (dp[i][j] + dp[i - 1][j - 1] * val) % mod;
+            }
+        }
+    }
+
+    return dp[n][len];
 }
