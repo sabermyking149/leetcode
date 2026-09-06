@@ -4598,3 +4598,301 @@ void AWC_141_E()
 
     cout << ans << "\n";
 }
+
+
+void AWC_142_E()
+{
+    int i, k;
+    int n;
+    long long m;
+
+    cin >> n >> m;
+    vector<long long> w(n);
+
+    for (i = 0; i < n; i++) {
+        cin >> w[i];
+    }
+
+    int size = 1 << n;
+    int inf = n + 1;
+    // dp[i] - 达成二进制状态为i时 -> {使用的货车数, 最后一辆货车剩余空间}
+    vector<pair<int, long long>> dp(size, {inf, -1});
+
+    for (i = 0; i < n; i++) {
+        dp[1 << i] = {1, m - w[i]};
+    }
+
+    for (i = 1; i < size; i++) {
+        if (dp[i].first == inf) {
+            continue;
+        }
+        for (k = 0; k < n; k++) {
+            if ((i & 1 << k) != 0) {
+                continue;
+            }
+            auto n_mask = (i | 1 << k);
+            if (dp[i].second < w[k]) {
+                if (dp[n_mask].first > dp[i].first + 1) {
+                    dp[n_mask] = {dp[i].first + 1, m - w[k]};
+                } else if (dp[n_mask].first == dp[i].first + 1) {
+                    dp[n_mask].second = max(dp[n_mask].second, m - w[k]);
+                }
+            } else {
+                if (dp[n_mask].first > dp[i].first) {
+                    dp[n_mask] = {dp[i].first, dp[i].second - w[k]};
+                } else if (dp[n_mask].first == dp[i].first) {
+                    dp[n_mask].second = max(dp[n_mask].second, dp[i].second - w[k]);
+                }
+            }
+        }
+    }
+
+    cout << dp[size - 1].first << "\n";
+}
+
+
+void AWC_144_D()
+{
+    int i;
+    int n, t;
+
+    cin >> n;
+
+    vector<int> visited(n + 1, 0);
+    vector<vector<int>> edges(n + 1);
+
+    // 找环的数量
+    for (i = 0; i < n; i++) {
+        cin >> t;
+        edges[i + 1].emplace_back(t);
+    }
+
+    int ans = n;
+    int cnt;
+    auto dfs = [&](auto&& self, int cur) -> void {
+        visited[cur] = 1;
+        for (auto next : edges[cur]) {
+            if (visited[next] == 1) {
+                cnt++; // 继续走下去
+            } else if (visited[next] == 0) {
+                self(self, next);
+            }
+        }
+        visited[cur] = 2;
+    };
+    for (i = 1; i <= n; i++) {
+        if (visited[i]) {
+            continue;
+        }
+        cnt = 0;
+        dfs(dfs, i);
+        ans -= cnt;
+    }
+    cout << ans << "\n";
+}
+
+
+void AWC_148_E()
+{
+    int i, j, z, p;
+    int n, m, k;
+
+    cin >> n >> m >> k;
+
+    vector<int> cType(n + 1);
+    for (i = 1; i <= n; i++) {
+        cin >> cType[i];
+    }
+
+    vector<vector<long long>> cost(n + 2, vector<long long>(n + 2));
+    for (i = 0; i <= n; i++) {
+        for (j = i + 1; j <= n + 1; j++) {
+            cin >> cost[i][j];
+        }
+    }
+
+    int mask = (1 << m);
+    long long inf = 1e15;
+    // dp[i][k][mask] - 前进到i处, 共经过k个检查点, 形成mask的最小cost
+    vector<vector<vector<long long>>> dp(n + 1, vector<vector<long long>>(n + 1, vector<long long>(mask, inf)));
+
+    for (i = 1; i <= n; i++) {
+        // 直接到检查点i
+        auto n_mask = (1 << (cType[i] - 1));
+        dp[i][1][n_mask] = min(dp[i][1][n_mask], cost[0][i]);
+
+        for (j = i - 1; j > 0; j--) {
+            for (z = 1; z <= j; z++) {
+                for (p = 0; p < mask; p++) {
+                    if (dp[j][z][p] == inf) {
+                        continue;
+                    }
+                    n_mask = (p ^ (1 << (cType[i] - 1)));
+                    dp[i][z + 1][n_mask] = min(dp[i][z + 1][n_mask], dp[j][z][p] + cost[j][i]);
+                }
+            }
+        }
+    }
+
+    long long ans = inf;
+    // 可以不经过任何一个checkpoint
+    if (k == 0) {
+        ans = cost[0][n + 1];
+    }
+    // 从最后一个checkpoint到山顶
+    for (i = 1; i <= n; i++) {
+        for (j = k; j <= n; j++) {
+            ans = min(ans, dp[i][j][0] + cost[i][n + 1]);
+        }
+    }
+    cout << (ans == inf ? -1 : ans) << "\n";
+}
+
+
+void AWC_149_E()
+{
+    // 与AWC_123_E类似
+    int i, j, z;
+    int n, m, k;
+    int u, v;
+    long long inf = 1e16;
+    long long w;
+
+    cin >> n >> m >> k;
+
+    vector<vector<pair<int, long long>>> edges(n + 1);
+
+    for (i = 0; i < m; i++) {
+        cin >> u >> v >> w;
+        edges[u].push_back({v, w});
+        edges[v].push_back({u, w});
+    }
+
+    int c;
+    vector<int> no(k);
+    for (i = 0; i < k; i++) {
+        cin >> c;
+        no[i] = c;
+    }
+
+    vector<long long> d;
+    // 每个ci之间的相互最小距离
+    vector<vector<long long>> dist(k, vector<long long>(k));
+
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<>> pq;
+
+    // 每个ci到n的最小距离
+    vector<long long> last(k);
+    for (i = 0; i < k; i++) {
+        pq.push({0, no[i]});
+        d.assign(n + 1, inf);
+        d[no[i]] = 0;
+        while (!pq.empty()) {
+            auto [val, cur] = pq.top();
+            pq.pop();
+            if (val > d[cur]) {
+                continue;
+            }
+            for (auto [next, value] : edges[cur]) {
+                if (d[next] > val + value) {
+                    d[next] = val + value;
+                    pq.push({d[next], next});
+                }
+            }
+        }
+        for (j = 0; j < k; j++) {
+            dist[i][j] = d[no[j]];
+        }
+        last[i] = d[n];
+    }
+
+    // 从起点1到每个ci的最小距离
+    vector<long long> first(k);
+    d.assign(n + 1, inf);
+    pq.push({0, 1});
+    d[1] = 0;
+    while (!pq.empty()) {
+        auto [val, cur] = pq.top();
+        pq.pop();
+        if (val > d[cur]) {
+            continue;
+        }
+        for (auto [next, value] : edges[cur]) {
+            if (d[next] > val + value) {
+                d[next] = val + value;
+                pq.push({d[next], next});
+            }
+        }
+    }
+    for (i = 0; i < k; i++) {
+        first[i] = d[no[i]];
+    }
+
+    int mask = 1 << k;
+    // dp[mask][i] 行进到mask状态且最后一个点是no[i]的最小距离
+    vector<vector<long long>> dp(mask, vector<long long>(k, inf));
+    for (i = 0; i < k; i++) {
+        dp[1 << i][i] = first[i];
+    }
+    for (i = 1; i < mask; i++) {
+        for (j = 0; j < k; j++) {
+            if (dp[i][j] == inf) {
+                continue;
+            }
+            for (z = 0; z < k; z++) {
+                if ((i & 1 << z) != 0) {
+                    continue;
+                }
+                auto n_mask = (i | 1 << z);
+                dp[n_mask][z] = min(dp[n_mask][z], dp[i][j] + dist[j][z]);
+            }
+        }
+    }
+    long long ans = inf;
+    // 从i到n
+    for (i = 0; i < k; i++) {
+        ans = min(ans, dp[mask - 1][i] + last[i]);
+    }
+
+    cout << ans << "\n";
+}
+
+
+void ABC_473_D()
+{
+    int i;
+    int n, k;
+    cin >> n >> k;
+    vector<int> record(n);
+    vector<int> maxVal(n + 1, 0);
+    // 后缀序列可取最大序列和
+    maxVal[n - 1] = k * n;
+    for (i = n - 2; i >= 0; i--) {
+        maxVal[i] = maxVal[i + 1] + (i + 1) * k;
+    }
+
+    auto dfs = [&](auto&& self, int idx, int sum) -> void {
+        if (idx == n) {
+            if (sum == k) {
+                for (auto val : record) {
+                    cout << val << ' ';
+                }
+                cout << "\n";
+            }
+            return;
+        }
+
+        int upper = (k - sum) / (idx + 1);
+        int lower = 0;
+        // lower的非0取值只可能在取最后一位的时候
+        if (k - sum - maxVal[idx + 1] >= 0) {
+            lower = (k - sum - maxVal[idx + 1] + idx) / (idx + 1); // 向上取整
+        }
+        for (int d = lower; d <= upper; d++) {
+            auto t = sum + d * (idx + 1);
+            record[idx] = d;
+            self(self, idx + 1, t);
+        }
+    };
+    dfs(dfs, 0, 0);
+}

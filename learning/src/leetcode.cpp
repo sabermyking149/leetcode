@@ -35268,3 +35268,162 @@ int numWays(vector<string>& words, string target)
 
     return dp[n][len];
 }
+
+
+// LC4040
+int minOperations_LC4040(vector<int>& nums, int sum)
+{
+    int i, k;
+    int n = nums.size();
+    int inf = 0x3f3f3f3f;
+    // dp[i][j] - 前i个数得到j的最小操作次数
+    vector<vector<int>> dp(n + 1, vector<int>(sum + 1, inf));
+    int t, cnt;
+    dp[0][0] = 0;
+    for (i = 1; i <= n; i++) {
+        dp[i] = dp[i - 1]; // 不选
+        for (k = 0; k <= sum; k++) {
+            if (dp[i - 1][k] == inf) {
+                continue;
+            }
+            // 乘以2
+            t = nums[i - 1];
+            cnt = 0;
+            while (t + k <= sum) {
+                dp[i][t + k] = min(dp[i][t + k], dp[i - 1][k] + cnt);
+                cnt++;
+                t <<= 1;
+            }
+
+            // 除以2
+            t = nums[i - 1];
+            cnt = 0;
+            while (t > 0) {
+                if (t + k > sum) {
+                    t >>= 1;
+                    cnt++;
+                    continue;
+                }
+                dp[i][t + k] = min(dp[i][t + k], dp[i - 1][k] + cnt);
+                cnt++;
+                t >>= 1;
+            }
+        }
+    }
+    return dp[n][sum] == inf ? -1 : dp[n][sum];
+}
+
+
+// LC4041
+int minOperations_LC4041(vector<int>& nums, int sum)
+{
+    int i, k;
+    int x, y;
+    int n = nums.size();
+    int inf = 0x3f3f3f3f;
+    // dp[i][j] - 前i个数得到j的最小操作次数
+    vector<vector<int>> dp(n + 1, vector<int>(sum + 1, inf));
+    int t, cnt;
+
+    dp[0][0] = 0;
+    for (i = 1; i <= n; i++) {
+        dp[i] = dp[i - 1]; // 不选
+        for (k = 0; k <= sum; k++) {
+            if (dp[i - 1][k] == inf) {
+                continue;
+            }
+            // 直接乘
+            t = nums[i - 1];
+            cnt = 0;
+            while (t + k <= sum) {
+                dp[i][t + k] = min(dp[i][t + k], dp[i - 1][k] + cnt);
+                cnt++;
+                t <<= 1;
+            }
+            // 先除再乘
+            // 100 - 最多除6次到1;
+            // 1 - 最多乘以13次到5000
+            t = nums[i - 1];
+            for (x = 1; x <= 6; x++) {
+                t >>= 1;
+                if (t == 0) {
+                    break;
+                }
+                if (t + k <= sum) {
+                    dp[i][t + k] = min(dp[i][t + k], dp[i - 1][k] + x);
+                }
+                auto tt = t; // 注意t值在内层不能改变
+                for (y = 1; y <= 13; y++) {
+                    tt <<= 1;
+                    if (tt + k > sum) {
+                        break;
+                    }
+                    dp[i][tt + k] = min(dp[i][tt + k], dp[i - 1][k] + x + y);
+                }
+            }
+        }
+    }
+    return dp[n][sum] == inf ? -1 : dp[n][sum];
+}
+
+
+// LC4046
+int minCost_LC4046(vector<vector<int>>& grid, int k)
+{
+    int m = grid.size();
+    int n = grid[0].size();
+    int inf = 0x3f3f3f3f;
+    vector<vector<int>> directions = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
+    vector<vector<vector<int>>> dist(m * n, vector<vector<int>>(4, 
+        vector<int>(k + 1, inf)));
+    // cost - pos - 进入方向 - 转向次数
+    priority_queue<tuple<int, int, int, int>, vector<tuple<int, int, int, int>>,
+        greater<>> pq;
+
+    dist[0][0][0] = grid[0][0];
+    pq.push({grid[0][0], 0, 0, 0});
+    while (!pq.empty()) {
+        auto [cost, pos, dir, t] = pq.top();
+        pq.pop();
+
+        if (dist[pos][dir][t] < cost) {
+            continue;
+        }
+        int r = pos / n;
+        int c = pos % n;
+        for (int i = 0; i < 4; i++) {
+            auto nr = r + directions[i][0];
+            auto nc = c + directions[i][1];
+            if (nr < 0 || nr >= m || nc < 0 || nc >= n) {
+                continue;
+            }
+            auto npos = nr * n + nc;
+            if (pos == 0) {
+                if (dist[npos][i][t] > cost + grid[nr][nc]) {
+                    dist[npos][i][t] = cost + grid[nr][nc];
+                    pq.push({dist[npos][i][t], npos, i, t});
+                }
+            } else {
+                if (dir == i) {
+                    if (dist[npos][i][t] > cost + grid[nr][nc]) {
+                        dist[npos][i][t] = cost + grid[nr][nc];
+                        pq.push({dist[npos][i][t], npos, i, t});
+                    }
+                } else if (t + 1 <= k) {
+                    if (dist[npos][i][t + 1] > cost + grid[nr][nc]) {
+                        dist[npos][i][t + 1] = cost + grid[nr][nc];
+                        pq.push({dist[npos][i][t + 1], npos, i, t + 1});
+                    }
+                }
+            }
+        }
+    }
+    int i, j;
+    int ans = inf;
+    for (i = 0; i < 4; i++) {
+        for (j = 0; j <= k; j++) {
+            ans = min(ans, dist[m * n - 1][i][j]);
+        }
+    }
+    return ans == inf ? -1 : ans;
+}

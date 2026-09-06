@@ -129,6 +129,7 @@ class UnionFind {
 private:
     vector<int> parent;  // 存储每个节点的父节点
     vector<int> rank;    // 存储每个根节点所对应的树的秩（高度）
+    vector<int> size;    // 存储每个根节点所对应的集合大小
 
     // 查找元素x所在集合的代表元素，并进行路径压缩
     int find(int x)
@@ -141,7 +142,7 @@ private:
 
 public:
     // 构造函数, 初始化parent和rank数组
-    UnionFind(int size) : parent(size), rank(size, 0)
+    UnionFind(int size) : parent(size), rank(size, 0), size(size, 1)
     {
         for (int i = 0; i < size; ++i) {
             parent[i] = i;  // 初始时, 每个节点的父节点是它自己
@@ -161,11 +162,14 @@ public:
         // 按秩合并：将秩较小的树合并到秩较大的树下
         if (rank[xRoot] < rank[yRoot]) {
             parent[xRoot] = yRoot;
+            size[yRoot] += size[xRoot];  // 更新新根的大小
         } else if (rank[xRoot] > rank[yRoot]) {
             parent[yRoot] = xRoot;
+            size[xRoot] += size[yRoot];  // 更新新根的大小
         } else {
             parent[yRoot] = xRoot;
             rank[xRoot] += 1;  // 如果秩相等, 选择一个作为根, 并增加其秩
+            size[xRoot] += size[yRoot];  // 更新新根的大小
         }
     }
 
@@ -173,6 +177,13 @@ public:
     int findSet(int x)
     {
         return find(x);
+    }
+
+    // 获取元素x所在集合的大小
+    int getSize(int x)
+    {
+        int root = find(x);
+        return size[root];
     }
 };
 
