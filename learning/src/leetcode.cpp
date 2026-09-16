@@ -63,6 +63,21 @@ vector<int> GetPrimes(int n)
 
     return primes;
 }
+void GetPrimes(int n, vector<bool>& isPrime)
+{
+    int i, p;
+    isPrime.assign(n + 1, true);
+    isPrime[0] = isPrime[1] = false; // 0 和 1 不是质数
+
+    int m = sqrt(n);
+    for (p = 2; p <= m; p++) {
+        if (isPrime[p]) {
+            for (i = p * p; i <= n; i += p) {
+                isPrime[i] = false;
+            }
+        }
+    }
+}
 
 
 bool IsPrime(int n)
@@ -552,6 +567,16 @@ bool IsPalindrome(string &s)
         j--;
     }
     return true;
+}
+bool IsPalindrome(long long val)
+{
+    auto t = val;
+    long long x = 0;
+    while (t) {
+        x = x * 10 + t % 10;
+        t /= 10;
+    }
+    return x == val;
 }
 void PartPalindrome(string s, vector<string>& record, vector<vector<string>>& ans)
 {

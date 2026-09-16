@@ -96,3 +96,48 @@ void Monthly_Round_136_E()
         cout << "\n";
     }
 }
+
+
+void Round_160_E()
+{
+    int i, j;
+    int n, len;
+    int l, r;
+    long long w;
+
+    cin >> n;
+
+    len = n * 2;
+    vector<int> rightIdx(len + 1, -1);
+    vector<long long> val(len + 1);
+    for (i = 0; i < n; i++) {
+        cin >> l >> r >> w;
+        rightIdx[l] = r;
+        val[l] = w;
+    }
+
+    long long inf = -1e16;
+
+    // dp[l][r] - 端点[l, r] 构成最大权值
+    vector<vector<long long>> dp(len +1, vector<long long>(len + 1, inf));
+
+    auto dfs = [&](auto&& self, int i, int j) -> long long {
+        if (i >= j) {
+            return 0;
+        }
+        if (dp[i][j] != inf) {
+            return dp[i][j];
+        }
+        // 不选左端点i
+        long long ans = self(self, i + 1, j);
+        // 选
+        if (rightIdx[i] != -1 && rightIdx[i] <= j) {
+            ans = max(ans, val[i] + self(self, rightIdx[i] + 1, j) + 
+                      self(self, i + 1, rightIdx[i] - 1));
+        }
+        dp[i][j] = ans;
+        return ans;
+    };
+    dfs(dfs, 1, len);
+    cout << (dp[1][len] == inf ? 0 : dp[1][len]) << "\n";
+}

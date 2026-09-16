@@ -4896,3 +4896,179 @@ void ABC_473_D()
     };
     dfs(dfs, 0, 0);
 }
+
+
+void AWC_151_D()
+{
+    int i, j, z;
+    int n, m, k;
+    long long b;
+
+    cin >> n >> m >> k >> b;
+
+    int d, t;
+    long long v;
+    long long inf = -1e15;
+    vector<vector<long long>> p;
+    for (i = 0; i < n; i++) {
+        cin >> d >> v >> t;
+        p.push_back({t, v, d});
+    }
+
+    // dp[i][m] - m天完成i个任务的最大收益
+    vector<vector<long long>> dp(n + 1, vector<long long>(m + 1, inf));
+
+    // 按deadline排序
+    sort(p.begin(), p.end());
+
+    dp[0][0] = 0;
+    for (i = 0; i < n; i++) {
+        if (p[i][0] - p[i][2] < 0) {
+            continue;
+        }
+        for (j = i; j >= 0; j--) {
+            auto start = p[i][0] - p[i][2];
+            for (z = start; z >= 0; z--) {
+                auto n_z = z + p[i][2];
+                if (dp[j][z] != inf) {
+                    dp[j + 1][n_z] = max(dp[j + 1][n_z], dp[j][z] + p[i][1]);
+                }
+            }
+        }
+    }
+
+    long long ans = 0;
+    for (i = 0; i <= n; i++) {
+        for (j = 0; j <= m; j++) {
+            if (dp[i][j] == inf) {
+                continue;
+            }
+            ans = max(ans, dp[i][j] + (i >= k ? b : 0));
+        }
+    }
+    cout << ans << "\n";
+}
+
+
+void AWC_156_C()
+{
+    int i;
+    int n, k;
+    int t;
+
+    cin >> n >> k;
+    vector<int> a(n);
+    for (i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    sort(a.begin(), a.end());
+    // 如果k = 1, 最大和为t
+    t = a[n - 1] - a[0];
+
+    vector<int> diff;
+    for (i = 1; i < n; i++) {
+        diff.emplace_back(a[i] - a[i - 1]);
+    }
+
+    sort(diff.rbegin(), diff.rend());
+    for (i = 0; i < k - 1; i++) {
+        // 每多一个盒子, 可以把间距最大作为两个盒子的分割点, 同时t减去diff[i]
+        t -= diff[i];
+    }
+
+    cout << t << "\n";
+}
+
+
+void AWC_157_E()
+{
+    // Kosaraju 求强连通分量 scc
+    int i;
+    int n, m;
+    int u, v;
+
+    cin >> n >> m;
+    vector<vector<int>> edges(n + 1);
+    vector<vector<int>> edges_r(n + 1); // 反向图
+    vector<long long> w(n + 1), t(n + 1);
+
+    for (i = 1; i <= n; i++) {
+        cin >> w[i];
+    }
+    for (i = 1; i <= n; i++) {
+        cin >> t[i];
+    }
+    for (i = 0; i < m; i++) {
+        cin >> u >> v;
+        edges[u].emplace_back(v);
+        edges_r[v].emplace_back(u);
+    }
+
+    vector<bool> visited(n + 1, false);
+    vector<int> visitedOrder;
+    auto dfs1 = [&](auto&& self, int cur) -> void {
+        visited[cur] = true;
+        for (auto next : edges[cur]) {
+            if (visited[next]) {
+                continue;
+            }
+            self(self, next);
+        }
+        visitedOrder.emplace_back(cur);
+    };
+
+    for (i = 1; i <= n; i++) {
+        if (visited[i] == false) {
+            dfs1(dfs1, i);
+        }
+    }
+
+    // for (auto o : visitedOrder) cout << o << " "; cout << "\n";
+
+    // scc_id[i] - 节点i属于额scc编号
+    vector<int> scc_id(n + 1, -1);
+    // scc_size[id] - 第id的scc的大小
+    vector<int> scc_size;
+
+    auto dfs2 = [&](auto&& self, int cur, int id) -> void {
+        scc_id[cur] = id;
+        scc_size[id]++;
+        for (auto next : edges_r[cur]) {
+            if (scc_id[next] == -1) {
+                self(self, next, id);
+            }
+        }
+    };
+
+    reverse(visitedOrder.begin(), visitedOrder.end());
+    int id = 0;
+    for (auto node : visitedOrder) {
+        if (scc_id[node] != -1) {
+            continue;
+        }
+
+        scc_size.emplace_back(0);
+        dfs2(dfs2, node, id);
+        id++;
+    }
+
+    // 没有自环, 则要找所有scc_size >= 2 的所有节点
+    vector<long long> need(scc_size.size(), 0);
+    for (i = 1; i <= n; i++) {
+        if (t[i] <= w[i]) {
+            continue;
+        }
+        auto id = scc_id[i];
+        if (scc_size[id] == 1) {
+            cout << -1 << "\n";
+            return;
+        }
+        need[id] = max(need[id], t[i] - w[i]);
+    }
+    long long ans = 0;
+    for (i = 0; i < scc_size.size(); i++) {
+        ans += need[i];
+    }
+    cout << ans << "\n";
+}
