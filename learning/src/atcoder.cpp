@@ -5072,3 +5072,325 @@ void AWC_157_E()
     }
     cout << ans << "\n";
 }
+
+
+void AWC_160_E() // 有问题
+{
+    int i;
+    int n;
+
+    cin >> n;
+    vector<int> c(n), h(n);
+    unordered_map<int, vector<int>> idx;
+    for (i = 0; i < n; i++) {
+        cin >> c[i] >> h[i];
+        idx[c[i]].emplace_back(i);
+    }
+
+    vector<int> l(n), r(n); // l[i] r[i] - 第一个大于h[i]的左右边界
+    stack<int> st;
+
+    for (i = 0; i < n; i++) {
+        if (st.empty()) {
+            st.push(i);
+            continue;
+        }
+        if (h[i] > h[st.top()]) {
+            while (!st.empty() && h[i] > h[st.top()]) {
+                r[st.top()] = i;
+                st.pop();
+            }
+        }
+        st.push(i);
+    }
+
+    while (!st.empty()) {
+        r[st.top()] = n;
+        st.pop();
+    }
+
+    for (i = n - 1; i >= 0; i--) {
+        if (st.empty()) {
+            st.push(i);
+            continue;
+        }
+        if (h[i] > h[st.top()]) {
+            while (!st.empty() && h[i] > h[st.top()]) {
+                l[st.top()] = i;
+                st.pop();
+            }
+        }
+        st.push(i);
+    }
+
+    while (!st.empty()) {
+        l[st.top()] = -1;
+        st.pop();
+    }
+
+    for (i = 0; i < n; i++) {
+        cout << l[i] << ' ' << r[i] << "\n";
+    }
+
+    long long ans = 0;
+    for (i = 0; i < n; i++) {
+        auto& v = idx[c[i]];
+        auto leftRange = max(0, l[i]);
+        auto rightRange = min(n - 1, r[i]);
+
+        if (leftRange >= rightRange) {
+            continue;
+        }
+        // v在 [i, rightRange] 包含元素个数
+        long long num = upper_bound(v.begin(), v.end(), i) - 
+            lower_bound(v.begin(), v.end(), leftRange);
+
+        // ans += num - 1;
+
+        num = upper_bound(v.begin(), v.end(), rightRange) - 
+            lower_bound(v.begin(), v.end(), i);
+
+        ans += num - 1;
+    }
+
+    cout << ans << "\n";
+}
+
+
+void AWC_161_D()
+{
+    int i, j;
+    int n;
+
+    cin >> n;
+
+    vector<int> a(n);
+
+    for (i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    // dp[l][r][0 ~ 1] - 区间[l, r]Takahashi先/后手能拿到的最大数字
+    vector<vector<vector<int>>> dp(n, vector<vector<int>>(n, vector<int>(2)));
+    for (i = 0; i < n; i++) {
+        for (j = 0; j >= 0; j--) {
+            if (i == j) {
+                dp[j][i][0] = dp[j][i][1] = a[i];
+            } else if (j + 1 == i) {
+                dp[j][i][0] = max(a[i], a[j]);
+                dp[j][i][1] = min(a[i], a[j]);
+            } else {
+                dp[j][i][0] = max(dp[j + 1][i][1], dp[j][i - 1][1]);
+                dp[j][i][1] = min(dp[j + 1][i][0], dp[j][i - 1][0]);
+            }
+        }
+    }
+    cout << dp[0][n - 1][0] << "\n";
+}
+
+
+void AWC_163_D()
+{
+    int i, j, k, z, y, c;
+    int n, p, q;
+    int mod = 998244353;
+    int m;
+    cin >> n >> p >> q >> m;
+    vector<vector<int>> a(n, vector<int>(2));
+    long long cnt = 0;
+    for (i = 0; i < n; i++) {
+        cin >> a[i][0] >> a[i][1];
+    }
+    int x, l, r;
+    for (c = 0; c < m; c++) {
+        cin >> x >> l >> r;
+        a[x - 1][0] = l;
+        a[x - 1][1] = r;
+
+        // dp[n][p][q][diff] - 前n个商店两人分别选择p、q家且差值为diff的方案数
+        vector<vector<vector<vector<long long>>>> dp(n + 1, 
+            vector<vector<vector<long long>>>(p + 1, 
+            vector<vector<long long>>(q + 1, 
+            vector<long long>(121, 0))));
+        dp[0][0][0][60] = 1;
+        for (i = 1; i <= n; i++) {
+            for (j = 0; j <= p; j++) {
+                for (k = 0; k <= q; k++) {
+                    for (z = 0; z <= 120; z++) {
+                        if (dp[i - 1][j][k][z] == 0) {
+                            continue;
+                        }
+                        dp[i][j][k][z] = (dp[i][j][k][z] + dp[i - 1][j][k][z]) % mod;
+                        for (y = a[i - 1][0]; y <= a[i - 1][1]; y++) {
+                            if (j + 1 > p) {
+                                continue;
+                            }
+                            dp[i][j + 1][k][z + y] = (dp[i][j + 1][k][z + y] + dp[i - 1][j][k][z]) % mod;
+                        }
+                        for (y = a[i - 1][0]; y <= a[i - 1][1]; y++) {
+                            if (k + 1 > q) {
+                                continue;
+                            }
+                            dp[i][j][k + 1][z - y] = (dp[i][j][k + 1][z - y] + dp[i - 1][j][k][z]) % mod;
+                        }
+                    }
+                }
+            }
+        }
+        cout << dp[n][p][q][60] << "\n";
+    }
+}
+
+
+void AWC_166_D()
+{
+    int i, j;
+    int h, w;
+
+    cin >> h >> w;
+
+    vector<vector<long long>> durability(h, vector<long long>(w));
+    for (i = 0; i < h; i++) {
+        for (j = 0; j < w; j++) {
+            cin >> durability[i][j];
+        }
+    }
+
+    // 转化为多源最短路
+    long long inf = 1e18;
+    vector<vector<long long>> dp(h, vector<long long>(w, inf));
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<>> pq;
+    for (i = 0; i < h; i++) {
+        for (j = 0; j < w; j++) {
+            if (i == 0 || i == h - 1 || j == 0 || j == w - 1) {
+                dp[i][j] = durability[i][j];
+                pq.push({dp[i][j], i * w + j});
+            }
+        }
+    }
+
+    vector<vector<int>> directions = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
+    while (!pq.empty()) {
+        auto [d, pos] = pq.top();
+        pq.pop();
+        auto r = pos / w;
+        auto c = pos % w;
+        if (dp[r][c] < d) {
+            continue;
+        }
+        for (i = 0; i < 4; i++) {
+            auto nr = r + directions[i][0];
+            auto nc = c + directions[i][1];
+            if (nr < 0 || nr >= h || nc < 0 || nc >= w) {
+                continue;
+            }
+
+            if (d + durability[nr][nc] < dp[nr][nc]) {
+                dp[nr][nc] = d + durability[nr][nc];
+                auto npos = nr * w + nc;
+                pq.push({dp[nr][nc], npos});
+            }
+        }
+    }
+
+    int r, c, q;
+    cin >> q;
+    for (i = 0; i < q; i++) {
+        cin >> r >> c;
+        r--;
+        c--;
+        cout << dp[r][c] << "\n";
+    }
+}
+
+
+void AWC_169_D()
+{
+    int i;
+    int n, m, k, q;
+    int u, v;
+    int w;
+
+    cin >> n >> m >> k >> q;
+
+    vector<vector<pair<int, int>>> edges(n + 1);
+    vector<pair<int, int>> e;
+    for (i = 0; i < m; i++) {
+        cin >> u >> v >> w;
+        edges[u].push_back({v, w});
+        edges[v].push_back({u, w});
+        e.push_back({u, v});
+    }
+    vector<pair<int, int>> queries;
+    for (i = 0; i < q; i++) {
+        cin >> u >> v;
+        queries.push_back({u, v});
+    }
+
+    int mask = 1 << m;
+    vector<int> b;
+    for (i = 0; i < mask; i++) {
+        if (popcount((unsigned)i) == k) {
+            b.emplace_back(i);
+        }
+    }
+
+    long long inf = 1e15;
+    auto floyd = [&](vector<vector<int>>& banned, vector<vector<long long>>& dist) -> void {
+        int i, j, k;
+
+        for (i = 1; i <= n; i++) {
+            dist[i][i] = 0;
+            for (auto& [v, w] : edges[i]) {
+                if (banned[i][v]) {
+                    continue;
+                }
+                dist[i][v] = w;
+            }
+        }
+
+        for (k = 1; k <= n; k++) {
+            for (i = 1; i <= n; i++) {
+                if (dist[i][k] == inf) {
+                    continue;
+                }
+                for (j = 1; j <= n; j++) {
+                    if (dist[k][j] == inf) {
+                        continue;
+                    }
+                    if (dist[i][k] + dist[k][j] < dist[i][j]) {
+                        dist[i][j] = dist[i][k] + dist[k][j];
+                    }
+                }
+            }
+        }
+    };
+
+    long long ans = 0;
+    for (auto val : b) {
+        vector<vector<int>> banned(n + 1, vector<int>(n + 1, 0));
+        i = 0;
+        while (i < m) {
+            if (val % 2 == 1) {
+                auto [u, v] = e[i];
+                banned[u][v] = 1;
+                banned[v][u] = 1;
+            }
+            val >>= 1;
+            i++;
+        }
+
+        vector<vector<long long>> dist(n + 1, vector<long long>(n + 1, inf));
+        floyd(banned, dist);
+        long long cur = inf;
+        for (auto [u, v] : queries) {
+            cur = min(cur, dist[u][v]);
+        }
+        ans = max(ans, cur);
+    }
+    if (ans == inf) {
+        cout << "INF\n";
+    } else {
+        cout << ans << "\n";
+    }
+}

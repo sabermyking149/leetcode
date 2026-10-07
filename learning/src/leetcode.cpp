@@ -35452,3 +35452,36 @@ int minCost_LC4046(vector<vector<int>>& grid, int k)
     }
     return ans == inf ? -1 : ans;
 }
+
+
+// LC4072
+long long maxAlternatingSum(vector<int>& nums)
+{
+    int i;
+    int n = nums.size();
+    long long inf = -1e15;
+    long long ans = inf;
+    // dp[i][0 ~ 1][1 ~ 0] - 第i位, 是否删除操作, 以正负号结尾的最大子数组交替和
+    vector<vector<vector<long long>>> dp(n, vector<vector<long long>>(2, 
+                                            vector<long long>(2, inf)));
+    dp[0][0][1] = nums[0];
+    dp[0][1][1] = 0;
+    ans = nums[0];
+    for (i = 1; i < n; i++) {
+        dp[i][0][1] = max(dp[i - 1][0][0], 0ll) + nums[i];
+        dp[i][0][0] = dp[i - 1][0][1] - nums[i];
+
+        // 删除
+        // 前面已删除
+        dp[i][1][1] = max(dp[i - 1][1][0], 0ll) + nums[i];
+        dp[i][1][0] = dp[i - 1][1][1] - nums[i];
+
+        // 删除nums[i]
+        dp[i][1][1] = max(dp[i][1][1], dp[i - 1][0][1]);
+        dp[i][1][0] = max(dp[i][1][0], dp[i - 1][0][0]);
+
+        ans = max({ans, dp[i][0][0], dp[i][0][1],
+                    dp[i][1][0], dp[i][1][1]});
+    }
+    return ans;
+}
