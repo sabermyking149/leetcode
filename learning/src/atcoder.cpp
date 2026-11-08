@@ -5394,3 +5394,218 @@ void AWC_169_D()
         cout << ans << "\n";
     }
 }
+
+
+void AWC_186_D()
+{
+    int i, j;
+    int n, m;
+
+    cin >> n >> m;
+    vector<long long> x(n);
+    for (i = 0; i < n; i++) {
+        cin >> x[i];
+    }
+
+    long long r, c;
+    vector<pair<long long, long long>> p;
+    for (i = 0; i < m; i++) {
+        cin >> r >> c;
+        p.push_back({r, c});
+    }
+
+    sort(x.begin(), x.end());
+
+    int idx;
+    long long inf = 1e15;
+    // dp[i] - 前i个房屋全照亮安装电灯最小成本
+    vector<long long> dp(n + 1, inf);
+
+    dp[0] = 0;
+    for (i = 1; i <= n; i++) {
+        for (j = 0; j < m; j++) {
+            auto t = x[i - 1] - p[j].first * 2 - 1; // 注意此处要减一, 避免刚好匹配到左闭区间
+            auto it = upper_bound(x.begin(), x.end(), t);
+            if (it == x.begin()) {
+                idx = 0;
+            } else {
+                idx = prev(it) - x.begin() + 1; // 其实分支计算的值是一致的
+            }
+            dp[i] = min(dp[i], dp[idx] + p[j].second);
+        }
+    }
+    cout << dp[n] << '\n';
+}
+
+
+void AWC_186_E()
+{
+    int i;
+    int n, m;
+    int u, v;
+
+    cin >> n >> m;
+
+    vector<vector<int>> edges(n + 1);
+    vector<vector<int>> edges_r(n + 1); // 反向边
+    vector<long long> a(n + 1);
+    vector<int> degree(n + 1, 0);
+
+    for (i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+
+    for (i = 0; i < m; i++) {
+        cin >> u >> v;
+        edges[u].emplace_back(v);
+        degree[v]++;
+        edges_r[v].emplace_back(u);
+    }
+
+    long long inf = 1e16;
+    vector<long long> dp(n + 1, inf);
+    queue<int> q;
+    for (i = 1; i <= n; i++) {
+        if (degree[i] == 0) {
+            dp[i] = a[i];
+            q.push(i);
+        }
+    }
+
+    // 判断环
+    if (q.empty()) {
+        cout << -1 << "\n";
+        return;
+    }
+    while (!q.empty()) {
+        auto cur = q.front();
+        q.pop();
+        for (auto next : edges[cur]) {
+            degree[next]--;
+            if (degree[next] == 0) {
+                q.push(next);
+            }
+        }
+    }
+    for (i = 1; i <= n; i++) {
+        if (degree[i] > 0) {
+            cout << -1 << "\n";
+            return;
+        }
+    }
+
+    // dp[n] - 完成n课程的最少需要时间
+    auto dfs = [&](auto&& self, int cur) -> long long {
+        if (dp[cur] != inf) {
+            return dp[cur];
+        }
+        long long ans;
+        long long t = 0;
+        for (auto next : edges_r[cur]) {
+            t = max(t, self(self, next));
+        }
+        ans = a[cur] + t;
+        dp[cur] = ans;
+        return ans;
+    };
+
+    for (i = 1; i <= n; i++) {
+        dfs(dfs, i);
+    }
+
+    long long ans = *max_element(dp.begin() + 1, dp.end());
+    cout << ans << "\n";
+}
+
+
+void AWC_189_E()
+{
+    int i, j;
+    int n, p1, q1, p2, q2;
+
+    cin >> n >> p1 >> q1 >> p2 >> q2;
+
+    int x, y;
+    int inf = 1e9 + 7;
+    vector<vector<int>> s, t;
+    for (i = 0; i < n; i++) {
+        cin >> x >> y;
+        s.push_back({x, y});
+    }
+
+    for (i = 0; i < n; i++) {
+        cin >> x >> y;
+        t.push_back({x, y});
+    }
+
+    auto bfs = [&](vector<int>& s, vector<int>& t) -> int {
+        int inf = 1e9 + 7;
+        vector<vector<int>> dist(1001, vector<int>(1001, inf));
+        queue<pair<int, int>> q;
+        dist[s[0]][s[1]] = 0;
+        q.push({s[0], s[1]});
+        while (!q.empty()) {
+            auto size = q.size();
+            for (int i = 0; i < size; i++) {
+                auto [x, y] = q.front();
+                q.pop();
+                auto d = dist[x][y];
+                auto nx = p1 * x / q1;
+                auto ny = p2 * y / q2;
+                if (nx <= 1000 && ny <= 1000 && dist[nx][ny] > d + 1) {
+                    dist[nx][ny] = d + 1;
+                    q.push({nx, ny});
+                }
+                if (x + 1 <= 1000 && dist[x + 1][y] > d + 1) {
+                    dist[x + 1][y] = d + 1;
+                    q.push({x + 1, y});
+                }
+            }
+        }
+        return dist[t[0]][t[1]];
+    };
+    // si -> tj 的最短步数
+    vector<vector<int>> cost(n, vector<int>(n));
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            cost[i][j] = bfs(s[i], t[j]);
+        }
+    }
+
+    // 不需要考虑移动中两颗石子重叠的情况, 可以等效于在重叠之前另外一个石子"继承"了这个石子的行动, 而这个石子停留在重叠处
+    int ans = inf;
+    // n <= 9, 一共最多有9!种可能的情况
+    // 全排列
+    vector<int> record(n); // record[i] - si -> t record[i] 的最小步数
+    vector<bool> visited(n, false);
+    auto dfs = [&](auto&& self, int idx) -> void {
+        if (idx == n) {
+            int cur = 0;
+            bool f = true;
+            for (int i = 0; i < n; i++) {
+                if (cost[i][record[i]] == inf) {
+                    f = false;
+                    break;
+                }
+                cur += cost[i][record[i]];
+            }
+            if (f) {
+                ans = min(ans, cur);
+            }
+            return;
+        }
+
+        for (int i = 0; i < n; i++) {
+            if (visited[i]) {
+                continue;
+            }
+            record[idx] = i;
+            visited[i] = true;
+            self(self, idx + 1);
+            visited[i] = false;
+        }
+    };
+    dfs(dfs, 0);
+
+    cout << (ans == inf ? -1 : ans) << "\n";
+}

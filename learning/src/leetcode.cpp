@@ -22847,6 +22847,54 @@ vector<vector<int>> criticalConnections(int n, vector<vector<int>>& connections)
     }
     return bridges;
 }
+// 针对于有平行边的情况
+vector<vector<int>> criticalConnections_new(int n, vector<vector<int>>& connections)
+{
+    // Tarjan
+    int i;
+    int idx;
+    vector<vector<int>> bridges;
+    vector<int> visited(n + 1, 0);
+    vector<int> dfs_num(n + 1);
+    vector<int> low(n + 1);
+
+    vector<vector<pair<int, int>>> edges(n + 1);
+    int no = 0;
+    for (auto c : connections) {
+        edges[c[0]].push_back({c[1], no});
+        edges[c[1]].push_back({c[0], no});
+        no++;
+    }
+
+    idx = 0;
+    auto dfs = [&](auto&& self, int cur, int fromEId) -> void {
+        visited[cur] = 1;
+        dfs_num[cur] = low[cur] = idx;
+        idx++;
+
+        for (auto [next, id] : edges[cur]) {
+            if (id == fromEId) {
+                continue;
+            }
+            if (visited[next] == 0) {
+                self(self, next, id);
+                low[cur] = min(low[cur], low[next]);
+                if (dfs_num[cur] < low[next]) {
+                    bridges.push_back({cur, next});
+                }
+            } else {
+                low[cur] = min(low[cur], dfs_num[next]);
+            }
+        }
+    };
+
+    for (i = 1; i <= n; i++) {
+        if (visited[i] == 0) {
+            dfs(dfs, i, -1);
+        }
+    }
+    return bridges;
+}
 
 
 // LC45
