@@ -17,6 +17,7 @@
 #include <optional>
 #include <bit>
 #include <climits>
+#include <bitset>
 
 #include "pub.h"
 
@@ -35532,4 +35533,117 @@ long long maxAlternatingSum(vector<int>& nums)
                     dp[i][1][0], dp[i][1][1]});
     }
     return ans;
+}
+
+
+// LC4112
+int maxScore(vector<int>& parent, vector<int>& op, vector<int>& score)
+{
+    int i;
+    int n = parent.size();
+    vector<vector<int>> e(n);
+    for (i = 1; i < n; i++) {
+        e[parent[i]].emplace_back(i);
+    }
+    vector<int> sum(n, 0);
+    // 原子树和
+    auto calc = [&](auto&& self, int cur) -> int {
+        if (e[cur].empty()) {
+            sum[cur] = score[cur];
+            return score[cur];
+        }
+        int ret = score[cur];
+        for (auto next : e[cur]) {
+            ret += self(self, next);
+        }
+        sum[cur] = ret;
+        return ret;
+    };
+    calc(calc, 0);
+
+    auto dfs = [&](auto&& self, int cur, int parent) -> void {
+        if (e[cur].empty()) {
+            return;
+        }
+        int inf = 1e9 + 7;
+        int minVal = inf, id = -1;
+        // 自底向上后序遍历
+        for (auto next : e[cur]) {
+            self(self, next, cur);
+        }
+
+        long long tol = score[cur];
+        for (auto next : e[cur]) {
+            tol += sum[next];
+            if (minVal > sum[next]) {
+                minVal = sum[next];
+                id = next;
+            }
+        }
+        if (id == -1) {
+            return;
+        }
+        if (op[cur] == 0) {
+            if (minVal < 0) {
+                tol -= minVal;
+            }
+        } else {
+            tol -= minVal;
+        }
+        sum[cur] = tol;
+    };
+
+    dfs(dfs, 0, -1);
+    return sum[0];
+}
+
+
+// LC4113
+long long maxDifference(vector<int>& nums)
+{
+    int i;
+    int n = nums.size();
+    long long inf = -1e15;
+
+    // dp[i][0 ~ 1] 下标i由alice或bob开始取数的最大值
+    vector<vector<long long>> dp(n, vector<long long>(2, inf));
+    vector<long long> suffix(n);
+
+    suffix[n - 1] = nums[n - 1];
+    for (i = n - 2; i >= 0; i--) {
+        suffix[i] = nums[i] + suffix[i + 1];
+    }
+
+    auto dfs = [&](auto&& self, int cur, int who) -> long long {
+        if (dp[cur][who] != inf) {
+            return dp[cur][who];
+        }
+        if (cur == n - 1) {
+            dp[cur][who] = nums[cur];
+        } else if (cur + 1 == n - 1) {
+            dp[cur][who] = nums[cur] + nums[cur + 1];
+        } else {
+            if (nums[cur] % 3 == 0) {
+                dp[cur][who] = max(
+                    dp[cur][who], 
+                    nums[cur] + suffix[cur + 1] - self(self, cur + 1, 1 - who));
+            } else {
+                dp[cur][who] = max(dp[cur][who], 
+                    nums[cur] + self(self, cur + 1, 1 - who));
+            }
+            if ((nums[cur] + nums[cur + 1]) % 3 == 0) {
+                dp[cur][who] = max(dp[cur][who], 
+                    nums[cur] + nums[cur + 1] + 
+                    suffix[cur + 2] - self(self, cur + 2, 1 - who));
+            } else {
+                dp[cur][who] = max(dp[cur][who], 
+                    nums[cur] + nums[cur + 1] + self(self, cur + 2, who));
+            }
+        }
+        return dp[cur][who];
+    };
+
+    dfs(dfs, 0, 0);
+    // Alice - Bob
+    return dp[0][0] * 2 - suffix[0];
 }

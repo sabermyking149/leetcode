@@ -15,7 +15,9 @@
 #include <climits>
 #include <iomanip>
 #include <numeric>
+#include <bitset>
 #include "pub.h"
+
 using namespace std;
 
 void ABC_346_D()
@@ -5608,4 +5610,171 @@ void AWC_189_E()
     dfs(dfs, 0);
 
     cout << (ans == inf ? -1 : ans) << "\n";
+}
+
+
+void AWC_196_D()
+{
+    int i, j;
+    int n, k;
+
+    cin >> n >> k;
+
+    vector<vector<long long>> dp(n, vector<long long>(k));
+    vector<vector<long long>> c(n, vector<long long>(k));
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < k; j++) {
+            cin >> c[i][j];
+        }
+    }
+    // {最小值, 下标}, {次小值, 下标}
+    pair<long long, int> p1 = {LLONG_MAX, -1}, p2 = {LLONG_MAX, -1};
+    for (j = 0; j < k; j++) {
+        dp[0][j] = c[0][j];
+        pair<long long, int> cur = {dp[0][j], j};
+        if (cur < p1) {
+            p2 = p1;
+            p1 = cur;
+        } else if (cur < p2) {
+            p2 = cur;
+        }
+    }
+    for (i = 1; i < n; i++) {
+        for (j = 0; j < k; j++) {
+            if (p1.second != j) {
+                dp[i][j] = p1.first + c[i][j];
+            } else {
+                dp[i][j] = p2.first + c[i][j];
+            }
+        }
+        p1 = {LLONG_MAX, -1}, p2 = {LLONG_MAX, -1};
+        for (j = 0; j < k; j++) {
+            pair<long long, int> cur = {dp[i][j], j};
+            if (cur < p1) {
+                p2 = p1;
+                p1 = cur;
+            } else if (cur < p2) {
+                p2 = cur;
+            }
+        }
+    }
+    long long ans = *min_element(dp[n - 1].begin(), dp[n - 1].end());
+    cout << ans << "\n";
+}
+
+
+void AWC_197_D()
+{
+    int i;
+    int n;
+
+    cin >> n;
+
+    vector<pair<long long, long long>> p;
+    long long x, w;
+    long long sum = 0;
+    for (i = 0; i < n; i++) {
+        cin >> x >> w;
+        p.push_back({x, w});
+        sum += w;
+    }
+    if (n == 1) {
+        cout << 0 << "\n";
+        return;
+    }
+
+    sort(p.begin(), p.end());
+    long long cur = 0;
+    int idx = -1;
+    // 求加权中位数
+    for (i = 0; i < n; i++) {
+        cur += p[i].second;
+        if (cur * 2 >= sum) {
+            idx = i;
+            break;
+        }
+    }
+    long long ans = 0;
+    for (i = 0 ; i < n; i++) {
+        ans += abs(p[i].first - p[idx].first) * p[i].second;
+    }
+    cout << ans << "\n";
+}
+
+
+void AWC_201_D()
+{
+    int i, j, p;
+    int n, k, x;
+    int mod = 998244353;
+    int sum;
+
+    cin >> n >> k >> x;
+
+    vector<int> a(n);
+
+    sum = 0;
+    for (i = 0; i < n; i++) {
+        cin >> a[i];
+        sum += a[i];
+    }
+    if (k == 0) {
+        if (sum >= x) {
+            cout << 1 << "\n";
+        } else {
+            cout << 0 << "\n";
+        }
+        return;
+    }
+    // dp[i][j][p] - 前i个物品舍弃j个剩下物品价值为p的方案数
+    vector<vector<vector<long long>>> dp(n + 1, vector<vector<long long>>(k + 1, vector<long long>(sum + 1, 0)));
+    dp[0][0][0] = 1;
+    for (i = 1; i <= n; i++) {
+        for (j = 0; j <= k; j++) {
+            for (p = 0; p <= sum; p++) {
+                if (dp[i - 1][j][p] != 0) {
+                    // 不舍弃
+                    if (p + a[i - 1] <= sum) {
+                        dp[i][j][p + a[i - 1]] = (dp[i][j][p + a[i - 1]] + dp[i - 1][j][p]) % mod;
+                    }
+                    // 舍弃
+                    if (j + 1 <= k) {
+                        dp[i][j + 1][p] = (dp[i][j + 1][p] + dp[i - 1][j][p]) % mod;
+                    }
+                }
+            }
+        }
+    }
+    long long ans = 0;
+    for (i = x; i <= sum; i++) {
+        ans = (ans + dp[n][k][i]) % mod;
+    }
+    cout << ans << "\n";
+}
+
+
+void AWC_201_E()
+{
+    int i;
+    int n;
+    int sum = 0;
+    cin >> n;
+
+    vector<int> a(n);
+    bitset<100001> dp;
+
+    dp[0] = true;
+    for (i = 0; i < n; i++) {
+        cin >> a[i];
+        sum += a[i];
+        dp |= (dp << a[i]);
+    }
+    int ans = -1;
+    for (i = sum / 2; i >= 0; i--) {
+        if (dp[i]) {
+            ans = abs(sum - i - i);
+            break;
+        }
+    }
+    cout << ans << "\n";
 }
